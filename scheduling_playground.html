@@ -1,0 +1,1939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scheduling Playground — Flow Shop | SE 600 Decision Making and Optimization</title>
+<style>
+:root{
+  --bg:#ffffff; --panel:#f7f9fc; --panel2:#eef3f9;
+  --ink:#15202b; --ink2:#3d4c5c; --muted:#6b7c8d; --line:#dbe4ee;
+  --accent:#2563eb; --accent-soft:#e8f0fe;
+  --teal:#0d9488; --teal-soft:#e6f6f4;
+  --warn:#b45309; --warn-bg:#fffbeb; --warn-line:#fcd34d;
+  --good:#15803d; --good-bg:#f0fdf4;
+  --bad:#b91c1c; --bad-bg:#fef2f2;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --radius:10px;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:var(--sans); font-size:16px; line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ---------- header ---------- */
+header.top{
+  position:sticky; top:0; z-index:50;
+  display:flex; align-items:center; gap:18px; flex-wrap:wrap;
+  padding:12px 24px; background:var(--panel); border-bottom:1px solid var(--line);
+}
+header.top h1{font-size:18px; margin:0; letter-spacing:-.2px}
+header.top h1 span{display:block; font-size:12px; color:var(--muted); font-weight:400; letter-spacing:0}
+.spacer{flex:1}
+.objwrap{display:flex; align-items:center; gap:8px; font-size:14px}
+.objwrap label{color:var(--ink2); font-weight:600}
+
+/* ---------- generic controls ---------- */
+select,input[type=number],textarea{
+  font-family:var(--sans); font-size:14px; color:var(--ink);
+  border:1px solid var(--line); border-radius:8px; padding:6px 9px; background:#fff;
+}
+textarea{font-family:var(--mono); font-size:12.5px; width:100%; resize:vertical}
+button{
+  font-family:var(--sans); font-size:14px; font-weight:600; color:var(--ink2);
+  background:#fff; border:1px solid var(--line); border-radius:8px;
+  padding:7px 13px; cursor:pointer; transition:background .12s,border-color .12s;
+}
+button:hover:not(:disabled){background:var(--accent-soft); border-color:var(--accent)}
+button:disabled{opacity:.4; cursor:not-allowed}
+button.primary{background:var(--accent); border-color:var(--accent); color:#fff}
+button.primary:hover:not(:disabled){background:#1d4ed8}
+button.tab{border-radius:8px 8px 0 0; border-bottom-color:transparent; padding:9px 18px}
+button.tab[aria-selected=true]{background:#fff; border-color:var(--line); border-bottom-color:#fff; color:var(--accent)}
+
+/* ---------- layout ---------- */
+.wrap{max-width:1240px; margin:0 auto; padding:18px 24px 60px}
+.row{display:grid; gap:18px; margin-bottom:18px}
+.row.two{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.row.instance{grid-template-columns:minmax(0,420px) minmax(0,1fr)}
+@media (max-width:900px){.row.two,.row.instance{grid-template-columns:1fr}}
+section.card{
+  background:var(--panel); border:1px solid var(--line);
+  border-radius:var(--radius); padding:14px 16px; min-width:0;
+}
+section.card > h2{
+  font-size:12px; text-transform:uppercase; letter-spacing:.7px;
+  color:var(--muted); margin:0 0 10px;
+}
+.hint{font-size:12.5px; color:var(--muted); margin:6px 0 0}
+
+/* ---------- tables ---------- */
+table{border-collapse:collapse; width:100%; font-size:13.5px}
+th,td{padding:4px 8px; text-align:right; border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+th{font-size:11.5px; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); font-weight:600}
+td.num,th.num{font-family:var(--mono)}
+tr.late td{color:var(--bad); font-weight:600}
+td.seq{font-family:var(--mono); font-size:12px; letter-spacing:-.2px}
+.colsel{background:var(--accent-soft)}
+.scrollx{overflow-x:auto}
+
+/* ---------- readout ---------- */
+.readout{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:12px}
+.metric{background:#fff; border:1px solid var(--line); border-radius:8px; padding:8px 10px}
+.metric b{display:block; font-family:var(--mono); font-size:22px; line-height:1.15; color:var(--ink)}
+.metric span{font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--muted)}
+.metric.sel{border-color:var(--accent); background:var(--accent-soft)}
+.metric.sel b{color:var(--accent)}
+
+/* ---------- sequence strip ---------- */
+.strip{display:flex; gap:8px; flex-wrap:wrap; align-items:stretch; min-height:66px}
+.chip{
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  border:2px solid transparent; border-radius:10px; padding:6px 10px 4px;
+  color:#fff; font-weight:700; cursor:grab; user-select:none; min-width:62px;
+}
+.chip.dragging{opacity:.35}
+.chip.over{border-color:var(--ink)}
+.chip.moved{border-color:var(--ink); box-shadow:0 0 0 3px var(--warn-line)}
+.chip .cname{font-size:16px; font-family:var(--mono)}
+.chip .cmeta{font-size:10.5px; font-weight:500; opacity:.92}
+.chip .arrows{display:flex; gap:3px; margin-top:2px}
+.chip .arrows button{
+  all:unset; cursor:pointer; font-size:11px; line-height:1;
+  padding:2px 5px; border-radius:4px; background:rgba(255,255,255,.28); color:#fff;
+}
+.chip .arrows button:hover{background:rgba(255,255,255,.55)}
+.chip.dark .arrows button{background:rgba(0,0,0,.18); color:#15202b}
+.chip.dark .arrows button:hover{background:rgba(0,0,0,.35)}
+.striptools{display:flex; gap:8px; align-items:center; margin-top:10px; flex-wrap:wrap}
+
+/* ---------- gantt / charts ---------- */
+svg{display:block; max-width:100%; height:auto}
+.gantt-tip{
+  position:fixed; pointer-events:none; z-index:100; display:none;
+  background:var(--ink); color:#fff; font-size:12px; padding:5px 8px;
+  border-radius:6px; font-family:var(--mono); white-space:pre;
+}
+.legend{display:flex; flex-wrap:wrap; gap:10px; margin-top:8px; font-size:12px}
+.legend i{display:inline-block; width:11px; height:11px; border-radius:3px; margin-right:4px; vertical-align:-1px}
+
+/* ---------- mode panels ---------- */
+.tabbar{display:flex; gap:4px; border-bottom:1px solid var(--line); margin-bottom:0}
+.modepanel{
+  background:var(--panel); border:1px solid var(--line); border-top:none;
+  border-radius:0 0 var(--radius) var(--radius); padding:14px 16px; margin-bottom:18px;
+}
+.ctrls{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+.ctrls .sep{width:1px; align-self:stretch; background:var(--line); margin:0 4px}
+
+/* ---------- candidate (propose / accept / reject) ---------- */
+.candbar{
+  display:none; margin:0 0 12px; border-radius:10px; padding:11px 14px;
+  border:2px dashed #b08900; background:#fffbeb;
+}
+body.pending .candbar{display:block}
+.candbar .crow{display:flex; gap:12px; align-items:center; flex-wrap:wrap}
+.candbar .ctitle{font-weight:700; font-size:14px; color:#7a5d00}
+.candbar .cmove{font-size:13.5px}
+.candbar .cvals{display:flex; gap:10px; align-items:center; font-size:14px; margin-left:auto}
+.candbar .cvals b{font-size:19px}
+.cdelta{padding:2px 9px; border-radius:999px; font-weight:700; font-size:13px}
+.cdelta.better{background:#d7f2df; color:#12683a}
+.cdelta.worse {background:#fbdcdc; color:#8d1f1f}
+.cdelta.same  {background:#e6ebf1; color:#4a5b6b}
+.candbar .cbrowse{display:flex; gap:4px; align-items:center; font-size:13px; color:#6b5600}
+.candbar .cbrowse button{padding:3px 9px}
+.candbar .cverdict{font-size:13px; margin-top:8px; color:#5c4a00}
+.btn-accept{background:#1a7f4b !important; border-color:#166b40 !important; color:#fff !important}
+.btn-reject{background:#a83232 !important; border-color:#8d2929 !important; color:#fff !important}
+/* while a candidate is on screen the strip is a preview, not an editor */
+body.pending .strip .chip{cursor:default}
+body.pending .strip .arrows{visibility:hidden}
+body.pending .striptools button{opacity:.4; pointer-events:none}
+.chip.cand{outline:3px solid #b08900; outline-offset:2px}
+.status{
+  margin-top:10px; padding:9px 12px; border-radius:8px; font-size:13.5px;
+  background:#fff; border:1px solid var(--line); min-height:40px;
+}
+.status.good{background:var(--good-bg); border-color:#bbf7d0; color:var(--good)}
+.status.warn{background:var(--warn-bg); border-color:var(--warn-line); color:var(--warn)}
+.status.bad{background:var(--bad-bg); border-color:#fecaca; color:var(--bad)}
+.status b{font-weight:700}
+.progress{height:7px; background:var(--panel2); border-radius:4px; overflow:hidden; margin-top:9px; display:none}
+.progress > i{display:block; height:100%; width:0; background:var(--accent)}
+.hide{display:none !important}
+
+@media print{
+  header.top,.noprint{display:none !important}
+  body{font-size:12px}
+  @page{margin:14mm}
+}
+
+/* ---------- selftest ---------- */
+#selftest{padding:20px 26px; font-family:var(--mono); font-size:13px; white-space:pre-wrap}
+#selftest .p{color:var(--good)}
+#selftest .f{color:var(--bad); font-weight:700}
+</style>
+</head>
+<body>
+
+<header class="top noprint">
+  <h1>Scheduling Playground<span>SE 600 · Part 2 · Lecture 1 · Workshop 9-1 — permutation flow shop</span></h1>
+  <div class="spacer"></div>
+  <div class="objwrap">
+    <label for="objsel">Objective</label>
+    <select id="objsel">
+      <option value="tardiness">Total tardiness &Sigma;T</option>
+      <option value="makespan">Makespan C<sub>max</sub></option>
+      <option value="maxlateness">Maximum lateness L<sub>max</sub></option>
+      <option value="flowtime">Total flow time &Sigma;C</option>
+    </select>
+  </div>
+</header>
+
+<!-- ==================== TOOL ==================== -->
+<div class="app">
+<div class="wrap">
+
+  <div class="row instance">
+    <section class="card">
+      <h2>Instance</h2>
+      <div class="scrollx"><table id="insttable"></table></div>
+      <div class="striptools">
+        <button data-inst="default">Default 6&times;3</button>
+        <button data-inst="explosion">12-job demo</button>
+        <button data-inst="random">Random</button>
+        <button id="editbtn">Edit&hellip;</button>
+      </div>
+      <div id="editpanel" class="hide" style="margin-top:12px">
+        <div class="ctrls" style="margin-bottom:8px">
+          <label style="font-size:13px">Jobs <input type="number" id="ednj" min="3" max="12" style="width:60px"></label>
+          <label style="font-size:13px">Machines <input type="number" id="ednm" min="3" max="5" style="width:60px"></label>
+          <button id="edresize">Resize</button>
+        </div>
+        <div class="scrollx"><table id="edtable"></table></div>
+        <p class="hint">Machines are capped at a minimum of 3 &mdash; see the note below.</p>
+        <div class="ctrls" style="margin-top:8px">
+          <button class="primary" id="edapply">Apply</button>
+          <button id="edcancel">Cancel</button>
+          <button id="edexport">Export JSON</button>
+          <button id="edimport">Import JSON</button>
+        </div>
+        <textarea id="edjson" rows="4" class="hide" style="margin-top:8px"></textarea>
+      </div>
+      <p class="hint" id="instnote"></p>
+    </section>
+
+    <section class="card">
+      <h2>Current solution</h2>
+      <div class="readout" id="readout"></div>
+      <div class="scrollx"><table id="jobtable"></table></div>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2>Sequence &mdash; this is the solution</h2>
+
+    <div class="candbar" id="candbar">
+      <div class="crow">
+        <span class="ctitle" id="candtitle">Proposed</span>
+        <span class="cmove" id="candmove"></span>
+        <span class="cbrowse" id="candbrowse">
+          <button id="candprev">&#9664;</button>
+          <span id="candidx"></span>
+          <button id="candnext">&#9654;</button>
+          <button id="candbest">Best</button>
+        </span>
+        <span class="cvals">
+          <span id="candvals"></span>
+          <button class="btn-accept" id="candaccept">Accept</button>
+          <button class="btn-reject" id="candreject">Reject</button>
+        </span>
+      </div>
+      <div class="cverdict" id="candverdict"></div>
+    </div>
+
+    <div class="strip" id="strip"></div>
+    <div class="striptools">
+      <span class="hint" style="margin:0">Drag a chip, or use &#9664;&#9654;.</span>
+      <div style="flex:1"></div>
+      <button id="undo">Undo</button>
+      <button id="redo">Redo</button>
+      <button id="resetseq">Reset</button>
+    </div>
+  </section>
+
+  <section class="card" style="margin-top:18px">
+    <h2>Gantt chart</h2>
+    <div id="gantt"></div>
+    <div class="legend" id="legend"></div>
+    <p class="hint">Hatched = the part of a job running past its due date. &#9662; on the bottom lane = due dates.</p>
+  </section>
+
+  <div style="margin-top:18px">
+    <div class="tabbar" id="tabbar">
+      <button class="tab" data-mode="hand" aria-selected="true">By hand</button>
+      <button class="tab" data-mode="policy" aria-selected="false">Policy</button>
+      <button class="tab" data-mode="local" aria-selected="false">Local search</button>
+      <button class="tab" data-mode="random" aria-selected="false">Random search</button>
+      <button class="tab" data-mode="exact" aria-selected="false">Exhaustive</button>
+    </div>
+
+    <div class="modepanel" data-panel="hand">
+      <p style="margin:0;font-size:14px">
+        Move the chips above. Every ordering is a legal schedule &mdash; there is nothing you can break.
+        Watch the Gantt and the four objectives change as you go.
+      </p>
+      <div class="status" id="handstatus"></div>
+    </div>
+
+    <div class="modepanel hide" data-panel="policy">
+      <div class="ctrls">
+        <button data-pol="FCFS">FCFS</button>
+        <button data-pol="SPT">SPT</button>
+        <button data-pol="LPT">LPT</button>
+        <button data-pol="EDD">EDD</button>
+        <div class="sep"></div>
+        <button data-pol="ALL" class="primary">Run all four</button>
+      </div>
+      <div class="status" id="polstatus">
+        FCFS = job number · SPT = shortest total processing time · LPT = longest · EDD = earliest due date.
+        Ties go to the lower job number.
+      </div>
+    </div>
+
+    <div class="modepanel hide" data-panel="local">
+      <div class="ctrls">
+        <label style="font-size:13px">Neighbourhood
+          <select id="nbhd">
+            <option value="adjacent">Adjacent swap</option>
+            <option value="swap">Any swap</option>
+            <option value="insertion">Insertion</option>
+          </select>
+        </label>
+        <label style="font-size:13px">Pick
+          <select id="lspick">
+            <option value="best">Best neighbour (scan all)</option>
+            <option value="random">Random neighbour (draw one)</option>
+          </select>
+        </label>
+        <div class="sep"></div>
+        <button id="lsstep" class="primary">Propose a move</button>
+        <div class="sep"></div>
+        <button id="lsauto">Auto (run to the end)</button>
+        <button id="lsstop" disabled>Stop</button>
+        <label style="font-size:13px">Speed
+          <select id="lsspeed">
+            <option value="500">Slow</option>
+            <option value="180" selected>Medium</option>
+            <option value="40">Fast</option>
+          </select>
+        </label>
+      </div>
+      <div class="status" id="lsstatus">Hill climbing: evaluate every neighbour, take the best one that improves. Stop when none does.<br><b>Propose a move</b> shows you one neighbour at a time &mdash; use &#9664;&#9654; to look through the whole neighbourhood on the Gantt before you Accept or Reject.</div>
+    </div>
+
+    <div class="modepanel hide" data-panel="random">
+      <div class="ctrls">
+        <button id="rsstep" class="primary">Draw one sequence</button>
+        <div class="sep"></div>
+        <button id="rsauto">Auto (run all samples)</button>
+        <button id="rsstop" disabled>Stop</button>
+        <label style="font-size:13px">Samples
+          <select id="rsn"><option>100</option><option selected>1000</option><option>10000</option></select>
+        </label>
+        <div class="sep"></div>
+        <label style="font-size:13px">Seed <input type="number" id="rsseed" value="42" style="width:76px"></label>
+      </div>
+      <div class="status" id="rsstatus">Draw a random sequence, score it, keep the best one seen.<br><b>Draw one sequence</b> shows you the draw on the Gantt before it counts &mdash; you decide whether to keep it.</div>
+      <div class="progress" id="rsprog"><i></i></div>
+    </div>
+
+    <div class="modepanel hide" data-panel="exact">
+      <div class="ctrls">
+        <button id="exrun" class="primary">Check every sequence</button>
+        <button id="exstop" disabled>Cancel</button>
+      </div>
+      <div class="status" id="exstatus"></div>
+      <div class="progress" id="exprog"><i></i></div>
+    </div>
+  </div>
+
+  <div class="row two">
+    <section class="card">
+      <h2>Results so far</h2>
+      <div class="scrollx"><table id="results"></table></div>
+      <div class="striptools">
+        <button id="clearres">Clear</button>
+        <span class="hint" style="margin:0">Click a row to load that sequence.</span>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Best found vs solutions evaluated</h2>
+      <div id="chart"></div>
+      <div class="striptools">
+        <label style="font-size:13px"><input type="checkbox" id="logx" checked> Log scale on x</label>
+        <div style="flex:1"></div>
+        <button id="clearchart">Clear runs</button>
+      </div>
+      <p class="hint">Local search falls fast then flattens. Random search wanders and never catches up.</p>
+    </section>
+  </div>
+</div>
+</div>
+
+<div class="gantt-tip" id="tip"></div>
+<pre id="selftest" class="hide"></pre>
+
+<script>
+"use strict";
+/* =====================================================================
+   SE 600 — Scheduling Playground (permutation flow shop)
+   Single file, offline, no dependencies. Open with file:// .
+
+   Layers, kept separate so a TSP module can reuse search + UI later:
+     problem        instance, decode(), objectives
+     neighbourhood  adjacent / swap / insertion
+     search         hill climbing, random sampling, exhaustive
+     ui             strip, gantt, charts, controls
+   ===================================================================== */
+
+/* ---------------------------------------------------------------- data */
+
+// Verified class instance. Total tardiness by rule:
+//   FCFS 41 · SPT 16 · EDD 18 · LPT 104 · optimum 5 (unique: J3 J1 J5 J6 J4 J2)
+const INSTANCES = {
+  default: {
+    name: "Default 6×3",
+    p: [[3,9,5],[9,7,4],[2,4,8],[9,7,5],[3,2,5],[8,9,8]],
+    d: [17,45,18,41,23,41]
+  },
+  // 12 jobs => 479,001,600 sequences. Exhaustive search must refuse this.
+  explosion: {
+    name: "12-job demo",
+    p: [[7,9,8],[9,7,4],[2,3,3],[2,3,2],[2,4,2],[3,2,2],
+        [5,8,3],[2,5,9],[3,2,2],[4,5,8],[2,3,2],[3,2,7]],
+    d: [47,43,27,32,22,24,46,44,26,23,25,36]
+  }
+};
+
+const OBJECTIVES = {
+  tardiness:   {label:"Total tardiness",   short:"ΣT",     sub:"Σ max(0, Cⱼ − dⱼ)"},
+  makespan:    {label:"Makespan",          short:"Cmax",        sub:"max Cⱼ"},
+  maxlateness: {label:"Max lateness",      short:"Lmax",        sub:"max (Cⱼ − dⱼ)"},
+  flowtime:    {label:"Total flow time",   short:"ΣC",     sub:"Σ Cⱼ"}
+};
+
+// Colour-blind-safe, and each stays distinct when projected.
+const JOBCOLOURS = ["#0072B2","#E69F00","#009E73","#CC79A7","#56B4E9","#D55E00",
+                    "#117733","#DDCC77","#882255","#44AA99","#999933","#AA4499"];
+
+/* ------------------------------------------------------------- problem */
+
+const problem = {
+  p: null, d: null, J: 0, M: 0,
+
+  load(inst){
+    this.p = inst.p.map(r => r.slice());
+    this.d = inst.d.slice();
+    this.J = inst.p.length;
+    this.M = inst.p[0].length;
+    this._pf = null;              // invalidate the flattened hot-path copies
+  },
+
+  totalProc(j){ return this.p[j].reduce((a,b)=>a+b, 0); },
+
+  // C[job][m] = max( C[job][m-1] , C[prev job][m] ) + p[job][m]
+  // Returns every operation, so the same call feeds the Gantt and the objectives.
+  decode(seq){
+    const {p, M} = this, C = [], ops = [];
+    let prev = null;
+    for (const j of seq){
+      C[j] = [];
+      for (let m = 0; m < M; m++){
+        const readyJob = m > 0 ? C[j][m-1] : 0;
+        const readyMac = prev !== null ? C[prev][m] : 0;
+        const start = Math.max(readyJob, readyMac);
+        C[j][m] = start + p[j][m];
+        ops.push({job:j, machine:m, start, end:C[j][m]});
+      }
+      prev = j;
+    }
+    const finish = seq.map(() => 0);
+    for (const j of seq) finish[j] = C[j][M-1];
+    return {C, ops, finish};
+  },
+
+  // All four objectives, always. The selected one is only what the searches minimise.
+  score(seq){
+    const {finish} = this.decode(seq), d = this.d;
+    let tard = 0, flow = 0, cmax = 0, lmax = -Infinity;
+    for (let j = 0; j < this.J; j++){
+      const late = finish[j] - d[j];
+      tard += Math.max(0, late);
+      flow += finish[j];
+      if (finish[j] > cmax) cmax = finish[j];
+      if (late > lmax) lmax = late;
+    }
+    return {tardiness:tard, makespan:cmax, maxlateness:lmax, flowtime:flow};
+  },
+
+  // Hot path. Same recursion as decode(), but it allocates nothing — no ops
+  // array, no result object. Exhaustive search calls this millions of times,
+  // and the allocation-free version is roughly ten times faster.
+  // scoreFast and score are asserted to agree in the self-test.
+  _flat(){
+    if (this._pf && this._pf.length === this.J * this.M) return;
+    this._pf = new Int32Array(this.J * this.M);
+    for (let j = 0; j < this.J; j++)
+      for (let m = 0; m < this.M; m++) this._pf[j*this.M + m] = this.p[j][m];
+    this._C  = new Int32Array(this.J * this.M);
+    this._df = Int32Array.from(this.d);
+  },
+  scoreFast(seq, key){
+    this._flat();
+    const M = this.M, C = this._C, pf = this._pf, df = this._df;
+    let prev = -1;
+    for (let i = 0; i < seq.length; i++){
+      const j = seq[i], b = j * M;
+      for (let m = 0; m < M; m++){
+        const rj = m > 0 ? C[b + m - 1] : 0;
+        const rm = prev >= 0 ? C[prev * M + m] : 0;
+        C[b + m] = (rj > rm ? rj : rm) + pf[b + m];
+      }
+      prev = j;
+    }
+    let tard = 0, flow = 0, cmax = 0, lmax = -Infinity;
+    for (let j = 0; j < this.J; j++){
+      const c = C[j*M + M - 1], late = c - df[j];
+      if (late > 0) tard += late;
+      flow += c;
+      if (c > cmax) cmax = c;
+      if (late > lmax) lmax = late;
+    }
+    return key === "tardiness" ? tard
+         : key === "makespan"  ? cmax
+         : key === "flowtime"  ? flow
+         : lmax;
+  },
+
+  evaluate(seq, key){ return this.scoreFast(seq, key); },
+
+  // Static sorting rules. In a flow shop these are not clock simulations —
+  // you sort the list once. Ties always go to the lower job number, so a
+  // group working on paper gets exactly what the tool gets.
+  policy(name){
+    const idx = Array.from({length:this.J}, (_, j) => j);
+    const by = (f) => idx.slice().sort((a,b) => f(a) - f(b) || a - b);
+    switch (name){
+      case "FCFS": return idx;
+      case "SPT":  return by(j => this.totalProc(j));
+      case "LPT":  return by(j => -this.totalProc(j));
+      case "EDD":  return by(j => this.d[j]);
+    }
+  },
+
+  // Every permutation is feasible, so a random solution is just a shuffle.
+  randomSolution(rng){
+    const s = Array.from({length:this.J}, (_, j) => j);
+    for (let i = s.length - 1; i > 0; i--){
+      const k = Math.floor(rng() * (i + 1));
+      [s[i], s[k]] = [s[k], s[i]];
+    }
+    return s;
+  }
+};
+
+/* ------------------------------------------------------- neighbourhood */
+/* Enumeration order is fixed. Combined with best-improvement hill climbing
+   this makes every run reproducible — every group sees the same answer. */
+
+const neighbourhood = {
+  adjacent(seq){
+    const out = [];
+    for (let i = 0; i < seq.length - 1; i++){
+      const s = seq.slice();
+      [s[i], s[i+1]] = [s[i+1], s[i]];
+      out.push({seq:s, move:[i, i+1], kind:"swap"});
+    }
+    return out;
+  },
+  swap(seq){
+    const out = [];
+    for (let i = 0; i < seq.length; i++)
+      for (let k = i + 1; k < seq.length; k++){
+        const s = seq.slice();
+        [s[i], s[k]] = [s[k], s[i]];
+        out.push({seq:s, move:[i, k], kind:"swap"});
+      }
+    return out;
+  },
+  insertion(seq){
+    const out = [];
+    for (let i = 0; i < seq.length; i++)
+      for (let k = 0; k < seq.length; k++){
+        if (k === i) continue;
+        const s = seq.slice();
+        s.splice(k, 0, s.splice(i, 1)[0]);
+        out.push({seq:s, move:[i, k], kind:"insert"});
+      }
+    return out;
+  },
+  get(name, seq){ return this[name](seq); },
+  size(name, J){
+    return name === "adjacent" ? J - 1
+         : name === "swap"     ? J * (J - 1) / 2
+         :                       J * (J - 1);
+  }
+};
+
+/* -------------------------------------------------------------- search */
+
+// Deterministic PRNG so "everyone use seed 42" reproduces the same run.
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+const search = {
+  // One steepest-descent step: scan the whole neighbourhood, take the best
+  // improving move. Returns the move even when it is rejected, because
+  // showing rejected moves at a local optimum is the point in Week 11.
+  hillStep(seq, nbhd, key){
+    const here = problem.evaluate(seq, key);
+    const cands = neighbourhood.get(nbhd, seq);
+    let best = null, bestVal = Infinity;
+    for (const c of cands){
+      const v = problem.evaluate(c.seq, key);
+      if (v < bestVal){ bestVal = v; best = c; }   // ties keep the first enumerated
+    }
+    return {
+      accepted: bestVal < here,
+      from: here, to: bestVal,
+      cand: best, evaluated: cands.length
+    };
+  },
+
+  randomStep(rng, key){
+    const s = problem.randomSolution(rng);
+    return {seq:s, value:problem.evaluate(s, key)};
+  }
+};
+
+/* ------------------------------------------------------------ ui state */
+
+const state = {
+  instName: "default",
+  seq: [],
+  startSeq: [],
+  obj: "tardiness",
+  history: [], future: [],
+  results: [],          // {label, seq} — values recomputed, so switching objective stays honest
+  runs: {local:null, random:null},
+  timer: null,
+  exhaustBest: null,
+  cand: null      // pending proposal awaiting the student's Accept / Reject
+};
+
+const $  = (s) => document.querySelector(s);
+const $$ = (s) => Array.from(document.querySelectorAll(s));
+// While a proposal is pending, everything the student LOOKS at shows the
+// candidate; state.seq stays untouched until they accept it.
+const viewSeq = () => (state.cand ? state.cand.seq : state.seq);
+const jobName = (j) => "J" + (j + 1);
+const colourOf = (j) => JOBCOLOURS[j % JOBCOLOURS.length];
+
+// White or black text, whichever survives on that bar.
+function inkOn(hex){
+  const n = parseInt(hex.slice(1), 16);
+  const lum = (0.299 * (n >> 16) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255)) / 255;
+  return lum > 0.62 ? "#15202b" : "#ffffff";
+}
+
+/* --------------------------------------------------- instance handling */
+
+function johnsonDegenerate(p){
+  // Johnson's rule solves 3-machine makespan exactly when the middle machine
+  // is dominated. Such an instance would "prove" a simple rule optimal —
+  // exactly the opposite of the lesson — so the generator must reject it.
+  if (p[0].length !== 3) return false;
+  const m2 = Math.max(...p.map(r => r[1]));
+  return Math.min(...p.map(r => r[0])) >= m2 || Math.min(...p.map(r => r[2])) >= m2;
+}
+
+function randomInstance(J, M){
+  // Retry until the instance actually teaches something: the four rules must
+  // disagree, and (when we can afford to check) the optimum must beat them all.
+  for (let attempt = 0; attempt < 4000; attempt++){
+    const rng = mulberry32((Math.random() * 1e9) | 0);
+    const p = Array.from({length:J}, () =>
+      Array.from({length:M}, () => 2 + Math.floor(rng() * 8)));
+    if (johnsonDegenerate(p)) continue;
+
+    const tot = p.map(r => r.reduce((a,b) => a+b, 0));
+    const span = tot.reduce((a,b) => a+b, 0) / M;
+    const d = Array.from({length:J}, () =>
+      Math.round(span * (0.45 + rng() * 0.5)));
+
+    const save = {p:problem.p, d:problem.d};
+    problem.load({p, d});
+    const vals = ["FCFS","SPT","LPT","EDD"].map(n => problem.evaluate(problem.policy(n), "tardiness"));
+    let ok = new Set(vals).size === 4 && Math.min(...vals) > 0;
+    if (ok && J <= 8){
+      const opt = exhaustiveSync(problem.J, "tardiness");
+      ok = opt.value < Math.min(...vals);
+    }
+    problem.load(save);                        // restore, and rebuild the hot-path copies
+    if (ok) return {name:"Random " + J + "×" + M, p, d};
+  }
+  return INSTANCES.default;
+}
+
+function loadInstance(inst, name){
+  if (typeof clearCandidate === "function") clearCandidate();
+  problem.load(inst);
+  state.instName = name;
+  state.seq = Array.from({length:problem.J}, (_, j) => j);
+  state.startSeq = state.seq.slice();
+  state.history = []; state.future = [];
+  state.results = [];
+  state.runs = {local:null, random:null}; state.localStuck = false;
+  state.exhaustBest = null;
+  $("#instnote").textContent =
+    problem.J + " jobs × " + problem.M + " machines · " +
+    factorialStr(problem.J) + " possible sequences.";
+  renderAll();
+  setStatus("#exstatus", "", "");
+  $("#exstatus").innerHTML = exhaustPrompt();
+}
+
+function factorialStr(n){ return bigCount(factorial(n)); }
+
+/* ------------------------------------------------------------ rendering */
+
+function renderAll(){
+  renderInstanceTable();
+  renderStrip();
+  renderReadout();
+  renderJobTable();
+  renderGantt();
+  renderLegend();
+  renderResults();
+  renderChart();
+}
+
+function renderInstanceTable(){
+  const heads = ["Job"].concat(Array.from({length:problem.M}, (_, m) => "M" + (m+1)))
+                       .concat(["Total", "Due"]);
+  let h = "<tr>" + heads.map(x => '<th class="num">' + x + "</th>").join("") + "</tr>";
+  for (let j = 0; j < problem.J; j++){
+    h += '<tr><td><span style="color:' + colourOf(j) + '">■</span> ' + jobName(j) + "</td>"
+       + problem.p[j].map(v => '<td class="num">' + v + "</td>").join("")
+       + '<td class="num"><b>' + problem.totalProc(j) + "</b></td>"
+       + '<td class="num">' + problem.d[j] + "</td></tr>";
+  }
+  $("#insttable").innerHTML = h;
+}
+
+function renderStrip(){
+  const strip = $("#strip");
+  const pend = !!state.cand;
+  const moved = pend ? (state.cand.move || []) : [];
+  strip.innerHTML = "";
+  viewSeq().forEach((j, pos) => {
+    const c = document.createElement("div");
+    const bg = colourOf(j), fg = inkOn(bg);
+    c.className = "chip" + (fg === "#15202b" ? " dark" : "");
+    c.style.background = bg; c.style.color = fg;
+    c.draggable = !pend;
+    c.dataset.pos = pos;
+    if (pend && moved.indexOf(pos) >= 0) c.classList.add("cand");
+    c.innerHTML =
+      '<span class="cname">' + jobName(j) + "</span>" +
+      '<span class="cmeta">p=' + problem.totalProc(j) + " d=" + problem.d[j] + "</span>" +
+      '<span class="arrows"><button data-mv="-1">◀</button>' +
+      '<button data-mv="1">▶</button></span>';
+    strip.appendChild(c);
+  });
+}
+
+function renderReadout(){
+  const s = problem.score(viewSeq());
+  $("#readout").innerHTML = Object.keys(OBJECTIVES).map(k => {
+    const o = OBJECTIVES[k];
+    return '<div class="metric' + (k === state.obj ? " sel" : "") + '">' +
+           "<b>" + s[k] + "</b><span>" + o.label + "</span></div>";
+  }).join("");
+}
+
+function renderJobTable(){
+  const {finish} = problem.decode(viewSeq());
+  let h = '<tr><th>Job</th><th class="num">Position</th><th class="num">Cⱼ</th>'
+        + '<th class="num">dⱼ</th><th class="num">Tardiness</th></tr>';
+  for (let j = 0; j < problem.J; j++){
+    const T = Math.max(0, finish[j] - problem.d[j]);
+    h += '<tr' + (T > 0 ? ' class="late"' : "") + "><td>" + jobName(j) + "</td>"
+       + '<td class="num">' + (viewSeq().indexOf(j) + 1) + "</td>"
+       + '<td class="num">' + finish[j] + "</td>"
+       + '<td class="num">' + problem.d[j] + "</td>"
+       + '<td class="num">' + T + "</td></tr>";
+  }
+  $("#jobtable").innerHTML = h;
+}
+
+function renderLegend(){
+  $("#legend").innerHTML = viewSeq().map((j, i) =>
+    '<span><i style="background:' + colourOf(j) + '"></i>' + jobName(j) +
+    ' <span style="color:var(--muted)">#' + (i+1) + "</span></span>").join("");
+}
+
+function renderGantt(){
+  const {ops, finish} = problem.decode(viewSeq());
+  const cmax = Math.max(...Object.values(finish));
+  const padL = 44, padR = 16, padT = 8, rowH = 34, gap = 6, dueH = 20;
+  const W = 1120, plotW = W - padL - padR;
+  const H = padT + problem.M * (rowH + gap) + dueH + 22;
+  const x = (t) => padL + (t / cmax) * plotW;
+
+  // time grid — every hour when it stays readable, else every 5
+  const stepT = cmax <= 30 ? 2 : cmax <= 80 ? 5 : 10;
+  let g = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Gantt chart">';
+  g += '<defs><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" '
+     + 'patternTransform="rotate(45)"><rect width="6" height="6" fill="rgba(0,0,0,0)"/>'
+     + '<line x1="0" y1="0" x2="0" y2="6" stroke="rgba(0,0,0,.55)" stroke-width="3"/></pattern></defs>';
+
+  for (let t = 0; t <= cmax; t += stepT){
+    g += '<line x1="' + x(t) + '" y1="' + padT + '" x2="' + x(t) + '" y2="'
+       + (padT + problem.M * (rowH + gap)) + '" stroke="#dbe4ee" stroke-width="1"/>'
+       + '<text x="' + x(t) + '" y="' + (H - 6) + '" font-size="11" fill="#6b7c8d" '
+       + 'text-anchor="middle" font-family="var(--mono)">' + t + "</text>";
+  }
+
+  for (let m = 0; m < problem.M; m++){
+    const y = padT + m * (rowH + gap);
+    g += '<rect x="' + padL + '" y="' + y + '" width="' + plotW + '" height="' + rowH
+       + '" fill="#ffffff" stroke="#dbe4ee"/>'
+       + '<text x="' + (padL - 8) + '" y="' + (y + rowH/2 + 4) + '" font-size="12" '
+       + 'fill="#3d4c5c" text-anchor="end" font-weight="600">M' + (m+1) + "</text>";
+  }
+
+  for (const op of ops){
+    const y = padT + op.machine * (rowH + gap);
+    const bx = x(op.start), bw = Math.max(1, x(op.end) - x(op.start));
+    const bg = colourOf(op.job), fg = inkOn(bg);
+    g += '<g class="op" data-job="' + op.job + '" data-m="' + op.machine
+       + '" data-s="' + op.start + '" data-e="' + op.end + '">'
+       + '<rect x="' + bx + '" y="' + (y+2) + '" width="' + bw + '" height="' + (rowH-4)
+       + '" rx="3" fill="' + bg + '"/>';
+    // hatch whatever runs past the due date, on the last machine only
+    if (op.machine === problem.M - 1 && op.end > problem.d[op.job]){
+      const hs = Math.max(op.start, problem.d[op.job]);
+      g += '<rect x="' + x(hs) + '" y="' + (y+2) + '" width="' + Math.max(1, x(op.end) - x(hs))
+         + '" height="' + (rowH-4) + '" rx="3" fill="url(#hatch)"/>';
+    }
+    if (bw > 17)
+      g += '<text x="' + (bx + bw/2) + '" y="' + (y + rowH/2 + 4) + '" font-size="11.5" '
+         + 'font-weight="700" fill="' + fg + '" text-anchor="middle" pointer-events="none">'
+         + jobName(op.job) + "</text>";
+    g += "</g>";
+  }
+
+  // due-date lane
+  const dy = padT + problem.M * (rowH + gap) + 3;
+  g += '<text x="' + (padL - 8) + '" y="' + (dy + 11) + '" font-size="11" fill="#6b7c8d" '
+     + 'text-anchor="end">due</text>';
+  for (let j = 0; j < problem.J; j++){
+    if (problem.d[j] > cmax) continue;
+    g += '<polygon points="' + (x(problem.d[j])-4) + "," + dy + " "
+       + (x(problem.d[j])+4) + "," + dy + " " + x(problem.d[j]) + "," + (dy+9)
+       + '" fill="' + colourOf(j) + '"><title>' + jobName(j) + " due " + problem.d[j]
+       + "</title></polygon>";
+  }
+  g += "</svg>";
+  $("#gantt").innerHTML = g;
+
+  const tip = $("#tip");
+  $$("#gantt .op").forEach(el => {
+    el.addEventListener("mousemove", (e) => {
+      tip.style.display = "block";
+      tip.style.left = (e.clientX + 12) + "px";
+      tip.style.top  = (e.clientY + 14) + "px";
+      tip.textContent = jobName(+el.dataset.job) + " on M" + (+el.dataset.m + 1)
+                      + "\nstart " + el.dataset.s + "  finish " + el.dataset.e;
+    });
+    el.addEventListener("mouseleave", () => { tip.style.display = "none"; });
+  });
+}
+
+/* -------------------------------------------------------- results table */
+
+function addResult(label, seq){
+  const key = label + "|" + seq.join(",");
+  if (state.results.some(r => r.key === key)) return;
+  state.results.push({key, label, seq:seq.slice()});
+  renderResults();
+}
+
+function renderResults(){
+  const t = $("#results");
+  if (!state.results.length){
+    t.innerHTML = '<tr><td style="color:var(--muted);border:none">Nothing yet — try the policy buttons.</td></tr>';
+    return;
+  }
+  const keys = Object.keys(OBJECTIVES);
+  const scored = state.results.map(r => ({...r, s:problem.score(r.seq)}));
+  const best = Math.min(...scored.map(r => r.s[state.obj]));
+  let h = "<tr><th>Method</th><th>Sequence</th>"
+        + keys.map(k => '<th class="num' + (k === state.obj ? " colsel" : "") + '">'
+                      + OBJECTIVES[k].short + "</th>").join("") + "</tr>";
+  scored.forEach((r, i) => {
+    h += '<tr data-res="' + i + '" style="cursor:pointer"><td>'
+       + (r.s[state.obj] === best ? "★ " : "") + r.label + "</td>"
+       + '<td class="seq">' + r.seq.map(jobName).join(" ") + "</td>"
+       + keys.map(k => '<td class="num' + (k === state.obj ? " colsel" : "") + '">'
+                     + r.s[k] + "</td>").join("") + "</tr>";
+  });
+  t.innerHTML = h;
+  $$("#results tr[data-res]").forEach(tr => tr.addEventListener("click", () => {
+    pushSeq(state.results[+tr.dataset.res].seq.slice());
+  }));
+}
+
+/* ------------------------------------------------------ convergence chart */
+
+function renderChart(){
+  const runs = [];
+  if (state.runs.local)  runs.push({name:"Local search",  colour:"#0072B2",
+                                    pts:state.runs.local, converged:state.localStuck});
+  if (state.runs.random) runs.push({name:"Random search", colour:"#D55E00", pts:state.runs.random});
+
+  const W = 560, H = 260, padL = 46, padR = 12, padT = 12, padB = 34;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+
+  if (!runs.length){
+    $("#chart").innerHTML = '<svg viewBox="0 0 ' + W + " " + H + '"><text x="' + (W/2)
+      + '" y="' + (H/2) + '" text-anchor="middle" font-size="13" fill="#6b7c8d">'
+      + "Run local search and random search to compare them.</text></svg>";
+    return;
+  }
+
+  const refs = ["FCFS","SPT","LPT","EDD"]
+    .map(n => ({name:n, v:problem.evaluate(problem.policy(n), state.obj)}));
+  const all = runs.flatMap(r => r.pts.map(p => p.v)).concat(refs.map(r => r.v));
+  let ymin = Math.min(...all), ymax = Math.max(...all);
+  if (ymax === ymin) ymax = ymin + 1;
+  const pad = (ymax - ymin) * 0.08;
+  ymin -= pad; ymax += pad;
+  const xmax = Math.max(...runs.map(r => r.pts[r.pts.length-1].n), 10);
+  const useLog = $("#logx").checked;
+
+  const X = (n) => padL + (useLog
+      ? Math.log10(Math.max(1, n)) / Math.log10(Math.max(10, xmax)) * plotW
+      : (n / xmax) * plotW);
+  const Y = (v) => padT + plotH - ((v - ymin) / (ymax - ymin)) * plotH;
+
+  let g = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Convergence chart">';
+  for (let i = 0; i <= 4; i++){
+    const v = ymin + (ymax - ymin) * i / 4;
+    g += '<line x1="' + padL + '" y1="' + Y(v) + '" x2="' + (W-padR) + '" y2="' + Y(v)
+       + '" stroke="#eef3f9"/><text x="' + (padL-6) + '" y="' + (Y(v)+4)
+       + '" font-size="10.5" fill="#6b7c8d" text-anchor="end">' + Math.round(v) + "</text>";
+  }
+  const ticks = useLog
+    ? [1,10,100,1000,10000,100000].filter(t => t <= Math.max(10, xmax))
+    : [0, xmax*0.25, xmax*0.5, xmax*0.75, xmax];
+  ticks.forEach(t => {
+    g += '<text x="' + X(t) + '" y="' + (H-12) + '" font-size="10.5" fill="#6b7c8d" '
+       + 'text-anchor="middle">' + (t >= 1000 ? (t/1000) + "k" : Math.round(t)) + "</text>";
+  });
+  g += '<text x="' + (padL + plotW/2) + '" y="' + (H-1) + '" font-size="10.5" fill="#6b7c8d" '
+     + 'text-anchor="middle">solutions evaluated' + (useLog ? " (log scale)" : "") + "</text>";
+
+  refs.forEach(r => {
+    if (r.v < ymin || r.v > ymax) return;
+    g += '<line x1="' + padL + '" y1="' + Y(r.v) + '" x2="' + (W-padR) + '" y2="' + Y(r.v)
+       + '" stroke="#9aa9b8" stroke-width="1" stroke-dasharray="4 3"/>'
+       + '<text x="' + (W-padR-2) + '" y="' + (Y(r.v)-3) + '" font-size="10" fill="#6b7c8d" '
+       + 'text-anchor="end">' + r.name + "</text>";
+  });
+
+  runs.forEach(r => {
+    // step line: best-so-far only changes when it improves
+    let dpath = "";
+    r.pts.forEach((p, i) => {
+      dpath += (i === 0 ? "M" : "L") + X(p.n) + " " + Y(p.v);
+      if (i < r.pts.length - 1) dpath += "L" + X(r.pts[i+1].n) + " " + Y(p.v);
+    });
+    g += '<path d="' + dpath + '" fill="none" stroke="' + r.colour + '" stroke-width="2.2"/>';
+    const last = r.pts[r.pts.length-1];
+
+    // A converged hill climber does not improve no matter how long you wait.
+    // Without this the line simply stops while random search runs on, and the
+    // chart reads as "random wins eventually" — the opposite of the truth.
+    if (r.converged && last.n < xmax){
+      g += '<path d="M' + X(last.n) + " " + Y(last.v) + "L" + X(xmax) + " " + Y(last.v)
+         + '" fill="none" stroke="' + r.colour + '" stroke-width="2.2" '
+         + 'stroke-dasharray="2 4" opacity=".85"/>'
+         + '<circle cx="' + X(last.n) + '" cy="' + Y(last.v) + '" r="4.5" fill="none" stroke="'
+         + r.colour + '" stroke-width="2"/>'
+         + '<text x="' + (X(last.n) + 7) + '" y="' + (Y(last.v) - 7) + '" font-size="10" '
+         + 'fill="' + r.colour + '" font-weight="600">stuck</text>';
+    }
+    g += '<circle cx="' + X(r.converged ? xmax : last.n) + '" cy="' + Y(last.v)
+       + '" r="3.5" fill="' + r.colour + '"/>';
+  });
+
+  runs.forEach((r, i) => {
+    g += '<rect x="' + (padL+8) + '" y="' + (padT+4+i*15) + '" width="10" height="10" rx="2" fill="'
+       + r.colour + '"/><text x="' + (padL+22) + '" y="' + (padT+13+i*15)
+       + '" font-size="11" fill="#3d4c5c">' + r.name + " → " + r.pts[r.pts.length-1].v + "</text>";
+  });
+  g += "</svg>";
+  $("#chart").innerHTML = g;
+}
+
+/* --------------------------------------------------------- interaction */
+
+function pushSeq(next, note){
+  state.history.push(state.seq.slice());
+  state.future = [];
+  state.seq = next;
+  renderStrip(); renderReadout(); renderJobTable(); renderGantt();
+  renderLegend(); renderResults();
+  if (note) setStatus("#handstatus", note, "");
+}
+
+function setStatus(sel, html, cls){
+  const el = $(sel);
+  el.className = "status" + (cls ? " " + cls : "");
+  el.innerHTML = html;
+}
+
+function highlightChips(positions){
+  $$("#strip .chip").forEach(c => c.classList.remove("moved"));
+  positions.forEach(p => {
+    const c = $('#strip .chip[data-pos="' + p + '"]');
+    if (c) c.classList.add("moved");
+  });
+}
+
+/* strip: drag and arrows */
+let dragFrom = null;
+$("#strip").addEventListener("dragstart", (e) => {
+  const chip = e.target.closest(".chip"); if (!chip) return;
+  dragFrom = +chip.dataset.pos;
+  chip.classList.add("dragging");
+  e.dataTransfer.effectAllowed = "move";
+});
+$("#strip").addEventListener("dragend", () => {
+  dragFrom = null;
+  $$("#strip .chip").forEach(c => c.classList.remove("dragging", "over"));
+});
+$("#strip").addEventListener("dragover", (e) => {
+  e.preventDefault();
+  const chip = e.target.closest(".chip"); if (!chip) return;
+  $$("#strip .chip").forEach(c => c.classList.remove("over"));
+  chip.classList.add("over");
+});
+$("#strip").addEventListener("drop", (e) => {
+  e.preventDefault();
+  const chip = e.target.closest(".chip");
+  if (!chip || dragFrom === null) return;
+  const to = +chip.dataset.pos;
+  if (to === dragFrom) return;
+  const s = state.seq.slice();
+  s.splice(to, 0, s.splice(dragFrom, 1)[0]);
+  pushSeq(s);
+});
+$("#strip").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-mv]"); if (!b) return;
+  const pos = +b.closest(".chip").dataset.pos, to = pos + (+b.dataset.mv);
+  if (to < 0 || to >= state.seq.length) return;
+  const s = state.seq.slice();
+  [s[pos], s[to]] = [s[to], s[pos]];
+  pushSeq(s);
+});
+
+$("#undo").addEventListener("click", () => {
+  clearCandidate();
+  if (!state.history.length) return;
+  state.future.push(state.seq.slice());
+  state.seq = state.history.pop();
+  renderStrip(); renderReadout(); renderJobTable(); renderGantt(); renderLegend(); renderResults();
+});
+$("#redo").addEventListener("click", () => {
+  clearCandidate();
+  if (!state.future.length) return;
+  state.history.push(state.seq.slice());
+  state.seq = state.future.pop();
+  renderStrip(); renderReadout(); renderJobTable(); renderGantt(); renderLegend(); renderResults();
+});
+$("#resetseq").addEventListener("click", () => { clearCandidate(); pushSeq(state.startSeq.slice()); });
+
+/* objective */
+$("#objsel").addEventListener("change", (e) => {
+  clearCandidate();
+  state.obj = e.target.value;
+  // Results store sequences, not values, so every row re-scores correctly.
+  renderReadout(); renderResults(); renderChart();
+});
+
+/* tabs */
+$("#tabbar").addEventListener("click", (e) => {
+  const b = e.target.closest("button.tab"); if (!b) return;
+  clearCandidate();
+  $$("#tabbar .tab").forEach(t => t.setAttribute("aria-selected", String(t === b)));
+  $$(".modepanel").forEach(p => p.classList.toggle("hide", p.dataset.panel !== b.dataset.mode));
+});
+
+/* instance buttons */
+$$("[data-inst]").forEach(b => b.addEventListener("click", () => {
+  const k = b.dataset.inst;
+  if (k === "random"){
+    b.disabled = true; b.textContent = "Searching…";
+    setTimeout(() => {
+      loadInstance(randomInstance(problem.J, problem.M), "random");
+      b.disabled = false; b.textContent = "Random";
+    }, 10);
+  } else {
+    loadInstance(INSTANCES[k], k);
+  }
+}));
+
+/* ------------------------------------------------------------- policies */
+
+$$("[data-pol]").forEach(b => b.addEventListener("click", () => {
+  clearCandidate();
+  const names = b.dataset.pol === "ALL" ? ["FCFS","SPT","LPT","EDD"] : [b.dataset.pol];
+  names.forEach(n => addResult(n, problem.policy(n)));
+  const last = problem.policy(names[names.length-1]);
+  pushSeq(last);
+  const vals = ["FCFS","SPT","LPT","EDD"].map(n => ({
+    n, v:problem.evaluate(problem.policy(n), state.obj)
+  }));
+  const uniq = new Set(vals.map(v => v.v)).size;
+  const bestRule = vals.reduce((a, c) => c.v < a.v ? c : a);
+  setStatus("#polstatus",
+    vals.map(v => "<b>" + v.n + "</b> " + v.v).join(" · ") +
+    (uniq > 1
+      ? " &mdash; the rules <b>disagree</b>. " + bestRule.n + " wins here, but is it the best possible?"
+      : " &mdash; all four agree on this instance."),
+    uniq > 1 ? "warn" : "");
+}));
+
+/* ------------------------------------------------------------ candidate */
+/* One proposal at a time. The student decides; nothing moves on its own. */
+
+function renderPreview(){
+  renderStrip(); renderReadout(); renderJobTable(); renderGantt(); renderLegend();
+}
+
+const moveWords = (c) =>
+  !c || !c.move ? "" :
+  c.kind === "insert"
+    ? "move position " + (c.move[0]+1) + " to position " + (c.move[1]+1)
+    : "swap positions " + (c.move[0]+1) + " and " + (c.move[1]+1);
+
+function setCandidate(c){
+  state.cand = c;
+  document.body.classList.add("pending");
+  const label = OBJECTIVES[state.obj].short;
+  const d = c.to - c.from;
+  const cls = d < 0 ? "better" : d > 0 ? "worse" : "same";
+  const word = d < 0 ? "better by " + (-d) : d > 0 ? "worse by " + d : "no change";
+
+  $("#candtitle").textContent =
+    c.source === "random" ? "Random draw"
+    : c.reveal            ? "Best move in the neighbourhood"
+    :                       "Random neighbour";
+  $("#candmove").innerHTML = c.source === "random"
+    ? "Sequence " + c.seq.map(jobName).join(" ")
+    : "<b>" + moveWords(c) + "</b>";
+  $("#candvals").innerHTML =
+    label + " <b>" + c.from + "</b> &rarr; <b>" + c.to + "</b> "
+    + '<span class="cdelta ' + cls + '">' + word + "</span>";
+
+  // neighbour browser is only meaningful for local search
+  $("#candbrowse").style.display = c.browse ? "flex" : "none";
+  if (c.browse){
+    $("#candidx").textContent = "neighbour " + (c.idx + 1) + " of " + c.total
+      + (c.isBest ? " (best)" : "");
+  }
+  $("#candverdict").innerHTML = c.verdict || "";
+  renderPreview();
+}
+
+function clearCandidate(){
+  if (!state.cand) return;
+  state.cand = null;
+  document.body.classList.remove("pending");
+  renderPreview();
+}
+
+function acceptCandidate(){
+  const c = state.cand;
+  if (!c) return;
+  const seq = c.seq.slice(), mv = (c.move || []).slice();
+  clearCandidate();
+  pushSeq(seq);
+  highlightChips(mv);
+  if (c.source === "local") lsAfterAccept(c);
+  else                      rsAfterDecision(c, true);
+}
+
+function rejectCandidate(){
+  const c = state.cand;
+  if (!c) return;
+  clearCandidate();
+  if (c.source === "local") lsAfterReject(c);
+  else                      rsAfterDecision(c, false);
+}
+
+$("#candaccept").addEventListener("click", acceptCandidate);
+$("#candreject").addEventListener("click", rejectCandidate);
+
+/* --------------------------------------------------------- local search */
+
+function lsRecord(value, evals){
+  const r = state.runs.local || (state.runs.local = []);
+  const prev = r.length ? r[r.length-1] : null;
+  const n = (prev ? prev.n : 0) + evals;
+  const v = prev ? Math.min(prev.v, value) : value;
+  r.push({n, v});
+  renderChart();
+}
+
+/* The neighbourhood of the CURRENT sequence, scored and enumerated once, so the
+   student can page through it and watch each move on the Gantt. */
+let lsList = [], lsFrom = 0, lsBestIdx = 0;
+// Selection is random in this mode, so it needs its own stream; seedable for the self-test.
+let lsRng = mulberry32((Math.random() * 1e9) | 0), lsStall = 0;
+function lsSeed(n){ lsRng = mulberry32(n | 0); }
+const lsPick = () => $("#lspick").value;
+// 6x the neighbourhood size. Measured over 300 runs per neighbourhood: at 2x, 11% of
+// "any swap" runs halted while an improving move still existed; at 6x that is ~0%.
+const lsStallLimit = () => Math.max(30, 6 * neighbourhood.size($("#nbhd").value, problem.J));
+
+function lsBuild(){
+  const nbhd = $("#nbhd").value;
+  lsFrom = problem.evaluate(state.seq, state.obj);
+  lsList = neighbourhood.get(nbhd, state.seq).map(c => {
+    c.value = problem.evaluate(c.seq, state.obj);
+    return c;
+  });
+  lsBestIdx = 0;
+  for (let i = 1; i < lsList.length; i++)
+    if (lsList[i].value < lsList[lsBestIdx].value) lsBestIdx = i;
+  if (!state.runs.local) lsRecord(lsFrom, 0);
+}
+
+// reveal=false is the random-pick case: the student drew one move blind, so the
+// panel must not leak what the best neighbour was, nor claim a local optimum —
+// neither is knowable without the scan that random selection deliberately skips.
+function lsShow(i, reveal){
+  const c = lsList[i];
+  const label = OBJECTIVES[state.obj].short;
+  const improves = c.value < lsFrom;
+  const anyImproves = lsList[lsBestIdx].value < lsFrom;
+  const common =
+    "Hill climbing would <b>" + (improves ? "accept" : "reject") + "</b> this one ("
+    + label + " " + c.value + (improves ? " is better than " : " is not better than ")
+    + lsFrom + "). ";
+  setCandidate({
+    source:"local", seq:c.seq, move:c.move, kind:c.kind,
+    from:lsFrom, to:c.value, idx:i, total:lsList.length, isBest:(i === lsBestIdx),
+    reveal: !!reveal, browse: !!reveal && lsList.length > 1,
+    evals: reveal ? lsList.length : 1,
+    verdict: common + (reveal
+      ? (anyImproves
+          ? "The best of all " + lsList.length + " neighbours scores <b>"
+            + lsList[lsBestIdx].value + "</b>."
+          : "<b>No neighbour here improves on " + lsFrom
+            + " — this is a local optimum.</b>")
+        + " You may accept it anyway and see what happens."
+      : "This is one draw out of " + lsList.length
+        + " possible moves, chosen without looking at the others — so it cost <b>1</b> "
+        + "evaluation instead of " + lsList.length + ". You cannot tell from this whether "
+        + "a better move exists.")
+  });
+}
+
+function doLocalPropose(){
+  stopTimers();
+  clearCandidate();
+  lsBuild();
+  if (!lsList.length){ setStatus("#lsstatus", "No neighbours to try.", "warn"); return; }
+  if (lsPick() === "random"){
+    lsShow(Math.floor(lsRng() * lsList.length), false);
+    setStatus("#lsstatus",
+      "Drew <b>one</b> of the " + lsList.length + " neighbours at random and scored only that "
+      + "one. This is how Simulated Annealing picks a move: no scan, no guarantee it is the "
+      + "best — just far cheaper per step.", "");
+    return;
+  }
+  lsShow(lsBestIdx, true);      // open on the move hill climbing would make
+  setStatus("#lsstatus",
+    "Evaluated all <b>" + lsList.length + "</b> neighbours of the current sequence. "
+    + "Showing the best one. Page through them with &#9664;&#9654; — the Gantt and the "
+    + "sequence above update for each — then Accept or Reject.", "");
+}
+
+function lsStep(i){
+  if (!state.cand || state.cand.source !== "local" || !state.cand.browse) return;
+  const n = lsList.length;
+  lsShow((state.cand.idx + i + n) % n, true);
+}
+
+function lsAfterAccept(c){
+  const label = OBJECTIVES[state.obj].short;
+  state.localStuck = false;
+  lsRecord(c.to, c.evals || c.total);
+  setStatus("#lsstatus",
+    "<b>Accepted</b> — " + moveWords(c) + ". " + label + " " + c.from + " &rarr; <b>" + c.to
+    + "</b>." + (c.to > c.from
+        ? " That made it worse — hill climbing would never do that, but you may. "
+          + "Propose again from here."
+        : " Propose again to continue climbing."),
+    c.to <= c.from ? "good" : "warn");
+}
+
+function lsAfterReject(c){
+  lsRecord(lsFrom, c.evals || c.total);
+  if (!c.reveal){
+    setStatus("#lsstatus",
+      "<b>Rejected</b> — the sequence is unchanged. You drew one move and it was no good; "
+      + "that tells you nothing about the other " + (c.total - 1) + ". Draw again.", "");
+    return;
+  }
+  setStatus("#lsstatus",
+    "<b>Rejected</b> — the sequence is unchanged. "
+    + (lsList[lsBestIdx].value < lsFrom
+        ? "Note that this neighbourhood still has an improving move available."
+        : "<b>No move in this neighbourhood improves it — you are at a local optimum.</b> "
+          + "Switch the neighbourhood and propose again."),
+    lsList[lsBestIdx].value < lsFrom ? "" : "warn");
+}
+
+/* One step of random-neighbour hill climbing: draw a single move, keep it only
+   if it improves. Costs 1 evaluation per step instead of |N|. Returns false to
+   halt the Auto loop. */
+function doLocalStepRandom(){
+  const list = neighbourhood.get($("#nbhd").value, state.seq);
+  if (!list.length) return false;
+  const from = problem.evaluate(state.seq, state.obj);
+  const label = OBJECTIVES[state.obj].short;
+  if (!state.runs.local) lsRecord(from, 0);
+
+  const c = list[Math.floor(lsRng() * list.length)];
+  const v = problem.evaluate(c.seq, state.obj);
+
+  if (v < from){
+    lsStall = 0;
+    state.localStuck = false;
+    pushSeq(c.seq);
+    highlightChips(c.move);
+    lsRecord(v, 1);
+    setStatus("#lsstatus",
+      "Random draw — " + moveWords(c) + " improves, <b>accepted</b>. "
+      + label + " " + from + " → <b>" + v + "</b>. One evaluation spent, not "
+      + list.length + ".", "good");
+    return true;
+  }
+
+  lsStall++;
+  lsRecord(from, 1);
+  if (lsStall < lsStallLimit()){
+    setStatus("#lsstatus",
+      "Random draw — " + moveWords(c) + " scores " + v + ", not better than " + from
+      + ". Rejected. <b>" + lsStall + "</b> unlucky draws in a row.", "");
+    return true;
+  }
+
+  // Out of luck, not out of moves — and the difference matters.
+  const best = list.reduce((a, x) =>
+    Math.min(a, problem.evaluate(x.seq, state.obj)), Infinity);
+  setStatus("#lsstatus",
+    "<b>Stopped after " + lsStall + " draws with no improvement.</b><br>"
+    + "Random selection can never prove you are at a local optimum — it only runs out "
+    + "of luck. In fact the best move here scores " + best + ", which "
+    + (best < from
+        ? "<b>is</b> better than " + from + " — an improving move existed and the draws kept "
+          + "missing it."
+        : "is not better than " + from + ", so this really was a local optimum — but the "
+          + "draws could not have told you that.")
+    + " Switch Pick to <b>Best neighbour</b> and propose once to settle it.",
+    "warn");
+  return false;
+}
+
+/* Auto still runs the classic loop, untouched, for the convergence chart. */
+function doLocalStep(){
+  const nbhd = $("#nbhd").value;
+  const res = search.hillStep(state.seq, nbhd, state.obj);
+  const label = OBJECTIVES[state.obj].short;
+  if (!state.runs.local) lsRecord(problem.evaluate(state.seq, state.obj), 0);
+
+  if (res.accepted){
+    state.localStuck = false;
+    pushSeq(res.cand.seq);
+    highlightChips(res.cand.move);
+    lsRecord(res.to, res.evaluated);
+    setStatus("#lsstatus",
+      "Checked all <b>" + res.evaluated + "</b> neighbours. Best move "
+      + moveWords(res.cand)
+      + " — <b>accepted</b>, " + label + " " + res.from + " → <b>" + res.to + "</b>.",
+      "good");
+    return true;
+  }
+
+  state.localStuck = true;
+  highlightChips(res.cand ? res.cand.move : []);
+  lsRecord(res.from, res.evaluated);
+
+  const thin = nbhd === "adjacent" && problem.J >= 9;
+  setStatus("#lsstatus",
+    "<b>Local optimum — no move in this neighbourhood improves it.</b><br>"
+    + "All " + res.evaluated + " neighbours checked; the best of them scores " + res.to
+    + ", which is not better than " + res.from + ". "
+    + (thin
+        ? "<br>Note that with " + problem.J + " jobs, adjacent swap offers only "
+          + (problem.J - 1) + " neighbours — a very narrow view of a very large space, "
+          + "so it stalls early and badly. Switch the neighbourhood and run it again."
+        : "Try a different neighbourhood, or a different starting sequence."),
+    "warn");
+  return false;
+}
+
+$("#lsstep").addEventListener("click", doLocalPropose);
+$("#candprev").addEventListener("click", () => lsStep(-1));
+$("#candnext").addEventListener("click", () => lsStep(1));
+$("#candbest").addEventListener("click", () => {
+  if (state.cand && state.cand.source === "local" && state.cand.browse)
+    lsShow(lsBestIdx, true);
+});
+$("#lsauto").addEventListener("click", () => {
+  stopTimers();
+  clearCandidate();
+  lsStall = 0;
+  $("#lsauto").disabled = true; $("#lsstop").disabled = false;
+  const speed = +$("#lsspeed").value;
+  const random = lsPick() === "random";
+  const step = random ? doLocalStepRandom : doLocalStep;
+  state.timer = setInterval(() => {
+    if (!step()){
+      stopTimers();
+      addResult("Local search (" + $("#nbhd").value
+        + (random ? ", random pick" : "") + ")", state.seq);
+    }
+  }, speed);
+});
+$("#lsstop").addEventListener("click", stopTimers);
+$("#lspick").addEventListener("change", () => {
+  clearCandidate();
+  lsStall = 0;
+  const n = neighbourhood.size($("#nbhd").value, problem.J);
+  setStatus("#lsstatus", lsPick() === "random"
+    ? "Now picking a <b>random</b> neighbour: one draw, <b>1</b> evaluation per step "
+      + "instead of " + n + ". Cheaper per step, but it can walk past an improving move — "
+      + "and it can never prove a local optimum. This is how Simulated Annealing chooses."
+    : "Now picking the <b>best</b> neighbour: every one of the " + n
+      + " is scored each step, so a step costs " + n + " evaluations and the choice is "
+      + "always the best available.", "");
+});
+
+$("#nbhd").addEventListener("change", () => {
+  clearCandidate();
+  lsStall = 0;
+  setStatus("#lsstatus", "Neighbourhood is now <b>" + $("#nbhd").options[$("#nbhd").selectedIndex].text
+    + "</b> — " + neighbourhood.size($("#nbhd").value, problem.J)
+    + " neighbours per step. Press Step or Auto.", "");
+});
+
+function stopTimers(){
+  if (state.timer){ clearInterval(state.timer); state.timer = null; }
+  $("#lsauto").disabled = false; $("#lsstop").disabled = true;
+  $("#rsauto").disabled = false; $("#rsstop").disabled = true;
+}
+
+/* -------------------------------------------------------- random search */
+
+let rsRng = mulberry32(42), rsCount = 0, rsBest = Infinity, rsBestSeq = null, rsCancel = false;
+
+function rsReset(){
+  rsRng = mulberry32(+$("#rsseed").value | 0);
+  rsCount = 0; rsBest = Infinity; rsBestSeq = null;
+  state.runs.random = null;
+}
+
+function rsRecord(){
+  const r = state.runs.random || (state.runs.random = []);
+  r.push({n:rsCount, v:rsBest});
+}
+
+function rsOne(){
+  const {seq, value} = search.randomStep(rsRng, state.obj);
+  rsCount++;
+  if (value < rsBest){ rsBest = value; rsBestSeq = seq; rsRecord(); return true; }
+  return false;
+}
+
+$("#rsstep").addEventListener("click", () => {
+  stopTimers();
+  clearCandidate();
+  if (!state.runs.random) rsReset();
+  const draw = search.randomStep(rsRng, state.obj);
+  const from = problem.evaluate(state.seq, state.obj);
+  const label = OBJECTIVES[state.obj].short;
+  const beatsBest = draw.value < rsBest;
+  setCandidate({
+    source:"random", seq:draw.seq, move:null, kind:null,
+    from:from, to:draw.value,
+    verdict:
+      "This is draw <b>" + (rsCount + 1) + "</b>, picked with no memory of anything tried before. "
+      + (rsBest === Infinity
+          ? ""
+          : "The best draw so far scored <b>" + rsBest + "</b>, so random search itself would "
+            + (beatsBest ? "<b>keep</b>" : "<b>discard</b>") + " this one. ")
+      + "Accept to put it on the board anyway, or Reject to keep what you have."
+  });
+  setStatus("#rsstatus",
+    "Drew a random sequence — " + draw.seq.map(jobName).join(" ") + ", " + label + " <b>"
+    + draw.value + "</b>. Look at the Gantt above: nothing about it was built on the sequence "
+    + "you had. That is what makes it random search.", "");
+});
+
+/* Every draw counts as an evaluation whether or not the student keeps it —
+   the sampling cost is paid at the draw, not at the decision. */
+function rsAfterDecision(c, accepted){
+  rsCount++;
+  const label = OBJECTIVES[state.obj].short;
+  const improved = c.to < rsBest;
+  if (improved){ rsBest = c.to; rsBestSeq = c.seq.slice(); }
+  rsRecord(); renderChart();
+  setStatus("#rsstatus",
+    "Draw <b>" + rsCount + "</b> — " + (accepted ? "<b>accepted</b>" : "<b>rejected</b>")
+    + ", " + label + " " + c.to + ". "
+    + (improved ? "That is a new best. " : "The best draw so far is still " + rsBest + ". ")
+    + "Best " + label + " over " + rsCount + " draw" + (rsCount === 1 ? "" : "s")
+    + ": <b>" + rsBest + "</b>.",
+    improved ? "good" : "");
+}
+
+$("#rsauto").addEventListener("click", () => {
+  stopTimers();
+  clearCandidate();
+  if (!state.runs.random) rsReset();
+  const N = +$("#rsn").value, target = rsCount + N;
+  rsCancel = false;
+  $("#rsauto").disabled = true; $("#rsstop").disabled = false;
+  const prog = $("#rsprog"); prog.style.display = "block";
+
+  (function chunk(){
+    if (rsCancel){ finish(); return; }
+    const stop = Math.min(rsCount + 2000, target);
+    while (rsCount < stop) rsOne();
+    prog.firstElementChild.style.width = (100 * (N - (target - rsCount)) / N) + "%";
+    renderChart();
+    if (rsCount < target) setTimeout(chunk, 0); else finish();
+  })();
+
+  function finish(){
+    prog.style.display = "none";
+    prog.firstElementChild.style.width = "0";
+    stopTimers();
+    if (rsBestSeq) pushSeq(rsBestSeq.slice());
+    rsRecord(); renderChart();
+    addResult("Random search (" + rsCount + ")", rsBestSeq || state.seq);
+    setStatus("#rsstatus",
+      "Drew <b>" + rsCount.toLocaleString("en-US") + "</b> random sequences. Best "
+      + OBJECTIVES[state.obj].short + " found: <b>" + rsBest + "</b>.", "");
+  }
+});
+$("#rsstop").addEventListener("click", () => { rsCancel = true; });
+$("#rsseed").addEventListener("change", rsReset);
+
+/* ------------------------------------------------------------ exhaustive */
+
+const EXHAUST_LIMIT = 10;   // 10! = 3,628,800 runs; 11! = 39,916,800 refuses
+
+function exhaustPrompt(){
+  const n = factorialStr(problem.J);
+  if (problem.J > EXHAUST_LIMIT)
+    return "There are <b>" + n + "</b> sequences for " + problem.J
+         + " jobs. This button will refuse — press it and see.";
+  const est = factorial(problem.J) / (state.measuredRate || 3e5);
+  return "There are <b>" + n + "</b> sequences for " + problem.J
+       + " jobs. Small enough to check every single one"
+       + (est > 2 ? " — about " + humanTime(est) + "." : ".");
+}
+
+// Used by the random-instance validator; small J only.
+function exhaustiveSync(J, key){
+  const idx = Array.from({length:J}, (_, j) => j);
+  let best = Infinity, bestSeq = null;
+  (function rec(arr, k){
+    if (k === arr.length){
+      const v = problem.evaluate(arr, key);
+      if (v < best){ best = v; bestSeq = arr.slice(); }
+      return;
+    }
+    for (let i = k; i < arr.length; i++){
+      [arr[k], arr[i]] = [arr[i], arr[k]];
+      rec(arr, k + 1);
+      [arr[k], arr[i]] = [arr[i], arr[k]];
+    }
+  })(idx, 0);
+  return {value:best, seq:bestSeq};
+}
+
+// Lexicographic next-permutation, so the scan can be chunked across frames
+// without freezing the tab. Web Workers are unreliable from file://.
+function nextPermutation(a){
+  let i = a.length - 2;
+  while (i >= 0 && a[i] >= a[i+1]) i--;
+  if (i < 0) return false;
+  let k = a.length - 1;
+  while (a[k] <= a[i]) k--;
+  [a[i], a[k]] = [a[k], a[i]];
+  for (let l = i+1, r = a.length-1; l < r; l++, r--) [a[l], a[r]] = [a[r], a[l]];
+  return true;
+}
+
+let exCancel = false;
+
+$("#exrun").addEventListener("click", () => {
+  clearCandidate();
+  if (problem.J > EXHAUST_LIMIT){
+    // The lesson is not "12 jobs is slow" — it is how violently the count grows.
+    // Quoting one number invites "so let it run overnight"; the ladder does not.
+    const rate = state.measuredRate || 3e5;
+    const ladder = [10, 12, 15, 20, 25]
+      .map(n => "<tr><td>" + n + " jobs</td><td class='num'>" + bigCount(factorial(n))
+              + "</td><td class='num'>" + humanTime(factorial(n) / rate) + "</td></tr>")
+      .join("");
+    setStatus("#exstatus",
+      "<b>Refused — " + problem.J + " jobs means " + factorialStr(problem.J)
+      + " sequences.</b><br>This tool checks about " + rateStr(rate)
+      + " per second. Adding one job multiplies the work by "
+      + "the next job number, so:"
+      + "<table style='margin-top:8px'><tr><th>Size</th><th class='num'>Sequences</th>"
+      + "<th class='num'>Time to check them all</th></tr>" + ladder + "</table>"
+      + "<div style='margin-top:8px'>No faster computer fixes this — a machine a "
+      + "<i>million</i> times quicker would still need " + humanTime(factorial(25) / (rate * 1e6))
+      + " at 25 jobs. That is why we stop trying to check every solution, "
+      + "and start searching.</div>", "bad");
+    return;
+  }
+  const total = factorial(problem.J), key = state.obj;
+  const perm = Array.from({length:problem.J}, (_, j) => j);
+  let best = Infinity, bestSeq = null, done = 0;
+  exCancel = false;
+  $("#exrun").disabled = true; $("#exstop").disabled = false;
+  const prog = $("#exprog"); prog.style.display = "block";
+  const t0 = performance.now();
+
+  (function chunk(){
+    if (exCancel){ setStatus("#exstatus", "Cancelled after " + done.toLocaleString("en-US")
+        + " sequences.", "warn"); return end(); }
+    let n = 0;
+    do {
+      const v = problem.evaluate(perm, key);
+      if (v < best){ best = v; bestSeq = perm.slice(); }
+      done++; n++;
+    } while (n < 40000 && nextPermutation(perm));   // ~40 ms per frame, so progress stays live
+
+    prog.firstElementChild.style.width = (100 * done / total) + "%";
+    if (done < total){ setTimeout(chunk, 0); return; }
+
+    const ms = Math.round(performance.now() - t0);
+    if (ms > 50) state.measuredRate = total / (ms / 1000);   // feeds the refusal ladder
+    state.exhaustBest = {value:best, seq:bestSeq};
+    pushSeq(bestSeq.slice());
+    addResult("Exhaustive (optimum)", bestSeq);
+    const rules = ["FCFS","SPT","LPT","EDD"]
+      .map(nm => problem.evaluate(problem.policy(nm), key));
+    setStatus("#exstatus",
+      "Checked all <b>" + total.toLocaleString("en-US") + "</b> sequences in " + ms + " ms.<br>"
+      + "True optimum " + OBJECTIVES[key].short + " = <b>" + best + "</b> from "
+      + bestSeq.map(jobName).join(" ") + ".<br>"
+      + "The best dispatching rule gave " + Math.min(...rules) + ".", "good");
+    end();
+  })();
+
+  function end(){
+    prog.style.display = "none"; prog.firstElementChild.style.width = "0";
+    $("#exrun").disabled = false; $("#exstop").disabled = true;
+  }
+});
+$("#exstop").addEventListener("click", () => { exCancel = true; });
+
+function factorial(n){ let f = 1; for (let i = 2; i <= n; i++) f *= i; return f; }
+
+// Past ~10^15 a grouped integer is unreadable, so switch to the same
+// scientific form the lecture deck uses on the TSP tour-count slide.
+const SUPER = "⁰¹²³⁴⁵⁶⁷⁸⁹";
+function sci(x){
+  const e = Math.floor(Math.log10(x));
+  const m = (x / Math.pow(10, e)).toFixed(2);
+  return m + " × 10" + String(e).split("").map(c => SUPER[+c]).join("");
+}
+function bigCount(x){ return x >= 1e15 ? sci(x) : Math.round(x).toLocaleString("en-US"); }
+
+function rateStr(r){
+  return r >= 1e6 ? (r/1e6).toFixed(1) + " million"
+       : Math.round(r/1000) + " thousand";
+}
+
+function humanTime(s){
+  const u = (v, name) => Math.round(v) + " " + name + (Math.round(v) === 1 ? "" : "s");
+  if (s < 1)      return "under a second";
+  if (s < 60)     return u(s, "second");
+  if (s < 3600)   return u(s/60, "minute");
+  if (s < 86400)  return u(s/3600, "hour");
+  if (s < 3.15e7) return u(s/86400, "day");
+  const y = s / 3.15e7;
+  if (y < 1000)   return u(y, "year");
+  if (y < 1e6)    return Math.round(y/1000).toLocaleString("en-US") + " thousand years";
+  if (y < 1e9)    return Math.round(y/1e6).toLocaleString("en-US") + " million years";
+  if (y < 1e12)   return Math.round(y/1e9).toLocaleString("en-US") + " billion years";
+  return sci(y) + " years";
+}
+
+/* ------------------------------------------------------------- editor */
+
+$("#editbtn").addEventListener("click", () => {
+  const panel = $("#editpanel");
+  panel.classList.toggle("hide");
+  if (!panel.classList.contains("hide")){
+    $("#ednj").value = problem.J; $("#ednm").value = problem.M;
+    renderEditor(problem.p.map(r => r.slice()), problem.d.slice());
+  }
+});
+$("#edcancel").addEventListener("click", () => $("#editpanel").classList.add("hide"));
+
+function renderEditor(p, d){
+  let h = "<tr><th>Job</th>"
+        + p[0].map((_, m) => '<th class="num">M' + (m+1) + "</th>").join("")
+        + '<th class="num">Due</th></tr>';
+  p.forEach((row, j) => {
+    h += "<tr><td>" + jobName(j) + "</td>"
+       + row.map((v, m) => '<td><input type="number" min="1" max="99" value="' + v
+                + '" data-j="' + j + '" data-m="' + m + '" style="width:52px"></td>').join("")
+       + '<td><input type="number" min="1" max="999" value="' + d[j]
+       + '" data-j="' + j + '" data-d="1" style="width:60px"></td></tr>';
+  });
+  $("#edtable").innerHTML = h;
+}
+
+$("#edresize").addEventListener("click", () => {
+  const J = Math.max(3, Math.min(12, +$("#ednj").value || 6));
+  const M = Math.max(3, Math.min(5,  +$("#ednm").value || 3));
+  $("#ednj").value = J; $("#ednm").value = M;
+  const p = Array.from({length:J}, (_, j) =>
+    Array.from({length:M}, (_, m) => (problem.p[j] && problem.p[j][m]) || 5));
+  const d = Array.from({length:J}, (_, j) => problem.d[j] || 30);
+  renderEditor(p, d);
+});
+
+$("#edapply").addEventListener("click", () => {
+  const J = +$("#ednj").value, M = +$("#ednm").value;
+  if (M < 3){
+    alert("At least 3 machines are required.\n\n"
+        + "With 1 or 2 machines some of these objectives are solved exactly by a simple rule "
+        + "(SPT, EDD, or Johnson's rule) — which would make the dispatching rules look "
+        + "optimal, the opposite of what this activity shows.");
+    return;
+  }
+  const p = Array.from({length:J}, () => Array(M).fill(1));
+  const d = Array(J).fill(1);
+  $$("#edtable input").forEach(inp => {
+    const j = +inp.dataset.j;
+    if (inp.dataset.d) d[j] = Math.max(1, +inp.value);
+    else p[j][+inp.dataset.m] = Math.max(1, +inp.value);
+  });
+  loadInstance({name:"Custom", p, d}, "custom");
+  $("#editpanel").classList.add("hide");
+});
+
+$("#edexport").addEventListener("click", () => {
+  const ta = $("#edjson");
+  ta.classList.remove("hide");
+  ta.value = JSON.stringify({p:problem.p, d:problem.d}, null, 1);
+  ta.select();
+});
+$("#edimport").addEventListener("click", () => {
+  const ta = $("#edjson");
+  if (ta.classList.contains("hide")){
+    ta.classList.remove("hide"); ta.value = ""; ta.placeholder = 'Paste {"p":[[..]],"d":[..]} then press Import again';
+    ta.focus(); return;
+  }
+  try{
+    const o = JSON.parse(ta.value);
+    if (!Array.isArray(o.p) || !Array.isArray(o.d)) throw new Error("needs p and d");
+    if (o.p[0].length < 3) throw new Error("at least 3 machines required");
+    if (o.p.length !== o.d.length) throw new Error("p and d lengths differ");
+    loadInstance({name:"Imported", p:o.p, d:o.d}, "imported");
+    $("#editpanel").classList.add("hide");
+  } catch(err){ alert("Could not import: " + err.message); }
+});
+
+/* ---------------------------------------------------------- misc wiring */
+
+$("#clearres").addEventListener("click", () => { state.results = []; renderResults(); });
+$("#clearchart").addEventListener("click", () => {
+  state.runs = {local:null, random:null}; state.localStuck = false; rsReset(); renderChart();
+});
+$("#logx").addEventListener("change", renderChart);
+
+/* ------------------------------------------------------------- selftest */
+
+function selftest(){
+  const out = [];
+  let pass = 0, fail = 0;
+  const ok = (name, cond, got) => {
+    if (cond){ pass++; out.push('<span class="p">PASS</span>  ' + name); }
+    else { fail++; out.push('<span class="f">FAIL</span>  ' + name + "   got: " + got); }
+  };
+
+  problem.load(INSTANCES.default);
+
+  // 1 — the published class numbers
+  const pol = {};
+  ["FCFS","SPT","LPT","EDD"].forEach(n => pol[n] = problem.evaluate(problem.policy(n), "tardiness"));
+  ok("FCFS total tardiness = 41", pol.FCFS === 41, pol.FCFS);
+  ok("SPT  total tardiness = 16", pol.SPT  === 16, pol.SPT);
+  ok("EDD  total tardiness = 18", pol.EDD  === 18, pol.EDD);
+  ok("LPT  total tardiness = 104", pol.LPT === 104, pol.LPT);
+
+  // 2 — exhaustive optimum
+  const opt = exhaustiveSync(6, "tardiness");
+  ok("exhaustive optimum = 5", opt.value === 5, opt.value);
+  ok("optimum sequence = J3 J1 J5 J6 J4 J2",
+     opt.seq.join(",") === "2,0,4,5,3,1", opt.seq.map(jobName).join(" "));
+
+  // 3 — hill climbing outcomes, including the SPT trap
+  const climb = (start, nb) => {
+    let s = problem.policy(start);
+    for (;;){
+      const r = search.hillStep(s, nb, "tardiness");
+      if (!r.accepted) return {value:problem.evaluate(s, "tardiness"), seq:s};
+      s = r.cand.seq;
+    }
+  };
+  ok("hill climb from EDD (adjacent) reaches 5",  climb("EDD","adjacent").value === 5,  climb("EDD","adjacent").value);
+  ok("hill climb from FCFS (adjacent) reaches 5", climb("FCFS","adjacent").value === 5, climb("FCFS","adjacent").value);
+  ok("hill climb from LPT (adjacent) reaches 5",  climb("LPT","adjacent").value === 5,  climb("LPT","adjacent").value);
+  const trapAdj = climb("SPT","adjacent"), trapSwap = climb("SPT","swap");
+  ok("hill climb from SPT (adjacent) is trapped at 6", trapAdj.value === 6, trapAdj.value);
+  ok("hill climb from SPT (any swap) is also trapped at 6", trapSwap.value === 6, trapSwap.value);
+  ok("hill climb from SPT (insertion) escapes to 5", climb("SPT","insertion").value === 5,
+     climb("SPT","insertion").value);
+
+  // 4 — exactly one insertion escapes the trap, straight to the optimum
+  const escapes = neighbourhood.insertion(trapAdj.seq)
+    .map(c => problem.evaluate(c.seq, "tardiness"))
+    .filter(v => v < 6);
+  ok("exactly one improving insertion from the trap", escapes.length === 1, escapes.length);
+  ok("that insertion lands on the optimum", escapes.every(v => v === 5), escapes.join(","));
+
+  // 5 — 7 adjacent-swap local optima with the published values
+  const lo = [];
+  (function rec(arr, k){
+    if (k === arr.length){
+      const v = problem.evaluate(arr, "tardiness");
+      if (neighbourhood.adjacent(arr).every(c => problem.evaluate(c.seq, "tardiness") >= v)) lo.push(v);
+      return;
+    }
+    for (let i = k; i < arr.length; i++){
+      [arr[k], arr[i]] = [arr[i], arr[k]]; rec(arr, k+1); [arr[k], arr[i]] = [arr[i], arr[k]];
+    }
+  })([0,1,2,3,4,5], 0);
+  lo.sort((a,b) => a-b);
+  ok("7 adjacent-swap local optima, values 5,6,16,54,54,62,67",
+     lo.join(",") === "5,6,16,54,54,62,67", lo.join(","));
+
+  // 6 — schedule validity on random sequences
+  let bad = 0;
+  const rng = mulberry32(7);
+  for (let t = 0; t < 400; t++){
+    const s = problem.randomSolution(rng);
+    const {ops} = problem.decode(s);
+    for (let m = 0; m < problem.M; m++){
+      const row = ops.filter(o => o.machine === m).sort((a,b) => a.start - b.start);
+      for (let i = 1; i < row.length; i++) if (row[i].start < row[i-1].end) bad++;   // machine overlap
+      // permutation property: every machine runs the same job order
+      if (row.map(o => o.job).join(",") !== s.join(",")) bad++;
+    }
+    for (const j of s){
+      const jo = ops.filter(o => o.job === j).sort((a,b) => a.machine - b.machine);
+      for (let i = 1; i < jo.length; i++) if (jo[i].start < jo[i-1].end) bad++;      // job on two machines
+      for (const o of jo) if (o.end - o.start !== problem.p[j][o.machine]) bad++;    // pre-emption
+    }
+  }
+  ok("400 random schedules are all valid", bad === 0, bad + " violations");
+
+  // 6b — the allocation-free hot path must agree with the display path exactly
+  let drift = 0;
+  const keys = Object.keys(OBJECTIVES);
+  [INSTANCES.default, INSTANCES.explosion].forEach(inst => {
+    problem.load(inst);
+    const r2 = mulberry32(99);
+    for (let t = 0; t < 300; t++){
+      const s = problem.randomSolution(r2), slow = problem.score(s);
+      for (const k of keys) if (problem.scoreFast(s, k) !== slow[k]) drift++;
+    }
+  });
+  problem.load(INSTANCES.default);
+  ok("scoreFast agrees with score on 2400 checks", drift === 0, drift + " mismatches");
+
+  // 7 — no search ever beats the exhaustive optimum
+  let cheat = 0;
+  for (let t = 0; t < 200; t++){
+    const s = problem.randomSolution(rng);
+    if (problem.evaluate(s, "tardiness") < opt.value) cheat++;
+  }
+  ok("no random sequence beats the optimum", cheat === 0, cheat);
+
+  // 8 — the guard: the random generator never emits a Johnson-degenerate instance
+  ok("default instance is not Johnson-degenerate", !johnsonDegenerate(INSTANCES.default.p), "degenerate");
+  ok("12-job demo is not Johnson-degenerate",      !johnsonDegenerate(INSTANCES.explosion.p), "degenerate");
+
+  // 9 — the 12-job demo makes the four rules disagree
+  problem.load(INSTANCES.explosion);
+  const ex = ["FCFS","SPT","LPT","EDD"].map(n => problem.evaluate(problem.policy(n), "tardiness"));
+  ok("12-job demo: four rules give four different answers", new Set(ex).size === 4, ex.join(","));
+  ok("12-job demo refuses exhaustive search", 12 > EXHAUST_LIMIT, "would run");
+
+  problem.load(INSTANCES.default);
+  document.getElementById("selftest").innerHTML =
+    (fail ? '<span class="f">' + fail + " FAILED</span>, " : "")
+    + pass + " passed\n\n" + out.join("\n");
+}
+
+/* ---------------------------------------------------------------- boot */
+
+// Student mode by default: the Exhaustive tab would reveal the optimum in one click.
+// Open the file with ?instructor at the end of the address to show it in the debrief.
+if (!new URLSearchParams(location.search).has("instructor")){
+  document.querySelector('#tabbar .tab[data-mode="exact"]').style.display = "none";
+}
+
+if (new URLSearchParams(location.search).get("selftest") === "1"){
+  document.querySelector(".app").classList.add("hide");
+  document.querySelector("header.top").classList.add("hide");
+  document.getElementById("selftest").classList.remove("hide");
+  selftest();
+} else {
+  loadInstance(INSTANCES.default, "default");
+}
+</script>
+</body>
+</html>
