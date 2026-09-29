@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SE 600 OR Tools</title>
+<meta name="description" content="Interactive tools for SE 600 Decision Making and Optimization.">
+<style>
+:root{
+  --bg:#ffffff; --panel:#f7f9fc;
+  --ink:#15202b; --ink2:#3d4c5c; --muted:#6b7c8d; --line:#dbe4ee;
+  --navy:#1F3864; --accent:#2F5597; --accent-soft:#DCE6F2; --edge:#B4C7E7;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --radius:12px;
+}
+*{box-sizing:border-box}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:16px; line-height:1.55; -webkit-font-smoothing:antialiased}
+
+header{background:var(--panel); border-bottom:1px solid var(--line); padding:28px 16px 24px}
+header .wrap, main{max-width:1080px; margin:0 auto}
+header h1{margin:0; font-size:26px; color:var(--navy); letter-spacing:-.3px; line-height:1.25}
+header p{margin:6px 0 0; color:var(--muted); font-size:15px}
+
+main{padding:24px 16px 40px}
+
+/* 1 column on phone, 2 on iPad, 3 on PC */
+.grid{display:grid; grid-template-columns:1fr; gap:16px}
+@media (min-width:640px){ .grid{grid-template-columns:repeat(2,1fr)} }
+@media (min-width:1000px){ .grid{grid-template-columns:repeat(3,1fr)} }
+
+.card{display:flex; flex-direction:column; gap:8px; padding:20px; min-height:180px;
+  background:#fff; border:1px solid var(--line); border-radius:var(--radius);
+  color:inherit; text-decoration:none;
+  transition:border-color .12s, box-shadow .12s, transform .12s}
+.card:hover, .card:focus-visible{border-color:var(--edge); box-shadow:0 4px 14px rgba(31,56,100,.10)}
+.card:active{transform:scale(.99)}
+.card:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+
+.tag{align-self:flex-start; font-size:12px; font-weight:600; color:var(--accent);
+  background:var(--accent-soft); border-radius:999px; padding:2px 10px}
+.card h2{margin:4px 0 0; font-size:19px; color:var(--navy); line-height:1.3}
+.card p{margin:0; color:var(--ink2); font-size:15px; flex:1}
+.open{font-size:14px; font-weight:600; color:var(--accent)}
+
+footer{max-width:1080px; margin:0 auto; padding:0 16px 32px; color:var(--muted); font-size:13px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>SE 600 Decision Making and Optimization</h1>
+    <p>Interactive tools. Tap a card to open a tool.</p>
+  </div>
+</header>
+
+<main>
+  <div class="grid">
+
+    <a class="card" href="scheduling_playground.html">
+      <span class="tag">Part 2 · Lecture 1 · Workshop 9-1</span>
+      <h2>Scheduling Playground</h2>
+      <p>Permutation flow shop: build job sequences and compare their makespan.</p>
+      <span class="open">Open tool →</span>
+    </a>
+
+    <a class="card" href="tsp_local_search.html">
+      <span class="tag">Part 2 · Lecture 1 · Workshop 9-2</span>
+      <h2>TSP Local Search</h2>
+      <p>Improve a 14-stop delivery route step by step with local search moves.</p>
+      <span class="open">Open tool →</span>
+    </a>
+
+    <a class="card" href="vns_explorer.html">
+      <span class="tag">Part 2 · Lecture 12</span>
+      <h2>VNS Explorer</h2>
+      <p>Variable Neighborhood Search: compare VND, RVNS, BVNS and GVNS. For self-study after class.</p>
+      <span class="open">Open tool →</span>
+    </a>
+
+  </div>
+</main>
+
+<footer>SE 600 · Works on PC, iPad and iPhone in any modern browser.</footer>
+
+</body>
+</html>
