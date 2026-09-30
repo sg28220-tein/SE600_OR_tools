@@ -130,19 +130,13 @@ body.state-stuck .stuck{display:block}
 .status.good{background:var(--good-bg); border-color:#bbf7d0; color:var(--good)}
 .status.warn{background:var(--warn-bg); border-color:var(--warn-line); color:var(--warn)}
 
-/* ---------- gated 2-opt ---------- */
-details.gate{
-  background:var(--panel2); border:2px dashed #94a3b8; border-radius:var(--radius);
-  padding:12px 16px; margin-bottom:18px;
-}
-details.gate > summary{
-  cursor:pointer; font-weight:700; font-size:14.5px; color:var(--ink2); list-style:none;
-}
-details.gate > summary::-webkit-details-marker{display:none}
-details.gate > summary::before{content:"\25B8  "; color:var(--muted)}
-details.gate[open] > summary::before{content:"\25BE  "}
-details.gate > summary em{font-weight:400; color:var(--muted); font-style:normal}
-.gatebody{margin-top:12px}
+/* ---------- move-type selector ---------- */
+.seg{display:inline-flex; border:1px solid var(--line); border-radius:9px; overflow:hidden; background:#fff}
+.seg button{border:0; border-radius:0; border-right:1px solid var(--line); padding:7px 14px}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed=true]{background:var(--accent); color:#fff}
+.seglabel{font-size:13px; color:var(--muted)}
+.movehint{font-size:13px; color:var(--ink2); margin:8px 0 10px}
 
 #errbar{
   display:none; margin:0 0 18px; padding:14px 18px; border-radius:10px;
@@ -201,6 +195,7 @@ details.gate > summary em{font-weight:400; color:var(--muted); font-style:normal
       <div class="metric hero"><b id="mlen">&mdash;</b><span>Tour length</span></div>
       <div class="metric"><b id="mbest">&mdash;</b><span>Best found</span></div>
       <div class="metric"><b id="mmoves">0</b><span>Moves accepted</span></div>
+      <div class="metric"><b id="miters">0</b><span>Iterations</span></div>
       <div class="metric" id="mcrosswrap"><b id="mcross">0</b><span>Crossings</span></div>
       <div class="tourtext" id="tourtext"></div>
     </section>
@@ -219,13 +214,23 @@ details.gate > summary em{font-weight:400; color:var(--muted); font-style:normal
   </div>
 
   <div class="stuck" id="stuckbanner">
-    <div class="big">No swap of any two stops improves this tour.</div>
+    <div class="big" id="stuckbig">No swap of any two stops improves this tour.</div>
     <div class="sub">You are at a local optimum. Length <b id="stucklen"></b>.
-      There are <b>78</b> possible swaps and every one of them is longer or the same.</div>
+      <span id="stucksub"></span></div>
   </div>
 
   <section class="card" style="margin-bottom:18px">
-    <h2>Local search &mdash; swap two stops</h2>
+    <h2>Local search</h2>
+    <div class="ctrls">
+      <span class="seglabel">Move</span>
+      <div class="seg" id="nhseg">
+        <button data-nh="swap" aria-pressed="true">Swap</button>
+        <button data-nh="insert" aria-pressed="false">Insertion</button>
+        <button data-nh="2opt" aria-pressed="false">2-opt</button>
+        <button data-nh="random" aria-pressed="false">Random</button>
+      </div>
+    </div>
+    <div class="movehint" id="movehint"></div>
     <div class="ctrls">
       <button id="btnpropose" class="primary">Propose a swap</button>
       <div class="sep"></div>
@@ -240,7 +245,7 @@ details.gate > summary em{font-weight:400; color:var(--muted); font-style:normal
       </label>
     </div>
     <div class="status" id="status">Drag one stop onto another to swap them, or press
-      <b>Propose a swap</b>. Nothing changes until you press Accept.</div>
+      <b>Propose</b>. Nothing changes until you press Accept.</div>
   </section>
 
   <div class="row two">
@@ -262,18 +267,6 @@ details.gate > summary em{font-weight:400; color:var(--muted); font-style:normal
         have. Keep the best one seen.</div>
     </section>
   </div>
-
-  <details class="gate" id="gate2opt">
-    <summary>Reverse a whole run of stops &mdash; <em>open only after you are stuck</em></summary>
-    <div class="gatebody">
-      <div class="ctrls">
-        <button id="btn2opt" class="primary" disabled>Uncross it (2-opt)</button>
-      </div>
-      <div class="status" id="status2opt">Instead of exchanging two stops, this reverses the
-        whole run of stops between two points. Try it on the route you are stuck with.</div>
-      <div class="status" id="lock2opt"><b>Locked.</b> This unlocks once swapping two stops can no longer improve your route.</div>
-    </div>
-  </details>
 
   <section class="card" id="optcard">
     <h2>The best possible route</h2>
@@ -320,16 +313,52 @@ const f3 = (x) => x.toFixed(3);
 const stopName = (i) => "S" + (i+1);
 const tourText = (t) => t.map(stopName).join(" → ") + " → S1";
 
+// Insertion: take the stop at position i out and put it back so it ends up at
+// position j. Moving position i to j = i-1 gives the same tour as moving i-1 to i
+// (both are a swap of neighbours), so that case is left out: 13 x 12 - 12 = 144.
+const INSERTS = (() => {
+  const out = [];
+  for (let i = 1; i < N; i++)
+    for (let j = 1; j < N; j++) if (j !== i && j !== i-1) out.push([i,j]);
+  return out;                                   // 144
+})();
+
+// 2-opt: reverse the run of stops from position i to position j.
+const TWOOPTS = (() => {
+  const out = [];
+  for (let i = 1; i < N-1; i++) for (let j = i+1; j < N; j++) out.push([i,j]);
+  return out;                                   // 78
+})();
+
 function swapped(t, i, j){ const c = t.slice(); const x = c[i]; c[i] = c[j]; c[j] = x; return c; }
 function reversed(t, i, j){ return t.slice(0,i).concat(t.slice(i, j+1).reverse(), t.slice(j+1)); }
+function inserted(t, i, j){ const c = t.slice(); const x = c.splice(i, 1)[0]; c.splice(j, 0, x); return c; }
 
 function* swapNeighbours(t){
   for (const [i,j] of SWAPS) yield {tour: swapped(t,i,j), move:[i,j], kind:"swap"};
 }
-function* twoOptNeighbours(t){
-  for (let i = 1; i < N-1; i++)
-    for (let j = i+1; j < N; j++) yield {tour: reversed(t,i,j), move:[i,j], kind:"2opt"};
+function* insertNeighbours(t){
+  for (const [i,j] of INSERTS) yield {tour: inserted(t,i,j), move:[i,j], kind:"insert"};
 }
+function* twoOptNeighbours(t){
+  for (const [i,j] of TWOOPTS) yield {tour: reversed(t,i,j), move:[i,j], kind:"2opt"};
+}
+
+// The three move types, in one place. "noun" fills sentences such as
+// "No <noun> improves this tour" and "Best of the 78 <plural>".
+const MOVES = {
+  swap:   {list: SWAPS,   apply: swapped,  gen: swapNeighbours,   noun: "swap",
+           plural: "swaps", title: "Proposed swap",
+           hint: "<b>Swap:</b> exchange the positions of two stops."},
+  insert: {list: INSERTS, apply: inserted, gen: insertNeighbours, noun: "insertion",
+           plural: "insertions", title: "Proposed insertion",
+           hint: "<b>Insertion:</b> take one stop out and put it back somewhere else in the route."},
+  "2opt": {list: TWOOPTS, apply: reversed, gen: twoOptNeighbours, noun: "2-opt reversal",
+           plural: "2-opt reversals", title: "Proposed reversal (2-opt)",
+           hint: "<b>2-opt:</b> reverse the whole run of stops between two points. "
+               + "This removes two edges and reconnects the route the other way."}
+};
+const KINDS = ["swap", "insert", "2opt"];
 
 const TOL = 1e-9;
 
@@ -457,6 +486,9 @@ const state = {
   startName: "shared",
   best: Infinity,
   moves: 0,
+  iters: 0,               // local-search steps: each proposal, or each Auto scan
+  nh: "swap",             // selected move: "swap", "insert", "2opt" or "random"
+  failed: new Set(),      // Random + Auto: move types with no improvement on this tour
   preview: null,          // {tour, move, kind, from, to, source}
   timer: null,
   runs: {local: [], random: []},
@@ -526,27 +558,50 @@ function renderReadout(){
   $("#mlen").textContent = f2(L);
   $("#mbest").textContent = state.best === Infinity ? "—" : f2(state.best);
   $("#mmoves").textContent = state.moves;
+  $("#miters").textContent = state.iters;
   const c = crossingCount(state.tour);
   $("#mcross").textContent = c;
   $("#mcrosswrap").classList.toggle("bad", c > 0);
   $("#tourtext").textContent = tourText(state.tour);
 }
 
+// The move types the selected option uses: one, or all three for Random.
+function selectedKinds(){
+  return state.nh === "random" ? KINDS : [state.nh];
+}
+
+// Stuck = no move of the selected type(s) makes the tour shorter.
+function isStuck(t){
+  for (const k of selectedKinds()) if (!isLocalOptimum(t, MOVES[k].gen)) return false;
+  return true;
+}
+
 function renderStuck(){
-  const stuck = isLocalOptimum(state.tour);
+  const stuck = isStuck(state.tour);
   document.body.classList.toggle("state-stuck", stuck);
-  if (stuck) $("#stucklen").textContent = f2(len(state.tour));
-  update2optLock();
+  if (!stuck) return;
+  $("#stucklen").textContent = f2(len(state.tour));
+  if (state.nh === "random"){
+    $("#stuckbig").textContent = "No swap, insertion or 2-opt move improves this tour.";
+    $("#stucksub").innerHTML = "All <b>300</b> possible moves (78 + 144 + 78) are longer or the same.";
+  } else {
+    const m = MOVES[state.nh];
+    $("#stuckbig").textContent = "No " + m.noun + " improves this tour.";
+    $("#stucksub").innerHTML = "There are <b>" + m.list.length + "</b> possible " + m.plural
+      + " and every one of them is longer or the same.";
+  }
 }
 
-// 2-opt is usable only when the gate is open AND the route is stuck under swaps
-function update2optLock(){
-  const stuck = isLocalOptimum(state.tour);
-  $("#btn2opt").disabled = !($("#gate2opt").open && stuck);
-  $("#lock2opt").style.display = stuck ? "none" : "";
+function renderMoveChoice(){
+  $$("#nhseg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.nh === state.nh)));
+  const words = {swap: "a swap", insert: "an insertion", "2opt": "a reversal", random: "a random move"};
+  $("#btnpropose").textContent = "Propose " + words[state.nh];
+  $("#movehint").innerHTML = state.nh === "random"
+    ? "<b>Random:</b> each step picks swap, insertion or 2-opt at random."
+    : MOVES[state.nh].hint;
 }
 
-function renderAll(){ renderMap(); renderReadout(); renderStuck(); renderChart(); }
+function renderAll(){ renderMoveChoice(); renderMap(); renderReadout(); renderStuck(); renderChart(); }
 
 /* ------------------------------------------------------------------ chart */
 function renderChart(){
@@ -648,6 +703,8 @@ function loadTour(t, name, note){
   if (name) state.startName = name;
   state.best = len(t);
   state.moves = 0;
+  state.iters = 0;
+  state.failed.clear();
   state.runs.local = [{n:0, v: len(t)}];
   state.tried = 0;
   renderAll();
@@ -658,6 +715,7 @@ function commit(t, move){
   state.tour = t.slice();
   state.moves++;
   state.best = Math.min(state.best, len(t));
+  state.failed.clear();
   renderAll();
 }
 
@@ -670,7 +728,7 @@ function setPreview(p){
   const word = d < -1e-9 ? "better by " + f2(-d)
              : d >  1e-9 ? "worse by "  + f2(d)
              : "no change";
-  $("#ptitle").textContent = p.kind === "2opt" ? "Proposed reversal" : "Proposed swap";
+  $("#ptitle").textContent = MOVES[p.kind] ? MOVES[p.kind].title : "Random tour";
   $("#pmove").innerHTML = p.label;
   $("#pvals").innerHTML = "<b>" + f2(p.from) + "</b> → <b>" + f2(p.to) + "</b> "
     + '<span class="pdelta ' + cls + '">' + word + "</span>";
@@ -682,20 +740,40 @@ function clearPreview(){
   document.body.classList.remove("state-preview");
   renderMap();
 }
-function proposeSwap(i, j, source){
-  const t = swapped(state.tour, i, j);
+// Describe move [i,j] of the given kind on tour t, in words, before it is applied.
+function moveLabel(kind, t, i, j){
+  const b = (k) => "<b>" + stopName(k) + "</b>";
+  if (kind === "swap") return "exchange " + b(t[i]) + " and " + b(t[j]);
+  if (kind === "2opt") return "reverse the run " + b(t[i]) + " … " + b(t[j])
+                              + " (" + (j - i + 1) + " stops)";
+  // insertion: name the two stops the moved stop will sit between
+  const after = inserted(t, i, j);
+  return "move " + b(t[i]) + " to between " + b(after[j-1]) + " and " + b(after[(j+1) % N]);
+}
+
+// The stops to highlight on the map while a move is proposed.
+function moveStops(kind, t, i, j){
+  return kind === "insert" ? [t[i]] : [t[i], t[j]];
+}
+
+function proposeMove(kind, i, j, source){
+  const t = MOVES[kind].apply(state.tour, i, j);
   setPreview({
-    tour: t, move: [i,j], kind: "swap", source: source,
-    stops: [state.tour[i], state.tour[j]],
+    tour: t, move: [i,j], kind: kind, source: source,
+    stops: moveStops(kind, state.tour, i, j),
     from: len(state.tour), to: len(t),
-    label: "exchange <b>" + stopName(state.tour[i]) + "</b> and <b>"
-           + stopName(state.tour[j]) + "</b>"
+    label: moveLabel(kind, state.tour, i, j)
   });
+}
+
+function randomKind(){
+  return state.nh === "random" ? KINDS[Math.floor(uiRng() * KINDS.length)] : state.nh;
 }
 
 $("#paccept").addEventListener("click", () => {
   const p = state.preview; if (!p) return;
   clearPreview();
+  if (MOVES[p.kind]) state.iters++;      // random-search draws are not local-search steps
   recordLocal(p.to, 1);
   commit(p.tour, p.move);
   const better = p.to < p.from - 1e-9;
@@ -709,42 +787,77 @@ $("#paccept").addEventListener("click", () => {
 $("#preject").addEventListener("click", () => {
   const p = state.preview; if (!p) return;
   clearPreview();
+  if (MOVES[p.kind]) state.iters++;
   recordLocal(len(state.tour), 1);
+  renderReadout();
   renderChart();
   setStatus("#status",
     "<b>Rejected</b> — the route is unchanged. " +
     (document.body.classList.contains("state-stuck")
-      ? "Every swap you try from here will come back longer. That is what being stuck means."
-      : "Try another swap."), "");
+      ? "Every move of this type you try from here will come back longer. That is what being stuck means."
+      : "Try another move."), "");
 });
 
 $("#btnpropose").addEventListener("click", () => {
   stopTimers(); clearPreview();
-  const [i,j] = SWAPS[Math.floor(uiRng() * SWAPS.length)];
-  proposeSwap(i, j, "propose");
+  const kind = randomKind(), list = MOVES[kind].list;
+  const [i,j] = list[Math.floor(uiRng() * list.length)];
+  proposeMove(kind, i, j, "propose");
   setStatus("#status",
-    "Picked one of the <b>78</b> possible swaps at random. The dashed route on the map is what "
-    + "you would get. Accept it or reject it.", "");
+    "Picked one of the <b>" + list.length + "</b> possible " + MOVES[kind].plural
+    + " at random. The dashed route on the map is what you would get. Accept it or reject it.", "");
+});
+
+$("#nhseg").addEventListener("click", (e) => {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+  stopTimers(); clearPreview();
+  state.nh = btn.dataset.nh;
+  state.failed.clear();
+  renderAll();
 });
 
 /* ------------------------------------------------------------ auto climb -- */
+// Random mode: pick a move type that has not already failed on this tour.
+function autoKind(){
+  if (state.nh !== "random") return state.nh;
+  const left = KINDS.filter(k => !state.failed.has(k));
+  return left[Math.floor(uiRng() * left.length)];
+}
+
+// One iteration of Auto: check every move of one type, take the best one if it
+// is shorter. Returns false when the search stops.
 function autoStep(){
-  const r = bestNeighbour(state.tour);
+  const kind = autoKind(), m = MOVES[kind], size = m.list.length;
+  const r = bestNeighbour(state.tour, m.gen);
+  state.iters++;
+  const it = "Iteration " + state.iters + ": ";
+
   if (!r.cand){
+    recordLocal(r.from, size);
+    state.failed.add(kind);
+    // Random mode keeps going while another move type is still untried on this tour.
+    if (state.nh === "random" && state.failed.size < KINDS.length){
+      renderAll();
+      setStatus("#status", it + "none of the " + size + " " + m.plural
+        + " is shorter. Trying another move type.", "");
+      return true;
+    }
     stopTimers();
-    recordLocal(r.from, SWAPS.length);
     renderAll();
-    setStatus("#status",
-      "<b>Stopped.</b> All 78 swaps were checked and not one of them is shorter. "
-      + "See the banner above.", "warn");
+    setStatus("#status", it + "<b>stopped.</b> "
+      + (state.nh === "random"
+          ? "No swap, insertion or 2-opt move is shorter."
+          : "All " + size + " " + m.plural + " were checked and not one of them is shorter.")
+      + " Local search used <b>" + state.iters + "</b> iterations. See the banner above.", "warn");
     return false;
   }
-  // name the two stops before the swap is applied, or they read back reversed
-  const a = stopName(state.tour[r.cand.move[0]]), b = stopName(state.tour[r.cand.move[1]]);
-  recordLocal(r.to, SWAPS.length);
+  // describe the move before it is applied, or the stops read back wrong
+  const label = moveLabel(kind, state.tour, r.cand.move[0], r.cand.move[1]);
+  recordLocal(r.to, size);
   commit(r.cand.tour, r.cand.move);
   setStatus("#status",
-    "Best of the 78 swaps: exchange <b>" + a + "</b> and <b>" + b + "</b> — accepted, "
+    it + "best of the " + size + " " + m.plural + ": " + label + " — accepted, "
     + f2(r.from) + " → <b>" + f2(r.to) + "</b>.", "good");
   return true;
 }
@@ -854,7 +967,7 @@ $("#btnreset").addEventListener("click", () => {
       return;
     }
     const i = state.tour.indexOf(from), j = state.tour.indexOf(over);
-    proposeSwap(Math.min(i,j), Math.max(i,j), "drag");
+    proposeMove("swap", Math.min(i,j), Math.max(i,j), "drag");
     setStatus("#status",
       "You proposed exchanging <b>" + stopName(from) + "</b> and <b>" + stopName(over)
       + "</b>. The dashed route is the result — nothing has changed yet. Accept or Reject.", "");
@@ -915,29 +1028,6 @@ $("#rsauto").addEventListener("click", () => {
     + "already has, which is usually why it ends up lower — but not always.", "");
 });
 
-/* --------------------------------------------------------- gated 2-opt --- */
-// Disabled until the gate is opened, so it is genuinely unavailable during the
-// activity rather than merely folded away.
-$("#gate2opt").addEventListener("toggle", () => {
-  update2optLock();
-});
-$("#btn2opt").addEventListener("click", () => {
-  if (!$("#gate2opt").open || !isLocalOptimum(state.tour)) return;
-  stopTimers(); clearPreview();
-  const before = len(state.tour);
-  const r = climb(state.tour, twoOptNeighbours);
-  state.tour = r.tour;
-  state.best = Math.min(state.best, len(r.tour));
-  state.moves += r.hist.length - 1;
-  recordLocal(len(r.tour), (r.hist.length - 1) * 78);
-  renderAll();
-  setStatus("#status2opt",
-    "Reversing runs of stops took <b>" + f2(before) + "</b> down to <b>" + f2(len(r.tour))
-    + "</b> in " + (r.hist.length - 1) + " moves. The move you needed was never a swap of "
-    + "two stops — no wonder swapping could not find it.",
-    "good");
-});
-
 /* ------------------------------------------------- show the best route --- */
 $("#btnopt").addEventListener("click", () => {
   if (!INSTRUCTOR) return;
@@ -970,7 +1060,7 @@ const INSTRUCTOR = URLFLAGS.has("instructor");
 if (!INSTRUCTOR) $("#optcard").style.display = "none";
 loadTour(SHARED_START, "shared",
   "The shared starting route, length <b>" + f2(len(SHARED_START))
-  + "</b>. Drag one stop onto another to swap them, or press Propose a swap.");
+  + "</b>. Drag one stop onto another to swap them, or choose a move type and press Propose.");
 
 /* ================================================================ selftest */
 function selftest(){
@@ -1006,6 +1096,42 @@ function selftest(){
   const two = climb(c.tour, twoOptNeighbours);
   ok("2-opt from stuck reaches optimum", Math.abs(len(two.tour) - hk.length) < 1e-9, f3(len(two.tour)));
 
+  // insertion: 144 moves, all distinct tours, none equal to the start, depot never moves
+  ok("insertion neighbourhood is 144", INSERTS.length === 144, INSERTS.length);
+  ok("2-opt neighbourhood is 78", TWOOPTS.length === 78, TWOOPTS.length);
+  const seen = new Set(INSERTS.map(([i,j]) => inserted(SHARED_START, i, j).join(",")));
+  ok("144 insertions give 144 different tours", seen.size === 144, seen.size);
+  ok("no insertion returns the start", !seen.has(SHARED_START.join(",")));
+  ok("insertion keeps the depot first", INSERTS.every(([i,j]) => inserted(SHARED_START, i, j)[0] === 0));
+  ok("inserted([0,1,2,3,4],1,3) = 0,2,3,1,4", inserted([0,1,2,3,4],1,3).join(",") === "0,2,3,1,4",
+     inserted([0,1,2,3,4],1,3).join(","));
+  ok("inserted([0,1,2,3,4],3,1) = 0,3,1,2,4", inserted([0,1,2,3,4],3,1).join(",") === "0,3,1,2,4",
+     inserted([0,1,2,3,4],3,1).join(","));
+  const ins = climb(SHARED_START, insertNeighbours);
+  ok("insertion climb ends at an insertion local optimum", isLocalOptimum(ins.tour, insertNeighbours));
+  ok("insertion climb never beats the optimum", len(ins.tour) >= hk.length - 1e-9, f3(len(ins.tour)));
+
+  // Auto counts one iteration per scan, including the last scan that finds nothing.
+  const savedNh = state.nh;
+  for (const nh of ["swap", "insert", "2opt", "random"]){
+    loadTour(SHARED_START, "shared");
+    state.nh = nh;
+    let guard = 0;
+    while (autoStep() && guard++ < 500){}
+    ok(nh + ": auto stops at a local optimum", isStuck(state.tour));
+    // one move type: exactly one failed scan at the end. Random: the last three
+    // scans fail (one per type), plus any failed scans along the way.
+    ok(nh + ": iterations = accepted moves + failed scans",
+       nh === "random" ? state.iters >= state.moves + 3 : state.iters === state.moves + 1,
+       state.iters + " vs " + state.moves);
+  }
+  loadTour(SHARED_START, "shared");
+  state.nh = "swap";
+  while (autoStep()){}
+  ok("swap auto: 8 iterations from the shared start (7 moves + final check)", state.iters === 8, state.iters);
+  state.nh = savedNh;
+  loadTour(SHARED_START, "shared");
+
   // no local optimum may beat the exact optimum
   const rng = mulberry32(12345);
   let worse = 0, viol = 0;
@@ -1030,7 +1156,7 @@ function selftest(){
   ok("page visible at a local optimum", vis(), getComputedStyle(document.body).display);
   ok("stuck banner is showing there",
      getComputedStyle($("#stuckbanner")).display === "block");
-  proposeSwap(1, 2, "selftest");
+  proposeMove("swap", 1, 2, "selftest");
   ok("page visible with a proposal open", vis());
   clearPreview();
   state.tour = savedTour; renderAll();
