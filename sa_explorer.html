@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SA Explorer — Simulated Annealing | SE 600 Decision Making and Optimization</title>
+<style>
+:root{
+  --bg:#ffffff; --panel:#f7f9fc; --panel2:#eef3f9;
+  --ink:#15202b; --ink2:#3d4c5c; --muted:#6b7c8d; --line:#dbe4ee;
+  --navy:#1F3864; --accent:#2F5597; --accent-soft:#DCE6F2; --edge:#B4C7E7;
+  --amber:#C55A11; --amber-soft:#FBE5D6;
+  --blue:#2E75B6; --good:#15803d; --good-bg:#f0fdf4; --bad:#b91c1c; --bad-bg:#fef2f2;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --radius:10px;
+}
+*{box-sizing:border-box}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:16px; line-height:1.55; -webkit-font-smoothing:antialiased}
+header.top{position:sticky; top:0; z-index:50; display:flex; align-items:center; gap:14px 18px; flex-wrap:wrap; padding:10px 24px; background:var(--panel); border-bottom:1px solid var(--line)}
+header.top h1{font-size:18px; margin:0; letter-spacing:-.2px; color:var(--navy)}
+header.top h1 span{display:block; font-size:12px; color:var(--muted); font-weight:400; letter-spacing:0}
+.spacer{flex:1}
+.seg{display:inline-flex; border:1px solid var(--line); border-radius:9px; overflow:hidden; background:#fff}
+.seg button{border:0; border-radius:0; border-right:1px solid var(--line); padding:7px 14px}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed=true]{background:var(--accent); color:#fff}
+.seglabel{font-size:12px; color:var(--muted); margin-right:6px}
+select,input[type=number]{font-family:var(--sans); font-size:14px; color:var(--ink); border:1px solid var(--line); border-radius:8px; padding:5px 8px; background:#fff}
+input[type=number]{width:78px}
+button{font-family:var(--sans); font-size:14px; font-weight:600; color:var(--ink2); background:#fff; border:1px solid var(--line); border-radius:8px; padding:7px 13px; cursor:pointer; transition:background .12s,border-color .12s}
+button:hover:not(:disabled){background:var(--accent-soft); border-color:var(--accent)}
+button:disabled{opacity:.4; cursor:not-allowed}
+button.primary{background:var(--accent); border-color:var(--accent); color:#fff}
+button.primary:hover:not(:disabled){background:var(--navy)}
+.wrap{max-width:1280px; margin:0 auto; padding:18px 24px 60px}
+.row{display:grid; gap:18px; margin-bottom:18px}
+.row.main{grid-template-columns:minmax(0,370px) minmax(0,1fr)}
+.row.two{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+@media (max-width:980px){.row.main,.row.two{grid-template-columns:1fr}}
+section.card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; min-width:0}
+section.card > h2{font-size:12px; text-transform:uppercase; letter-spacing:.7px; color:var(--muted); margin:0 0 10px}
+.hint{font-size:12.5px; color:var(--muted); margin:6px 0 0}
+svg{display:block; max-width:100%; height:auto}
+.controls{display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px; margin-bottom:10px}
+.controls label{font-size:13px; color:var(--ink2); display:inline-flex; align-items:center; gap:5px}
+.status{display:flex; flex-wrap:wrap; gap:8px; margin:6px 0 10px}
+.stat{background:#fff; border:1px solid var(--line); border-radius:8px; padding:5px 10px; font-size:13px; color:var(--muted)}
+.stat b{color:var(--ink); font-size:15px; margin-left:4px; font-variant-numeric:tabular-nums}
+.stat.best b{color:var(--good)}
+.stat.worse b{color:var(--amber)}
+.phase{font-size:12px; font-weight:700; padding:2px 9px; border-radius:999px; margin-left:6px; color:#fff; background:#9aa9b8}
+.phase.hot{background:#C55A11} .phase.warm{background:#7a5bb5} .phase.cold{background:#2E75B6}
+.msg{font-family:var(--mono); font-size:13px; background:#fff; border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:6px; padding:8px 10px; min-height:38px; color:var(--ink2)}
+.msg.better{border-left-color:var(--good)} .msg.worse_accepted{border-left-color:var(--amber)} .msg.worse_rejected{border-left-color:var(--bad)}
+table.log{width:100%; border-collapse:collapse; font-size:13px; font-variant-numeric:tabular-nums}
+table.log th{background:var(--accent); color:#fff; font-weight:600; text-align:left; padding:5px 7px; position:sticky; top:0}
+table.log td{padding:4px 7px; border-bottom:1px solid var(--line); background:#fff; white-space:nowrap}
+table.log tr.better td{background:var(--good-bg)}
+table.log tr.worse_accepted td{background:#fdf1e8}
+table.log tr.worse_rejected td{color:#7b8794}
+.logbox{max-height:330px; overflow:auto; border:1px solid var(--line); border-radius:6px}
+.legend{display:flex; flex-wrap:wrap; gap:6px 16px; font-size:12.5px; color:var(--ink2); margin-top:6px}
+.legend i{display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:5px; vertical-align:-2px}
+.explain p{margin:0 0 8px; font-size:15px}
+.explain ol{margin:4px 0 0 18px; padding:0; font-size:14.5px}
+.explain li{margin-bottom:6px}
+.tag{display:inline-block; font-size:11.5px; font-weight:700; letter-spacing:.4px; color:var(--accent); background:var(--accent-soft); border-radius:5px; padding:1px 7px; margin-right:6px}
+.formula{font-family:var(--mono); font-size:14px; background:#fff; border:1px solid var(--line); border-radius:6px; padding:2px 8px; white-space:nowrap}
+#selftest:empty{display:none}
+#selftest{margin-top:22px; font-family:var(--mono); font-size:11.5px; color:var(--muted); white-space:pre-wrap; border-top:1px dashed var(--line); padding-top:10px}
+@media (max-width:600px){header.top{position:static; padding:10px 16px} .wrap{padding:14px 16px 40px} .seg button{padding:7px 9px} .logbox{overflow-x:auto} table.log{font-size:12px} select{max-width:100%}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1>SA Explorer<span>SE 600 · Part 2 · Lecture 11 · Simulated Annealing — the acceptance rule and cooling at work</span></h1>
+  <div class="spacer"></div>
+  <div><span class="seglabel">Mode</span>
+    <span class="seg" id="modeSeg">
+      <button data-m="ls">Local search</button><button data-m="sa" aria-pressed="true">Simulated annealing</button>
+    </span></div>
+  <div><span class="seglabel">Problem</span>
+    <span class="seg" id="viewSeg">
+      <button data-p="landscape" aria-pressed="true">Cost landscape</button><button data-p="tsp">Small TSP</button>
+    </span></div>
+</header>
+
+<div class="wrap">
+
+  <section class="card explain" style="margin-bottom:18px">
+    <h2 id="explainTitle">About this mode</h2>
+    <div id="explainBody"></div>
+  </section>
+
+  <div class="row main">
+    <section class="card">
+      <h2 id="flowTitle">Flow of SA</h2>
+      <svg id="flow" viewBox="0 0 380 690" aria-label="Flow diagram of simulated annealing"></svg>
+      <p class="hint">The orange box is the step that just happened; the pale orange boxes are the path that led to it. The small numbers count how often each box has been visited.</p>
+    </section>
+
+    <section class="card">
+      <h2 id="viewTitle">Cost landscape</h2>
+      <div class="controls">
+        <button class="primary" id="btnStep" title="One small step">Step</button>
+        <button id="btnLevel" title="Finish the inner loop at this temperature, then cool">Next temperature</button>
+        <button id="btnRun">Run</button>
+        <button id="btnReset">Reset</button>
+        <label>Speed <select id="speed">
+          <option value="slow">Slow</option><option value="medium" selected>Medium</option><option value="fast">Fast</option>
+        </select></label>
+        <label>Preset <select id="preset">
+          <option value="default">Class default</option>
+          <option value="quench">Quench (α = 0.90)</option>
+          <option value="cold">Too cold (T0 = 1)</option>
+          <option value="hot">Never settles (high T_min)</option>
+        </select></label>
+      </div>
+      <div class="controls">
+        <label title="Starting temperature">T0 <input type="number" id="T0" min="0.1" step="any"></label>
+        <label title="Cooling rate: T = alpha * T after each inner loop">α <input type="number" id="alpha" min="0.5" max="0.9999" step="0.001"></label>
+        <label title="The run stops when T falls to T_min">T_min <input type="number" id="Tmin" min="0.001" step="any"></label>
+        <label title="Moves tried at each temperature level">iters_per_T <input type="number" id="iters" min="1" max="1000" step="1"></label>
+        <label>seed <input type="number" id="seed" min="0" max="9999" step="1" value="3"></label>
+      </div>
+      <div class="controls" id="weightsRow">
+        <span class="seglabel">Move mix</span>
+        <label>swap <input type="number" id="wSwap" min="0" max="1" step="0.01" value="0.34"></label>
+        <label>2-opt <input type="number" id="w2opt" min="0" max="1" step="0.01" value="0.33"></label>
+        <label>insert <input type="number" id="wIns" min="0" max="1" step="0.01" value="0.33"></label>
+      </div>
+      <div class="status">
+        <div class="stat">T<b id="sT">–</b><span class="phase" id="sPhase">–</span></div>
+        <div class="stat">cooling level<b id="sLevel">0</b><span id="sLevels"></span></div>
+        <div class="stat">proposals<b id="sProps">0</b></div>
+        <div class="stat">current f(x)<b id="sF">–</b></div>
+        <div class="stat best">best<b id="sBest">–</b></div>
+        <div class="stat worse">worse moves accepted<b id="sWorse">0</b></div>
+      </div>
+      <div id="viewLandscape">
+        <svg id="land" viewBox="0 0 780 360" aria-label="Cost landscape"></svg>
+        <div class="legend">
+          <span><i style="background:var(--accent)"></i>current solution x</span>
+          <span><i style="background:var(--amber)"></i>proposed neighbour x′</span>
+          <span><i style="background:var(--good)"></i>best so far</span>
+          <span><i style="background:#b8c6d6"></i>where x has been recently</span>
+        </div>
+        <p class="hint">Click anywhere on the curve to choose the starting solution. A neighbour is x moved left or right by 1 to 10 steps.</p>
+      </div>
+      <div id="viewTsp" hidden>
+        <svg id="map" viewBox="0 0 780 450" aria-label="TSP tour"></svg>
+        <div class="legend">
+          <span><i style="background:var(--accent)"></i>current tour</span>
+          <span><i style="background:var(--amber)"></i>proposed tour (dashed)</span>
+          <span><i style="background:var(--good)"></i>best tour so far (faint)</span>
+        </div>
+      </div>
+      <div class="msg" id="msg">Press Step to begin.</div>
+    </section>
+  </div>
+
+  <div class="row two">
+    <section class="card">
+      <h2>Acceptance meter — should we accept x′?</h2>
+      <svg id="meter" viewBox="0 0 600 270" aria-label="Acceptance probability"></svg>
+      <p class="hint" id="meterHint">Left: the chance of accepting a worse move, P = e<sup>−δ/T</sup>, for every size of worsening δ. The dashed curve is at the start (T0), the solid one at the current T. Right: the random number r is drawn on the 0–1 bar. Below P (green) → accept; above P (red) → reject.</p>
+    </section>
+    <section class="card">
+      <h2>Thermometer — the cooling schedule</h2>
+      <svg id="thermo" viewBox="0 0 600 270" aria-label="Temperature over the run"></svg>
+      <p class="hint">T is multiplied by α after every iters_per_T moves, until it falls below T_min. What "hot" means depends on δ (slide 15). The bands use a typical worsening δ: <b style="color:#C55A11">HOT</b> = it is accepted more than half the time, <b style="color:#7a5bb5">WARM</b> = sometimes, <b style="color:#2E75B6">COLD</b> = less than 2 times in 100.</p>
+    </section>
+  </div>
+
+  <div class="row two">
+    <section class="card">
+      <h2>Cost over the run</h2>
+      <svg id="costChart" viewBox="0 0 600 250" aria-label="Cost over the run"></svg>
+      <div class="legend">
+        <span><i style="background:var(--accent)"></i>current f(x) — may go up</span>
+        <span><i style="background:var(--good)"></i>best so far — never goes up</span>
+        <span><i style="background:var(--amber)"></i>a worse move accepted</span>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Step log — one row per proposal (as on slide 34)</h2>
+      <div class="logbox"><table class="log" id="log">
+        <thead><tr><th>#</th><th>T</th><th>f(x)</th><th>move</th><th>f(x′)</th><th>δ</th><th>P</th><th>r</th><th>result</th><th>new f(x)</th></tr></thead>
+        <tbody></tbody></table></div>
+      <p class="hint">Shows the latest 150 proposals. '–' in P and r: the move was not worse, so no random draw was needed.</p>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2>Compare cooling rates</h2>
+    <div class="controls">
+      <button class="primary" id="btnCompare">Run α = 0.90, 0.995 and 0.999</button>
+      <span class="hint" style="margin:0">Same problem, seed, T0, T_min and iters_per_T — only α changes.</span>
+    </div>
+    <div class="row two" style="margin:0">
+      <div><svg id="cmpChart" viewBox="0 0 600 250" aria-label="Best cost against evaluations"></svg></div>
+      <div id="cmpOut"><p class="hint">Fast cooling (α = 0.90) is a <b>quench</b>: few temperature levels, so the search freezes in the first valley it falls into. Slow cooling spends many more evaluations and usually ends lower. Press the button to see it.</p></div>
+    </div>
+  </section>
+
+  <div id="selftest"></div>
+</div>
+
+<script id="core">
+// =====================================================================
+//  SA Explorer - core logic (no DOM). Plain functions, one per idea.
+//  The algorithm follows simulated_annealing() in the Workshop 11-1
+//  notebook line by line.
+// =====================================================================
+
+// ---------- seeded random numbers (same seed -> same run) ----------
+function makeRng(seed) {
+  let a = (seed >>> 0) || 1;
+  const rng = function () {                       // mulberry32, returns [0, 1)
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  rng.int = function (lo, hi) { return lo + Math.floor(rng() * (hi - lo + 1)); };   // lo..hi inclusive
+  return rng;
+}
+
+// =====================================================================
+//  Problem 1 - a 1-D cost landscape (the same curve as the VNS tool)
+// =====================================================================
+const LAND_N = 241;                               // positions 0 .. 240
+const LAND_STEP = 10;                             // a neighbour is x +/- 1..10
+
+function landscapeValue(x) {
+  // several valleys; the deepest one is on the right
+  return 62
+    + 16 * Math.sin(0.155 * x + 0.4)
+    + 7 * Math.sin(0.47 * x + 1.3)
+    + 0.0022 * (x - 190) * (x - 190);
+}
+
+const LAND_F = Array.from({ length: LAND_N }, (_, x) => landscapeValue(x));
+
+function landNeighbour(x, rng) {
+  // move left or right by 1..LAND_STEP; bounce back at the two ends
+  const d = rng.int(1, LAND_STEP) * (rng() < 0.5 ? -1 : 1);
+  let y = x + d;
+  if (y < 0) y = -y;
+  if (y > LAND_N - 1) y = 2 * (LAND_N - 1) - y;
+  return { sol: y, type: "step", label: "x " + (y >= x ? "+ " : "− ") + Math.abs(y - x) };
+}
+
+function makeLandscapeProblem() {
+  return {
+    id: "landscape",
+    defaults: { T0: 30, alpha: 0.99, Tmin: 0.1, iters: 10 },
+    presets: { quench: { alpha: 0.90 }, cold: { T0: 1 }, hot: { Tmin: 8 } },
+    deltaMax: 30,                                 // x-axis of the acceptance meter
+    typDelta: 7,                                  // a typical worsening, measured over random moves
+    cost(x) { return LAND_F[x]; },
+    initial(rng) { return rng.int(10, 110); },    // start somewhere in the left half
+    neighbour(x, weights, rng) { return landNeighbour(x, rng); },
+    fmt(v) { return v.toFixed(1); },
+    globalBest() {
+      let b = 0;
+      for (let x = 1; x < LAND_N; x++) if (LAND_F[x] < LAND_F[b]) b = x;
+      return b;
+    },
+  };
+}
+
+// =====================================================================
+//  Problem 2 - a small TSP: 30 cities, a permutation, three moves
+// =====================================================================
+function makeTspInstance(seed, n) {
+  const rng = makeRng(seed);
+  const coords = [];
+  for (let i = 0; i < n; i++) coords.push([4 + rng() * 92, 4 + rng() * 92]);
+  const dist = coords.map(a => coords.map(b => Math.hypot(a[0] - b[0], a[1] - b[1])));
+  return { n, coords, dist };
+}
+
+function tourCost(route, dist) {
+  // the closed tour length: consecutive cities, plus the return leg
+  let total = 0;
+  for (let i = 0; i < route.length; i++) {
+    const a = route[i];
+    const b = route[(i + 1) % route.length];     // % wraps the last city back to the first
+    total += dist[a][b];
+  }
+  return total;
+}
+
+function twoPositions(n, rng) {
+  // two different positions, like random.sample(range(n), 2)
+  const i = rng.int(0, n - 1);
+  let j = rng.int(0, n - 2);
+  if (j >= i) j += 1;
+  return [i, j];
+}
+
+function moveSwap(route, rng) {
+  const p = route.slice();
+  const [i, j] = twoPositions(p.length, rng);
+  const t = p[i]; p[i] = p[j]; p[j] = t;
+  return { sol: p, type: "swap", cities: [route[i], route[j]],
+           label: `swap cities ${route[i]} and ${route[j]}` };
+}
+
+function move2opt(route, rng) {
+  const p = route.slice();
+  let [i, j] = twoPositions(p.length, rng);
+  if (i > j) { const t = i; i = j; j = t; }
+  const seg = p.slice(i, j + 1).reverse();       // reverse positions i..j
+  for (let k = 0; k < seg.length; k++) p[i + k] = seg[k];
+  return { sol: p, type: "2-opt", cities: [route[i], route[j]],
+           label: `2-opt: reverse ${route[i]} … ${route[j]} (${j - i + 1} cities)` };
+}
+
+function moveInsert(route, rng) {
+  const p = route.slice();
+  const [i, j] = twoPositions(p.length, rng);
+  const city = p.splice(i, 1)[0];                 // remove the city at position i
+  p.splice(j, 0, city);                           // re-insert it at position j
+  return { sol: p, type: "insert", cities: [city],
+           label: `insert: move city ${city} from position ${i} to ${j}` };
+}
+
+function getNeighbour(route, weights, rng) {
+  // the mixed neighbourhood: one random number picks the move (slide 32)
+  const [pSwap, p2opt] = weights;
+  const r = rng();
+  if (r < pSwap) return moveSwap(route, rng);
+  if (r < pSwap + p2opt) return move2opt(route, rng);
+  return moveInsert(route, rng);
+}
+
+function makeTspProblem(inst) {
+  return {
+    id: "tsp",
+    inst,
+    defaults: { T0: 100, alpha: 0.995, Tmin: 0.01, iters: 100 },   // the notebook's defaults
+    presets: { quench: { alpha: 0.90 }, cold: { T0: 1 }, hot: { Tmin: 30 } },
+    deltaMax: 200,
+    typDelta: 27,                                 // a typical worsening from a random tour (slide 15)
+    cost(route) { return tourCost(route, inst.dist); },
+    initial(rng) {
+      // a random permutation (Fisher-Yates shuffle)
+      const p = [];
+      for (let i = 0; i < inst.n; i++) p.push(i);
+      for (let i = p.length - 1; i > 0; i--) { const j = rng.int(0, i); const t = p[i]; p[i] = p[j]; p[j] = t; }
+      return p;
+    },
+    neighbour(route, weights, rng) { return getNeighbour(route, weights, rng); },
+    fmt(v) { return v.toFixed(1); },
+  };
+}
+
+// =====================================================================
+//  The acceptance rule (slide 12) - the heart of SA
+// =====================================================================
+// mode "sa": better or equal -> always accept; worse -> accept with P = exp(-delta/T)
+// mode "ls": local search accepts only a strictly better neighbour
+function acceptMove(delta, T, mode, rng) {
+  if (mode === "ls") {
+    return { ok: delta < 0, kind: delta < 0 ? "better" : "worse_rejected", P: null, r: null };
+  }
+  if (delta <= 0) return { ok: true, kind: "better", P: null, r: null };
+  const P = Math.exp(-delta / T);
+  const r = rng();
+  return { ok: r < P, kind: r < P ? "worse_accepted" : "worse_rejected", P, r };
+}
+
+function coolingLevels(T0, alpha, Tmin) {
+  // how many times the outer loop runs: T0 * alpha^k <= Tmin
+  if (T0 <= Tmin) return 0;
+  return Math.ceil(Math.log(Tmin / T0) / Math.log(alpha) - 1e-12);
+}
+
+// =====================================================================
+//  SA in one plain function (used by "Compare" and by the self-test)
+// =====================================================================
+function simulatedAnnealing(P, o) {
+  const rng = makeRng(o.seed);
+  let current = (o.start !== undefined && o.start !== null) ? o.start : P.initial(rng);
+  let currentCost = P.cost(current);
+  let best = current, bestCost = currentCost;
+  const history = [{ evals: 0, best: bestCost }];
+  let T = o.T0, evals = 0, levels = 0;
+  while (T > o.Tmin) {                              // OUTER LOOP (cooling)
+    for (let k = 0; k < o.iters; k++) {             // INNER LOOP at a fixed T
+      const nb = P.neighbour(current, o.weights, rng);
+      const newCost = P.cost(nb.sol);
+      evals += 1;
+      const d = acceptMove(newCost - currentCost, T, o.mode, rng);
+      if (d.ok) {
+        current = nb.sol; currentCost = newCost;
+        if (currentCost < bestCost) { best = current; bestCost = currentCost; }
+      }
+    }
+    levels += 1;
+    history.push({ evals, best: bestCost });
+    T *= o.alpha;                                   // cool down
+  }
+  return { best, bestCost, evals, levels, history };
+}
+
+// =====================================================================
+//  The same algorithm as a step-by-step generator for the animation.
+//  Every `yield` is one thing the student can see happen. It draws the
+//  random numbers in exactly the same order as simulatedAnnealing().
+// =====================================================================
+function* saSteps(P, o) {
+  const rng = makeRng(o.seed);
+  let x = (o.start !== undefined && o.start !== null) ? o.start : P.initial(rng);
+  let fx = P.cost(x);
+  let best = x, fBest = fx;
+  let T = o.T0, level = 0, proposals = 0, worseAccepted = 0;
+  const snap = (e) => Object.assign({ x, fx, best, fBest, T, level, proposals, worseAccepted }, e);
+
+  yield snap({ node: "start", path: ["start"],
+    msg: `Start: a random solution, f(x) = ${P.fmt(fx)}. T = T0 = ${fmtT(T)}.` });
+
+  while (T > o.Tmin) {
+    for (let k = 1; k <= o.iters; k++) {
+      // 1. propose a neighbour and measure delta
+      const nb = P.neighbour(x, o.weights, rng);
+      const fNew = P.cost(nb.sol);
+      const delta = fNew - fx;
+      proposals += 1;
+      yield snap({ node: "neighbor", path: ["neighbor"], inner: k, cand: nb.sol, fCand: fNew, delta, move: nb,
+        msg: `Proposal ${proposals} (move ${k} of ${o.iters} at T = ${fmtT(T)}): ${nb.label} → f(x′) = ${P.fmt(fNew)}, δ = ${fmtD(delta)}` });
+
+      // 2. the acceptance rule
+      const d = acceptMove(delta, T, o.mode, rng);
+      const xBefore = x, fBefore = fx;
+      let newBest = false;
+      if (d.ok) {
+        x = nb.sol; fx = fNew;
+        if (fx < fBest) { best = x; fBest = fx; newBest = true; }
+      }
+      if (d.kind === "worse_accepted") worseAccepted += 1;
+      const decision = { kind: d.kind, delta, P: d.P, r: d.r, fBefore, fCand: fNew, fAfter: fx, newBest, T, move: nb.label };
+      yield snap({ node: d.ok ? "accept" : "reject", path: decisionPath(d.kind, o.mode, newBest), inner: k, xBefore,
+        cand: nb.sol, fCand: fNew, delta, move: nb, decision, msg: decisionMessage(decision, o.mode, P) });
+    }
+    // 3. cool down
+    const Told = T;
+    level += 1;
+    T *= o.alpha;
+    yield snap({ node: "cool", path: ["inner", "cool", "tcheck"],
+      msg: `Inner loop done: T = ${o.alpha} × ${fmtT(Told)} = ${fmtT(T)} (cooling level ${level}).` });
+  }
+  yield snap({ node: "end", path: ["tcheck", "end"], done: true,
+    msg: `T = ${fmtT(T)} ≤ T_min = ${o.Tmin}: stop. Best f = ${P.fmt(fBest)} after ${proposals.toLocaleString("en-US")} proposals.` });
+}
+
+// which flow boxes a decision passed through (the last one is the active box)
+function decisionPath(kind, mode, newBest) {
+  if (kind === "better") return newBest ? ["dle0", "accept", "best"] : ["dle0", "accept"];
+  if (mode === "ls") return ["dle0", "metro", "reject"];
+  if (kind === "worse_accepted") return ["dle0", "metro", "rlt", "accept"];
+  return ["dle0", "metro", "rlt", "reject"];
+}
+
+function decisionMessage(d, mode, P) {
+  const tail = d.newBest ? " New best!" : "";
+  if (d.kind === "better") return `δ = ${fmtD(d.delta)} ≤ 0: not worse → accept. f(x) = ${P.fmt(d.fAfter)}.${tail}`;
+  if (mode === "ls") return `δ = ${fmtD(d.delta)} > 0: local search never accepts a worse move → reject, keep x.`;
+  const head = `δ = ${fmtD(d.delta)} > 0: P = e^(−${d.delta.toFixed(2)}/${fmtT(d.T)}) = ${d.P.toFixed(3)}, r = ${d.r.toFixed(3)}`;
+  return d.kind === "worse_accepted"
+    ? `${head} < P → accept anyway (uphill). f(x) = ${P.fmt(d.fAfter)}.`
+    : `${head} ≥ P → reject, keep x.`;
+}
+
+function fmtT(T) { return T >= 100 ? T.toFixed(1) : T >= 1 ? T.toFixed(2) : T.toPrecision(3); }
+function fmtD(d) { return (d > 0 ? "+" : d < 0 ? "−" : "") + Math.abs(d).toFixed(2); }
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { makeRng, makeLandscapeProblem, makeTspInstance, makeTspProblem, tourCost,
+    moveSwap, move2opt, moveInsert, getNeighbour, acceptMove, coolingLevels, simulatedAnnealing, saSteps, LAND_F };
+}
+</script>
+
+<script id="ui">
+// =====================================================================
+//  SA Explorer - page logic. One function per job, no framework.
+// =====================================================================
+const SVGNS = "http://www.w3.org/2000/svg";
+const $ = (id) => document.getElementById(id);
+const TSP_INST = makeTspInstance(42, 30);
+const LOG_ROWS = 150;
+
+const state = {
+  mode: "sa",
+  problemId: "landscape",
+  P: null,
+  opts: null,
+  gen: null,
+  last: null,          // the latest event
+  done: false,
+  timer: null,
+  start: null,         // landscape: the clicked starting position
+  visits: {},          // flow box id -> count
+  trace: [],           // one entry per decision: {f, best, worse}
+  logRows: [],         // the latest decisions, for the table
+  trail: [],           // landscape: the last positions of x
+};
+
+// ---------------------------------------------------------------- helpers
+function el(tag, attrs, parent, text) {
+  const e = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function clear(svg) { while (svg.firstChild) svg.removeChild(svg.firstChild); }
+function fmt(v) { return (v === null || v === undefined) ? "–" : v.toFixed(1); }
+function num(id, lo, hi, fallback) {
+  const v = parseFloat($(id).value);
+  return isFinite(v) ? Math.min(hi, Math.max(lo, v)) : fallback;
+}
+
+function readOpts() {
+  const d = state.P.defaults;
+  // the move mix: three weights, scaled so they add up to 1
+  let w = [num("wSwap", 0, 1, 0.34), num("w2opt", 0, 1, 0.33), num("wIns", 0, 1, 0.33)];
+  const s = w[0] + w[1] + w[2];
+  w = s > 0 ? w.map(v => v / s) : [0.34, 0.33, 0.33];
+  return {
+    mode: state.mode,
+    T0: num("T0", 0.01, 100000, d.T0),
+    alpha: num("alpha", 0.5, 0.9999, d.alpha),
+    Tmin: num("Tmin", 0.0001, 100000, d.Tmin),
+    iters: Math.round(num("iters", 1, 1000, d.iters)),
+    seed: Math.round(num("seed", 0, 9999, 1)),
+    weights: w,
+    start: state.problemId === "landscape" ? state.start : null,
+  };
+}
+
+function setInputs(v) {
+  $("T0").value = v.T0; $("alpha").value = v.alpha; $("Tmin").value = v.Tmin; $("iters").value = v.iters;
+}
+
+function totalLevels() { const o = state.opts; return coolingLevels(o.T0, o.alpha, o.Tmin); }
+
+// ---------------------------------------------------------------- texts
+const EXPLAIN = {
+  sa: {
+    title: "Simulated annealing — local search that sometimes goes uphill",
+    body: `<p><span class="tag">accept worse, sometimes</span>Propose one random neighbour x′ and compute <span class="formula">δ = f(x′) − f(x)</span>. If it is not worse (δ ≤ 0), always accept it. If it is worse, accept it with probability <span class="formula">P = e<sup>−δ/T</sup></span>: draw r in [0, 1) and accept when r &lt; P. The temperature T starts hot at T0 and is multiplied by α after every iters_per_T moves, until T &lt; T_min. Hot = explore, cold = exploit. Keep the best solution ever seen, because the current one may get worse.</p>`,
+    tryThis: [
+      "Press Step a few times and watch the acceptance meter. When δ > 0, where does r land compared with P?",
+      "Press Run on Fast and watch the thermometer. At which colour does the blue ball stop climbing out of valleys?",
+      "Choose the preset 'Quench (α = 0.90)'. Where does the run end, and how many cooling levels did it have? Then try 'Too cold'.",
+    ],
+  },
+  ls: {
+    title: "Local search — downhill only (the baseline for SA)",
+    body: `<p><span class="tag">downhill only</span>The same moves and the same budget as SA, but a different acceptance rule: accept x′ only if it is <b>better</b> (δ &lt; 0). A worse move is never accepted, so once no neighbour is better the search is stuck in a local optimum. The temperature is not used at all — here it only counts the budget.</p>`,
+    tryThis: [
+      "Run local search on Fast. In which valley does it stop, and does it ever leave it?",
+      "Switch to Simulated annealing with the same seed and run again. Compare the final 'best'.",
+      "On the small TSP, compare the best tour of local search with SA. Which edges still cross?",
+    ],
+  },
+};
+
+function renderExplain() {
+  const e = EXPLAIN[state.mode];
+  $("explainTitle").textContent = e.title;
+  $("explainBody").innerHTML = e.body + "<p style='margin-top:10px'><b>Try this</b></p><ol>" +
+    e.tryThis.map(t => `<li>${t}</li>`).join("") + "</ol>";
+}
+
+// ---------------------------------------------------------------- flow diagram
+// Each node: id, kind (box|diamond), centre x, y, width, height, text lines.
+function flowSpec() {
+  const ls = state.mode === "ls";
+  const moveLine = state.problemId === "tsp" ? "swap / 2-opt / insert, by weights" : "x moved by ±1 … 10";
+  return {
+    nodes: [
+      { id: "start", kind: "box", x: 190, y: 30, w: 230, h: 40, lines: ["START", "random solution x, T = T0"] },
+      { id: "tcheck", kind: "diamond", x: 190, y: 92, w: 150, h: 50, lines: ["T > T_min ?"] },
+      { id: "end", kind: "box", x: 52, y: 92, w: 86, h: 38, lines: ["RETURN", "best"] },
+      { id: "neighbor", kind: "box", x: 190, y: 160, w: 270, h: 56, lines: ["NEIGHBOUR x′ = one random move", moveLine, "δ = f(x′) − f(x)"] },
+      { id: "dle0", kind: "diamond", x: 190, y: 240, w: 130, h: 50, lines: ["δ ≤ 0 ?"] },
+      { id: "metro", kind: "box", x: 285, y: 312, w: 160, h: 46,
+        lines: ls ? ["LOCAL SEARCH:", "never accept worse"] : ["P = e^(−δ/T)", "draw r in [0, 1)"] },
+      { id: "rlt", kind: "diamond", x: 285, y: 380, w: 110, h: 46, lines: ["r < P ?"], dashed: ls },
+      { id: "accept", kind: "box", x: 95, y: 450, w: 150, h: 42, lines: ["ACCEPT", "x ← x′"] },
+      { id: "reject", kind: "box", x: 285, y: 450, w: 150, h: 42, lines: ["REJECT", "keep x"] },
+      { id: "best", kind: "box", x: 95, y: 515, w: 150, h: 42, lines: ["better than best?", "save x as best"] },
+      { id: "inner", kind: "diamond", x: 190, y: 590, w: 180, h: 50, lines: ["iters_per_T moves", "done?"] },
+      { id: "cool", kind: "box", x: 190, y: 655, w: 170, h: 36, lines: ["COOL: T = α · T"] },
+    ],
+    edges: [
+      { pts: [[190, 50], [190, 67]] },
+      { pts: [[190, 117], [190, 132]], label: "yes", lx: 198, ly: 128 },
+      { pts: [[115, 92], [95, 92]], label: "no", lx: 98, ly: 84 },
+      { pts: [[190, 188], [190, 215]] },
+      { pts: [[125, 240], [60, 240], [60, 429]], label: "yes", lx: 98, ly: 233 },
+      { pts: [[255, 240], [285, 240], [285, 289]], label: "no", lx: 262, ly: 233 },
+      { pts: [[285, 335], [285, 357]] },
+      { pts: [[230, 380], [130, 380], [130, 429]], label: ls ? "" : "yes: accept anyway", lx: 136, ly: 373 },
+      { pts: [[285, 403], [285, 429]], label: ls ? "" : "no", lx: 292, ly: 420 },
+      { pts: [[95, 471], [95, 494]] },
+      { pts: [[95, 536], [95, 552], [190, 552], [190, 565]] },
+      { pts: [[285, 471], [285, 590], [280, 590]] },
+      { pts: [[100, 590], [14, 590], [14, 160], [55, 160]], label: "no", lx: 64, ly: 584 },
+      { pts: [[190, 615], [190, 637]], label: "yes", lx: 198, ly: 630 },
+      { pts: [[275, 655], [368, 655], [368, 92], [265, 92]] },
+    ],
+  };
+}
+
+function drawFlow() {
+  const svg = $("flow"); clear(svg);
+  const spec = flowSpec();
+  const defs = el("defs", {}, svg);
+  const mk = el("marker", { id: "arr", viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto-start-reverse" }, defs);
+  el("path", { d: "M0,0 L10,5 L0,10 z", fill: "#1F3864" }, mk);
+
+  const path = state.last ? state.last.path : [];
+  const active = path.length ? path[path.length - 1] : null;
+  for (const e of spec.edges) {
+    const d = e.pts.map((p, i) => (i ? "L" : "M") + p[0] + "," + p[1]).join(" ");
+    el("path", { d, fill: "none", stroke: "#1F3864", "stroke-width": 1.4, "marker-end": "url(#arr)" }, svg);
+    if (e.label) el("text", { x: e.lx, y: e.ly, "font-size": 11, fill: "#6b7c8d" }, svg, e.label);
+  }
+  for (const n of spec.nodes) {
+    const on = n.id === active, onPath = !on && path.includes(n.id);
+    const fill = on ? "#FBE5D6" : onPath ? "#FDF4EC" : (n.kind === "diamond" ? "#ffffff" : "#F3F6FB");
+    const stroke = on ? "#C55A11" : onPath ? "#E3A57A" : "#2F5597";
+    const g = el("g", {}, svg);
+    if (n.kind === "box") {
+      el("rect", { x: n.x - n.w / 2, y: n.y - n.h / 2, width: n.w, height: n.h, rx: 6, fill, stroke,
+        "stroke-width": on ? 2.6 : onPath ? 2 : 1.3, "stroke-dasharray": n.dashed ? "5 4" : "none" }, g);
+    } else {
+      const pts = [[n.x, n.y - n.h / 2], [n.x + n.w / 2, n.y], [n.x, n.y + n.h / 2], [n.x - n.w / 2, n.y]];
+      el("polygon", { points: pts.map(p => p.join(",")).join(" "), fill, stroke,
+        "stroke-width": on ? 2.6 : onPath ? 2 : 1.3, "stroke-dasharray": n.dashed ? "5 4" : "none" }, g);
+    }
+    const lh = 14, y0 = n.y - (n.lines.length - 1) * lh / 2 + 4;
+    n.lines.forEach((line, i) => {
+      el("text", { x: n.x, y: y0 + i * lh, "text-anchor": "middle", "font-size": i === 0 ? 12.5 : 11.5,
+        "font-weight": i === 0 ? 700 : 400, fill: n.dashed ? "#9aa9b8" : "#15202b" }, g, line);
+    });
+    const c = state.visits[n.id] || 0;
+    if (c > 0) {
+      const label = c > 9999 ? Math.round(c / 1000) + "k" : String(c);
+      const bw = 10 + 6 * label.length;
+      const bx = n.kind === "box" ? n.x + n.w / 2 - 4 : n.x + n.w / 2 - 14;
+      const by = n.kind === "box" ? n.y - n.h / 2 + 4 : n.y - 14;
+      el("rect", { x: bx - bw + 4, y: by - 9, width: bw, height: 15, rx: 7, fill: on ? "#C55A11" : "#2F5597" }, g);
+      el("text", { x: bx - bw / 2 + 4, y: by + 2, "text-anchor": "middle", "font-size": 10, fill: "#fff", "font-weight": 700 }, g, label);
+    }
+  }
+}
+
+// ---------------------------------------------------------------- landscape view
+const LV = { x0: 48, x1: 760, yTop: 24, yBot: 320 };
+function lx(x) { return LV.x0 + (LV.x1 - LV.x0) * x / (LAND_N - 1); }
+const LY = (() => {
+  let lo = Infinity, hi = -Infinity;
+  for (const v of LAND_F) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+  return { lo: lo - 6, hi: hi + 6 };
+})();
+function ly(f) { return LV.yBot - (LV.yBot - LV.yTop) * (f - LY.lo) / (LY.hi - LY.lo); }
+
+function drawLandscape() {
+  const svg = $("land"); clear(svg);
+  const ev = state.last;
+  el("line", { x1: LV.x0, y1: LV.yBot, x2: LV.x1, y2: LV.yBot, stroke: "#dbe4ee" }, svg);
+  el("text", { x: 14, y: 170, "font-size": 12, fill: "#6b7c8d", transform: "rotate(-90 14 170)", "text-anchor": "middle" }, svg, "cost f(x)");
+  el("text", { x: (LV.x0 + LV.x1) / 2, y: 350, "font-size": 12, fill: "#6b7c8d", "text-anchor": "middle" }, svg, "solution space x (0 … 240)");
+  const g = state.P.globalBest();
+  el("line", { x1: lx(g), y1: LV.yTop + 14, x2: lx(g), y2: LV.yBot, stroke: "#15803d", "stroke-dasharray": "3 4", opacity: .45 }, svg);
+  el("text", { x: lx(g), y: LV.yTop + 8, "font-size": 11, fill: "#15803d", "text-anchor": "middle" }, svg, "global optimum");
+  const d = LAND_F.map((f, x) => (x ? "L" : "M") + lx(x).toFixed(1) + "," + ly(f).toFixed(1)).join(" ");
+  el("path", { d: d + ` L${LV.x1},${LV.yBot} L${LV.x0},${LV.yBot} Z`, fill: "#eef3f9" }, svg);
+  el("path", { d, fill: "none", stroke: "#1F3864", "stroke-width": 2 }, svg);
+  const hit = el("rect", { x: LV.x0, y: LV.yTop, width: LV.x1 - LV.x0, height: LV.yBot - LV.yTop, fill: "transparent", style: "cursor:crosshair" }, svg);
+  hit.addEventListener("click", onLandscapeClick);
+
+  if (!ev) {
+    if (state.start !== null) drawDot(svg, state.start, "#2F5597", 7.5, "start");
+    return;
+  }
+  // where x has been recently
+  state.trail.forEach((x, i) => {
+    el("circle", { cx: lx(x), cy: ly(LAND_F[x]), r: 3.2, fill: "#b8c6d6", opacity: 0.25 + 0.75 * i / state.trail.length }, svg);
+  });
+  drawStar(svg, ev.best, "#15803d");
+  // the proposal and what happened to it
+  if (ev.node === "neighbor" || ev.node === "accept" || ev.node === "reject") {
+    const origin = ev.node === "neighbor" ? ev.x : ev.xBefore;
+    const kind = ev.decision ? ev.decision.kind : "proposed";
+    const color = kind === "better" ? "#15803d" : kind === "worse_rejected" ? "#b91c1c" : "#C55A11";
+    if (origin !== ev.cand) arrow(svg, origin, ev.cand, color);
+    if (kind === "worse_rejected") {
+      const cx = lx(ev.cand), cy = ly(LAND_F[ev.cand]);
+      el("path", { d: `M${cx - 6},${cy - 6} L${cx + 6},${cy + 6} M${cx + 6},${cy - 6} L${cx - 6},${cy + 6}`, stroke: "#b91c1c", "stroke-width": 2.5 }, svg);
+    } else if (ev.node === "neighbor") {
+      el("circle", { cx: lx(ev.cand), cy: ly(LAND_F[ev.cand]), r: 6.5, fill: "#fff", stroke: "#C55A11", "stroke-width": 2.5 }, svg);
+      el("text", { x: lx(ev.cand), y: ly(LAND_F[ev.cand]) - 12, "text-anchor": "middle", "font-size": 12.5, "font-weight": 700, fill: "#C55A11" }, svg,
+        "x′" + (ev.delta > 0 ? " (uphill)" : ""));
+    }
+  }
+  drawDot(svg, ev.x, "#2F5597", 7.5, "x");
+}
+
+function drawDot(svg, x, color, r, label) {
+  el("circle", { cx: lx(x), cy: ly(LAND_F[x]), r, fill: color, stroke: "#fff", "stroke-width": 1.5 }, svg);
+  if (label) el("text", { x: lx(x), y: ly(LAND_F[x]) + r + 14, "text-anchor": "middle", "font-size": 12.5, "font-weight": 700, fill: color }, svg, label);
+}
+function drawStar(svg, x, color) {
+  const cx = lx(x), cy = ly(LAND_F[x]) - 16, R = 7, r = 3;
+  const pts = [];
+  for (let i = 0; i < 10; i++) {
+    const a = Math.PI / 2 + i * Math.PI / 5, rad = i % 2 ? r : R;
+    pts.push([cx + rad * Math.cos(a), cy - rad * Math.sin(a)]);
+  }
+  el("polygon", { points: pts.map(p => p.map(v => v.toFixed(1)).join(",")).join(" "), fill: color }, svg);
+}
+function arrow(svg, xa, xb, color) {
+  const ax = lx(xa), ay = ly(LAND_F[xa]), bx = lx(xb), by = ly(LAND_F[xb]);
+  const mx = (ax + bx) / 2, my = Math.min(ay, by) - 26;
+  const id = "a" + color.slice(1);
+  if (!svg.querySelector("#" + id)) {
+    const defs = el("defs", {}, svg);
+    const mk = el("marker", { id, viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto" }, defs);
+    el("path", { d: "M0,0 L10,5 L0,10 z", fill: color }, mk);
+  }
+  el("path", { d: `M${ax},${ay} Q${mx},${my} ${bx},${by}`, fill: "none", stroke: color, "stroke-width": 2.2, "stroke-dasharray": "5 4", "marker-end": `url(#${id})` }, svg);
+}
+
+function onLandscapeClick(evt) {
+  const svg = $("land");
+  const pt = svg.createSVGPoint(); pt.x = evt.clientX; pt.y = evt.clientY;
+  const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+  const x = Math.round((p.x - LV.x0) / (LV.x1 - LV.x0) * (LAND_N - 1));
+  state.start = Math.max(0, Math.min(LAND_N - 1, x));
+  resetRun();
+  $("msg").textContent = `Start set to x = ${state.start} (cost ${LAND_F[state.start].toFixed(1)}). Press Step.`;
+}
+
+// ---------------------------------------------------------------- TSP view
+function mapXY(pt) { return [16 + pt[0] * 4.2, 10 + (100 - pt[1]) * 4.2]; }
+
+function tourPath(route) {
+  return route.concat([route[0]]).map((c, i) => {
+    const [x, y] = mapXY(TSP_INST.coords[c]);
+    return (i ? "L" : "M") + x.toFixed(1) + "," + y.toFixed(1);
+  }).join(" ");
+}
+
+function drawTsp() {
+  const svg = $("map"); clear(svg);
+  const ev = state.last;
+  el("rect", { x: 12, y: 6, width: 400, height: 438, fill: "#fff", stroke: "#dbe4ee", rx: 6 }, svg);
+  if (ev) {
+    el("path", { d: tourPath(ev.best), fill: "none", stroke: "#15803d", "stroke-width": 7, opacity: 0.18, "stroke-linejoin": "round" }, svg);
+    el("path", { d: tourPath(ev.x), fill: "none", stroke: "#2F5597", "stroke-width": 2.2, "stroke-linejoin": "round" }, svg);
+    if (ev.node === "neighbor") {
+      el("path", { d: tourPath(ev.cand), fill: "none", stroke: "#C55A11", "stroke-width": 2.4, "stroke-dasharray": "7 5", "stroke-linejoin": "round" }, svg);
+    }
+  }
+  const moved = ev && ev.move && (ev.node === "neighbor" || ev.node === "accept" || ev.node === "reject") ? ev.move.cities : [];
+  TSP_INST.coords.forEach((c, i) => {
+    const [x, y] = mapXY(c);
+    const on = moved.includes(i);
+    el("circle", { cx: x, cy: y, r: on ? 10 : 8.5, fill: on ? "#C55A11" : "#fff", stroke: on ? "#C55A11" : "#1F3864", "stroke-width": 1.4 }, svg);
+    el("text", { x, y: y + 3.5, "text-anchor": "middle", "font-size": 9.5, fill: on ? "#fff" : "#15202b", "font-weight": on ? 700 : 400 }, svg, String(i));
+  });
+  drawTspPanel(svg, ev);
+}
+
+function drawTspPanel(svg, ev) {
+  const px = 432;
+  const line = (y, text, opts) => el("text", Object.assign({ x: px, y, "font-size": 13.5, fill: "#15202b" }, opts || {}), svg, text);
+  line(28, "A permutation of 30 cities (seed 42)", { fill: "#6b7c8d", "font-size": 12.5 });
+  if (!ev) { line(58, "Press Step to begin.", { "font-weight": 700, fill: "#1F3864" }); return; }
+  const title = ev.node === "neighbor" ? "Proposed move" : ev.node === "accept" ? "Accepted" : ev.node === "reject" ? "Rejected" :
+    ev.node === "end" ? "Finished — best tour" : "Current tour";
+  line(58, title, { "font-weight": 700, "font-size": 16, fill: ev.node === "reject" ? "#b91c1c" : ev.node === "accept" ? "#15803d" : "#1F3864" });
+  let y = 84;
+  if (ev.move && ev.node !== "cool" && ev.node !== "end") {
+    line(y, ev.move.label, { "font-size": 12.5, fill: "#C55A11" }); y += 24;
+    line(y, `f(x)   = ${fmt(ev.decision ? ev.decision.fBefore : ev.fx)}`, { "font-family": "var(--mono)" }); y += 20;
+    line(y, `f(x′)  = ${fmt(ev.fCand)}`, { "font-family": "var(--mono)" }); y += 20;
+    line(y, `δ      = ${fmtD(ev.delta)}`, { "font-family": "var(--mono)", fill: ev.delta > 0 ? "#b91c1c" : "#15803d" }); y += 28;
+  }
+  line(y, `current length ${fmt(ev.fx)}`); y += 20;
+  line(y, `best length    ${fmt(ev.fBest)}`, { fill: "#15803d" }); y += 30;
+  const notes = ["The tour is a closed loop: after the last", "city it returns to the first.",
+    "Highlighted cities are the ones the", "proposed move touches."];
+  notes.forEach(n => { line(y, n, { "font-size": 12, fill: "#6b7c8d" }); y += 17; });
+}
+
+// ---------------------------------------------------------------- acceptance meter
+function drawMeter() {
+  const svg = $("meter"); clear(svg);
+  const ev = state.last, o = state.opts, P = state.P;
+  const X0 = 52, X1 = 380, Y0 = 210, Y1 = 22, dMax = P.deltaMax;
+  const T = ev ? ev.T : o.T0;
+  const xOf = (d) => X0 + (X1 - X0) * Math.min(d, dMax) / dMax;
+  const yOf = (p) => Y0 - (Y0 - Y1) * p;
+  // axes and grid
+  for (let j = 0; j <= 4; j++) {
+    el("line", { x1: X0, y1: yOf(j / 4), x2: X1, y2: yOf(j / 4), stroke: "#e7edf4" }, svg);
+    el("text", { x: X0 - 6, y: yOf(j / 4) + 4, "text-anchor": "end", "font-size": 11, fill: "#6b7c8d" }, svg, (j / 4).toFixed(2));
+  }
+  for (let j = 0; j <= 4; j++) {
+    const dv = dMax * j / 4;
+    el("text", { x: xOf(dv), y: Y0 + 16, "text-anchor": "middle", "font-size": 11, fill: "#6b7c8d" }, svg, dv.toFixed(0));
+  }
+  el("text", { x: (X0 + X1) / 2, y: Y0 + 34, "text-anchor": "middle", "font-size": 12, fill: "#6b7c8d" }, svg, "δ = how much worse x′ is");
+  el("text", { x: 14, y: 116, "font-size": 12, fill: "#6b7c8d", transform: "rotate(-90 14 116)", "text-anchor": "middle" }, svg, "P(accept)");
+
+  if (state.mode === "ls") {
+    el("path", { d: `M${X0},${yOf(0)} L${X1},${yOf(0)}`, stroke: "#b91c1c", "stroke-width": 3 }, svg);
+    el("text", { x: (X0 + X1) / 2, y: 110, "text-anchor": "middle", "font-size": 13.5, fill: "#b91c1c", "font-weight": 700 }, svg, "Local search: P = 0 for every worse move");
+  } else {
+    // the curve at T0 (dashed) and at the current T (solid)
+    el("path", { d: curvePath(o.T0, dMax, xOf, yOf), fill: "none", stroke: "#9aa9b8", "stroke-width": 1.6, "stroke-dasharray": "5 4" }, svg);
+    el("path", { d: curvePath(T, dMax, xOf, yOf), fill: "none", stroke: "#C55A11", "stroke-width": 2.8 }, svg);
+    el("text", { x: X1, y: Y1 - 6, "text-anchor": "end", "font-size": 12, fill: "#C55A11", "font-weight": 700 }, svg, `P = e^(−δ/T), T = ${fmtT(T)}`);
+    el("text", { x: X0 + 4, y: Y0 - 8, "font-size": 11.5, fill: "#6b7c8d" }, svg, `dashed: at T0 = ${fmtT(o.T0)}`);
+  }
+
+  // the bar on the right: accept zone [0, P), reject zone [P, 1)
+  const BX = 430, BW = 46;
+  const isDecision = ev && (ev.node === "accept" || ev.node === "reject") && ev.decision;
+  const delta = ev && ev.delta !== undefined && (ev.node === "neighbor" || isDecision) ? ev.delta : null;
+  el("text", { x: BX + BW / 2, y: Y1 - 6, "text-anchor": "middle", "font-size": 12, fill: "#6b7c8d" }, svg, "r in [0, 1)");
+  let pNow = null;
+  if (delta !== null && delta > 0) pNow = state.mode === "ls" ? 0 : Math.exp(-delta / T);
+  if (delta !== null && delta <= 0) pNow = 1;
+  const pBar = pNow === null ? 0 : pNow;
+  el("rect", { x: BX, y: yOf(1), width: BW, height: yOf(pBar) - yOf(1), fill: "#fbdcdc" }, svg);
+  el("rect", { x: BX, y: yOf(pBar), width: BW, height: yOf(0) - yOf(pBar), fill: "#d7f2df" }, svg);
+  el("rect", { x: BX, y: yOf(1), width: BW, height: yOf(0) - yOf(1), fill: "none", stroke: "#9aa9b8" }, svg);
+  el("text", { x: BX + BW + 6, y: yOf(1) + 4, "font-size": 11, fill: "#6b7c8d" }, svg, "1");
+  el("text", { x: BX + BW + 6, y: yOf(0) + 4, "font-size": 11, fill: "#6b7c8d" }, svg, "0");
+  if (pNow !== null && pNow > 0 && pNow < 1) {
+    el("line", { x1: BX - 6, y1: yOf(pNow), x2: BX + BW + 6, y2: yOf(pNow), stroke: "#15803d", "stroke-width": 2 }, svg);
+    el("text", { x: BX - 10, y: yOf(pNow) + 4, "text-anchor": "end", "font-size": 12, "font-weight": 700, fill: "#15803d" }, svg, "P = " + pNow.toFixed(3));
+  }
+
+  if (delta === null) {
+    el("text", { x: BX + BW / 2, y: Y0 + 34, "text-anchor": "middle", "font-size": 12.5, fill: "#6b7c8d" }, svg, state.done ? "Run finished" : "Step to propose a move");
+    return;
+  }
+  if (delta > 0) {
+    // mark this delta on the curve
+    const p = state.mode === "ls" ? 0 : Math.exp(-delta / T);
+    el("line", { x1: xOf(delta), y1: Y0, x2: xOf(delta), y2: yOf(p), stroke: "#1F3864", "stroke-dasharray": "3 3" }, svg);
+    el("line", { x1: X0, y1: yOf(p), x2: xOf(delta), y2: yOf(p), stroke: "#1F3864", "stroke-dasharray": "3 3" }, svg);
+    el("circle", { cx: xOf(delta), cy: yOf(p), r: 6, fill: "#1F3864", stroke: "#fff", "stroke-width": 1.5 }, svg);
+    el("text", { x: xOf(delta) + (delta > dMax * 0.7 ? -8 : 8), y: p > 0.8 ? yOf(p) + 20 : yOf(p) - 9, "text-anchor": delta > dMax * 0.7 ? "end" : "start",
+      "font-size": 12.5, "font-weight": 700, fill: "#1F3864" }, svg, `δ = ${fmtD(delta)}` + (delta > dMax ? " (off the scale)" : ""));
+  } else {
+    el("rect", { x: X0 + 30, y: 70, width: X1 - X0 - 60, height: 52, rx: 8, fill: "#f0fdf4", stroke: "#15803d" }, svg);
+    el("text", { x: (X0 + X1) / 2, y: 92, "text-anchor": "middle", "font-size": 13.5, "font-weight": 700, fill: "#15803d" }, svg, `δ = ${fmtD(delta)} ≤ 0: not worse`);
+    el("text", { x: (X0 + X1) / 2, y: 111, "text-anchor": "middle", "font-size": 12.5, fill: "#15803d" }, svg,
+      state.mode === "ls" && delta === 0 ? "local search needs strictly better: reject" : "always accept — no random draw needed");
+  }
+  // the random draw r, once the decision is made
+  let verdict = "";
+  if (isDecision && ev.decision.r !== null) {
+    const r = ev.decision.r, ok = ev.decision.kind === "worse_accepted";
+    el("line", { x1: BX - 14, y1: yOf(r), x2: BX + BW + 14, y2: yOf(r), stroke: "#15202b", "stroke-width": 2.5 }, svg);
+    el("polygon", { points: `${BX + BW + 14},${yOf(r)} ${BX + BW + 26},${yOf(r) - 7} ${BX + BW + 26},${yOf(r) + 7}`, fill: "#15202b" }, svg);
+    el("text", { x: BX + BW + 30, y: yOf(r) + 4, "font-size": 12.5, "font-weight": 700, fill: "#15202b" }, svg, "r = " + r.toFixed(3));
+    verdict = ok ? "r < P → accept anyway" : "r ≥ P → reject";
+    el("text", { x: BX + BW / 2, y: Y0 + 34, "text-anchor": "middle", "font-size": 13, "font-weight": 700, fill: ok ? "#C55A11" : "#b91c1c" }, svg, verdict);
+  } else if (ev.node === "neighbor" && delta > 0 && state.mode === "sa") {
+    el("text", { x: BX + BW / 2, y: (yOf(0) + yOf(1)) / 2, "text-anchor": "middle", "font-size": 22, "font-weight": 700, fill: "#6b7c8d" }, svg, "?");
+    el("text", { x: BX + BW / 2, y: Y0 + 34, "text-anchor": "middle", "font-size": 12.5, fill: "#6b7c8d" }, svg, "Step to draw r");
+  } else if (isDecision) {
+    el("text", { x: BX + BW / 2, y: Y0 + 34, "text-anchor": "middle", "font-size": 13, "font-weight": 700,
+      fill: ev.decision.kind === "better" ? "#15803d" : "#b91c1c" }, svg, ev.decision.kind === "better" ? "accept" : "reject");
+  }
+}
+
+function curvePath(T, dMax, xOf, yOf) {
+  let d = "";
+  for (let i = 0; i <= 120; i++) {
+    const dv = dMax * i / 120;
+    d += (i ? " L" : "M") + xOf(dv).toFixed(1) + "," + yOf(Math.exp(-dv / T)).toFixed(1);
+  }
+  return d;
+}
+
+// ---------------------------------------------------------------- thermometer
+// HOT / WARM / COLD by temperature: how likely a typical worsening is accepted (slide 15)
+function phaseOfT(T) {
+  const p = Math.exp(-state.P.typDelta / T);
+  return p > 0.5 ? "hot" : p < 0.02 ? "cold" : "warm";
+}
+// the temperatures where the phases change: P(typical) = 0.5 and P(typical) = 0.02
+function phaseLimits() {
+  const d = state.P.typDelta;
+  return { hot: d / Math.log(2), cold: d / Math.log(50) };
+}
+const PHASE_COLOR = { hot: "#C55A11", warm: "#7a5bb5", cold: "#2E75B6" };
+const PHASE_SOFT = { hot: "#fdf1e8", warm: "#f3effa", cold: "#eaf2fa" };
+const PHASE_TEXT = { hot: "HOT — explore", warm: "WARM — explore + exploit", cold: "COLD — exploit" };
+
+function currentPhase() {
+  return phaseOfT(state.last ? state.last.T : state.opts.T0);
+}
+
+function drawThermo() {
+  const svg = $("thermo"); clear(svg);
+  const o = state.opts, ev = state.last;
+  const L = Math.max(1, totalLevels());
+  const X0 = 58, X1 = 585, Y0 = 210, Y1 = 26;
+  const xOf = (k) => X0 + (X1 - X0) * k / L;
+  const yOf = (T) => Y0 - (Y0 - Y1) * T / o.T0;
+  for (let j = 0; j <= 4; j++) {
+    const T = o.T0 * j / 4;
+    el("line", { x1: X0, y1: yOf(T), x2: X1, y2: yOf(T), stroke: "#e7edf4" }, svg);
+    el("text", { x: X0 - 6, y: yOf(T) + 4, "text-anchor": "end", "font-size": 11, fill: "#6b7c8d" }, svg, fmtT(T));
+  }
+  el("text", { x: 14, y: 118, "font-size": 12, fill: "#6b7c8d", transform: "rotate(-90 14 118)", "text-anchor": "middle" }, svg, "temperature T");
+  el("text", { x: (X0 + X1) / 2, y: Y0 + 32, "text-anchor": "middle", "font-size": 12, fill: "#6b7c8d" }, svg,
+    `cooling level (0 … ${L.toLocaleString("en-US")})`);
+  el("text", { x: X0, y: Y0 + 16, "font-size": 11, fill: "#6b7c8d" }, svg, "0");
+  el("text", { x: X1, y: Y0 + 16, "font-size": 11, fill: "#6b7c8d", "text-anchor": "end" }, svg, L.toLocaleString("en-US"));
+  // the phase bands
+  const lim = phaseLimits();
+  const band = (Thi, Tlo, ph) => {
+    const a = Math.min(Thi, o.T0), b = Math.max(Tlo, 0);
+    if (a <= b) return;
+    el("rect", { x: X0, y: yOf(a), width: X1 - X0, height: yOf(b) - yOf(a), fill: PHASE_SOFT[ph] }, svg);
+    el("text", { x: X1 - 6, y: yOf(a) + 14, "text-anchor": "end", "font-size": 11, "font-weight": 700, fill: PHASE_COLOR[ph], opacity: .8 }, svg, ph.toUpperCase());
+  };
+  if (state.mode === "sa") { band(Infinity, lim.hot, "hot"); band(lim.hot, lim.cold, "warm"); band(lim.cold, 0, "cold"); }
+  // T_min line
+  el("line", { x1: X0, y1: yOf(o.Tmin), x2: X1, y2: yOf(o.Tmin), stroke: "#b91c1c", "stroke-dasharray": "4 4", opacity: .6 }, svg);
+  el("text", { x: X0 + 6, y: yOf(o.Tmin) - 5, "font-size": 11, fill: "#b91c1c" }, svg, "T_min");
+  // the full schedule, faint
+  const step = Math.max(1, Math.ceil(L / 300));
+  let d = "";
+  for (let k = 0; k <= L; k += step) d += (k ? " L" : "M") + xOf(k).toFixed(1) + "," + yOf(o.T0 * Math.pow(o.alpha, k)).toFixed(1);
+  el("path", { d, fill: "none", stroke: "#9aa9b8", "stroke-width": 1.6, "stroke-dasharray": "4 4" }, svg);
+  // the levels already run, coloured by phase
+  const done = ev ? ev.level : 0;
+  for (let k = 0; k < done; k += step) {
+    const k2 = Math.min(k + step, done), T = o.T0 * Math.pow(o.alpha, k);
+    el("line", { x1: xOf(k), y1: yOf(T), x2: xOf(k2), y2: yOf(o.T0 * Math.pow(o.alpha, k2)),
+      stroke: state.mode === "ls" ? "#9aa9b8" : PHASE_COLOR[phaseOfT(T)], "stroke-width": 4, "stroke-linecap": "round" }, svg);
+  }
+  // you are here
+  if (ev) {
+    const k = ev.level, T = ev.T;
+    el("line", { x1: xOf(k), y1: Y0, x2: xOf(k), y2: yOf(T), stroke: "#1F3864", "stroke-dasharray": "3 3" }, svg);
+    el("circle", { cx: xOf(k), cy: yOf(T), r: 7, fill: "#1F3864", stroke: "#fff", "stroke-width": 2 }, svg);
+  }
+  if (state.mode === "ls") {
+    el("text", { x: X1, y: 16, "text-anchor": "end", "font-size": 14, "font-weight": 700, fill: "#6b7c8d" }, svg, "Local search ignores T: it is always COLD");
+    return;
+  }
+  const Tn = ev ? ev.T : o.T0, ph = phaseOfT(Tn);
+  el("text", { x: X1, y: 16, "text-anchor": "end", "font-size": 13.5, "font-weight": 700, fill: PHASE_COLOR[ph] }, svg,
+    `${PHASE_TEXT[ph]}: typical δ = ${state.P.typDelta} accepted with P = ${Math.exp(-state.P.typDelta / Tn).toFixed(2)}`);
+}
+
+// ---------------------------------------------------------------- cost chart
+function drawCostChart() {
+  const svg = $("costChart"); clear(svg);
+  const tr = state.trace;
+  const X0 = 58, X1 = 585, Y0 = 200, Y1 = 16;
+  if (tr.length < 2) {
+    el("text", { x: 300, y: 115, "text-anchor": "middle", "font-size": 13, fill: "#6b7c8d" }, svg, "Run a few steps to see the curve");
+    return;
+  }
+  let lo = Infinity, hi = -Infinity;
+  for (const t of tr) { lo = Math.min(lo, t.best); hi = Math.max(hi, t.f); }
+  if (hi - lo < 1) hi = lo + 1;
+  const pad = (hi - lo) * 0.06; lo -= pad; hi += pad;
+  const xOf = (i) => X0 + (X1 - X0) * i / (tr.length - 1);
+  const yOf = (v) => Y0 - (Y0 - Y1) * (v - lo) / (hi - lo);
+  for (let j = 0; j <= 4; j++) {
+    const v = lo + (hi - lo) * j / 4;
+    el("line", { x1: X0, y1: yOf(v), x2: X1, y2: yOf(v), stroke: "#e7edf4" }, svg);
+    el("text", { x: X0 - 6, y: yOf(v) + 4, "text-anchor": "end", "font-size": 11, fill: "#6b7c8d" }, svg, v.toFixed(0));
+  }
+  // a long run has many more points than pixels: draw at most ~600
+  const step = Math.max(1, Math.ceil(tr.length / 600));
+  const idx = [];
+  for (let i = 0; i < tr.length; i += step) idx.push(i);
+  if (idx[idx.length - 1] !== tr.length - 1) idx.push(tr.length - 1);
+  // accepted worse moves (at most ~400 dots)
+  const dotStep = Math.max(1, Math.ceil(tr.length / 400));
+  for (let i = 0; i < tr.length; i += dotStep) {
+    let hitIdx = -1;
+    for (let k = i; k < Math.min(i + dotStep, tr.length); k++) if (tr[k].worse) { hitIdx = k; break; }
+    if (hitIdx >= 0) el("circle", { cx: xOf(hitIdx), cy: yOf(tr[hitIdx].f), r: 2.4, fill: "#C55A11", opacity: .75 }, svg);
+  }
+  el("path", { d: idx.map((i, n) => (n ? "L" : "M") + xOf(i).toFixed(1) + "," + yOf(tr[i].f).toFixed(1)).join(" "), fill: "none", stroke: "#2F5597", "stroke-width": 1.6 }, svg);
+  el("path", { d: idx.map((i, n) => (n ? "L" : "M") + xOf(i).toFixed(1) + "," + yOf(tr[i].best).toFixed(1)).join(" "), fill: "none", stroke: "#15803d", "stroke-width": 2.2, "stroke-dasharray": "6 3" }, svg);
+  el("text", { x: (X0 + X1) / 2, y: 228, "text-anchor": "middle", "font-size": 11.5, fill: "#6b7c8d" }, svg,
+    `proposals (0 … ${tr.length.toLocaleString("en-US")})`);
+}
+
+// ---------------------------------------------------------------- log and status
+function addLogRow(ev) {
+  const d = ev.decision;
+  state.logRows.push({
+    n: ev.proposals, T: fmtT(d.T), f: fmt(d.fBefore), move: ev.move.label, fNew: fmt(d.fCand), delta: fmtD(d.delta),
+    P: d.P === null ? "–" : d.P.toFixed(3), r: d.r === null ? "–" : d.r.toFixed(3),
+    result: d.kind === "better" ? "accept" : d.kind === "worse_accepted" ? "accept anyway" : "reject",
+    fAfter: fmt(d.fAfter), kind: d.kind,
+  });
+  if (state.logRows.length > LOG_ROWS) state.logRows.shift();
+}
+
+function drawLog() {
+  const body = $("log").querySelector("tbody");
+  body.innerHTML = state.logRows.map(r =>
+    `<tr class="${r.kind}"><td>${r.n}</td><td>${r.T}</td><td>${r.f}</td><td>${r.move}</td><td>${r.fNew}</td>` +
+    `<td>${r.delta}</td><td>${r.P}</td><td>${r.r}</td><td>${r.result}</td><td>${r.fAfter}</td></tr>`).join("");
+  const box = body.closest(".logbox"); box.scrollTop = box.scrollHeight;
+}
+
+function drawStatus() {
+  const ev = state.last;
+  $("sT").textContent = ev ? fmtT(ev.T) : fmtT(state.opts.T0);
+  const ph = currentPhase();
+  const chip = $("sPhase");
+  chip.className = "phase" + (state.mode === "ls" ? "" : " " + ph);
+  chip.textContent = state.mode === "ls" ? "not used" : ph.toUpperCase();
+  $("sLevel").textContent = ev ? ev.level : 0;
+  $("sLevels").textContent = " / " + totalLevels().toLocaleString("en-US");
+  $("sProps").textContent = ev ? ev.proposals.toLocaleString("en-US") : 0;
+  $("sF").textContent = ev ? fmt(ev.fx) : "–";
+  $("sBest").textContent = ev ? fmt(ev.fBest) : "–";
+  $("sWorse").textContent = ev ? ev.worseAccepted.toLocaleString("en-US") : 0;
+  const m = $("msg");
+  m.textContent = ev ? ev.msg : "Press Step to begin.";
+  m.className = "msg" + (ev && ev.decision ? " " + ev.decision.kind : "");
+}
+
+function renderAll() {
+  drawFlow();
+  if (state.problemId === "landscape") drawLandscape(); else drawTsp();
+  drawMeter(); drawThermo(); drawCostChart(); drawLog(); drawStatus();
+}
+
+// ---------------------------------------------------------------- running
+function resetRun() {
+  stopTimer();
+  state.opts = readOpts();
+  state.gen = null; state.last = null; state.done = false;
+  state.visits = {}; state.trace = []; state.logRows = []; state.trail = [];
+  $("btnStep").disabled = false; $("btnLevel").disabled = false; $("btnRun").disabled = false;
+  renderAll();
+}
+
+// Advance one event and record it. Returns false when the run is over.
+function stepOnce() {
+  if (state.done) return false;
+  if (!state.gen) state.gen = saSteps(state.P, state.opts);
+  const r = state.gen.next();
+  if (r.done) { finish(); return false; }
+  const ev = r.value;
+  state.last = ev;
+  for (const id of ev.path) state.visits[id] = (state.visits[id] || 0) + 1;
+  if (ev.decision) recordDecision(ev);
+  if (ev.node === "start" && state.problemId === "landscape") state.trail = [ev.x];
+  if (ev.done) finish();
+  return true;
+}
+
+function recordDecision(ev) {
+  const d = ev.decision;
+  state.trace.push({ f: ev.fx, best: ev.fBest, worse: d.kind === "worse_accepted" });
+  addLogRow(ev);
+  if (state.problemId === "landscape" && d.kind !== "worse_rejected" && ev.x !== state.trail[state.trail.length - 1]) {
+    state.trail.push(ev.x);
+    if (state.trail.length > 30) state.trail.shift();
+  }
+}
+
+function finish() {
+  state.done = true; stopTimer();
+  $("btnStep").disabled = true; $("btnLevel").disabled = true; $("btnRun").disabled = true;
+}
+
+// run until `count` cooling steps have happened (or the run ends)
+function stepLevels(count) {
+  let cooled = 0, guard = 0;
+  while (guard++ < 5e6 && stepOnce()) {
+    if (state.last.node === "cool" && ++cooled >= count) break;
+  }
+}
+
+// run until the next decision (one whole proposal)
+function stepProposal() {
+  let guard = 0;
+  while (guard++ < 10 && stepOnce()) {
+    if (state.last.decision || state.last.node === "end") break;
+  }
+}
+
+function stopTimer() {
+  if (state.timer) { clearInterval(state.timer); state.timer = null; }
+  $("btnRun").textContent = "Run";
+}
+
+function toggleRun() {
+  if (state.timer) { stopTimer(); return; }
+  $("btnRun").textContent = "Pause";
+  const speed = $("speed").value;
+  const ms = speed === "slow" ? 650 : speed === "medium" ? 90 : 40;
+  // Fast: enough cooling levels per tick that a whole run takes about 8 seconds
+  const levelsPerTick = Math.max(1, Math.ceil(totalLevels() / 200));
+  state.timer = setInterval(() => {
+    try {
+      if (speed === "slow") stepOnce();
+      else if (speed === "medium") stepProposal();
+      else stepLevels(levelsPerTick);
+      renderAll();
+      if (state.done) stopTimer();
+    } catch (err) { stopTimer(); $("msg").textContent = "Error: " + err.message; throw err; }
+  }, ms);
+}
+
+// ---------------------------------------------------------------- compare cooling rates
+const CMP_ALPHAS = [
+  { alpha: 0.90, color: "#C55A11", name: "α = 0.90 (quench)" },
+  { alpha: 0.995, color: "#2F5597", name: "α = 0.995" },
+  { alpha: 0.999, color: "#15803d", name: "α = 0.999 (slow)" },
+];
+
+function runCompare() {
+  const base = Object.assign({}, state.opts, { mode: "sa" });
+  const runs = CMP_ALPHAS.map(c => Object.assign({ c }, simulatedAnnealing(state.P, Object.assign({}, base, { alpha: c.alpha }))));
+  drawCompareChart(runs);
+  const best = Math.min(...runs.map(r => r.bestCost));
+  let html = "<table class='log'><thead><tr><th>cooling</th><th>levels</th><th>evaluations</th><th>best f</th></tr></thead><tbody>";
+  for (const r of runs) {
+    html += `<tr${r.bestCost === best ? " class='better'" : ""}><td style="color:${r.c.color}; font-weight:700">${r.c.name}</td>` +
+      `<td>${r.levels.toLocaleString("en-US")}</td><td>${r.evals.toLocaleString("en-US")}</td><td>${r.bestCost.toFixed(1)}</td></tr>`;
+  }
+  html += "</tbody></table><p class='hint'>Every gain costs time: slower cooling means more temperature levels, so many more evaluations. " +
+    "The quench has only a few levels, so it freezes early — usually in a worse place.</p>";
+  $("cmpOut").innerHTML = html;
+}
+
+function drawCompareChart(runs) {
+  const svg = $("cmpChart"); clear(svg);
+  const X0 = 58, X1 = 585, Y0 = 200, Y1 = 16;
+  let lo = Infinity, hi = -Infinity, maxE = 10;
+  for (const r of runs) for (const h of r.history) { lo = Math.min(lo, h.best); hi = Math.max(hi, h.best); maxE = Math.max(maxE, h.evals); }
+  if (hi - lo < 1) hi = lo + 1;
+  const pad = (hi - lo) * 0.06; lo -= pad; hi += pad;
+  const lmax = Math.log10(maxE);
+  const xOf = (e) => X0 + (X1 - X0) * Math.log10(Math.max(1, e)) / lmax;
+  const yOf = (v) => Y0 - (Y0 - Y1) * (v - lo) / (hi - lo);
+  for (let j = 0; j <= 4; j++) {
+    const v = lo + (hi - lo) * j / 4;
+    el("line", { x1: X0, y1: yOf(v), x2: X1, y2: yOf(v), stroke: "#e7edf4" }, svg);
+    el("text", { x: X0 - 6, y: yOf(v) + 4, "text-anchor": "end", "font-size": 11, fill: "#6b7c8d" }, svg, v.toFixed(0));
+  }
+  for (let p = 0; p <= Math.floor(lmax); p++) {
+    el("text", { x: xOf(Math.pow(10, p)), y: Y0 + 16, "text-anchor": "middle", "font-size": 11, fill: "#6b7c8d" }, svg,
+      Math.pow(10, p).toLocaleString("en-US"));
+  }
+  el("text", { x: (X0 + X1) / 2, y: 236, "text-anchor": "middle", "font-size": 11.5, fill: "#6b7c8d" }, svg, "evaluations (log scale)");
+  el("text", { x: 14, y: 110, "font-size": 12, fill: "#6b7c8d", transform: "rotate(-90 14 110)", "text-anchor": "middle" }, svg, "best f so far");
+  runs.forEach((r, n) => {
+    const step = Math.max(1, Math.ceil(r.history.length / 500));
+    const pts = r.history.filter((_, i) => i % step === 0 || i === r.history.length - 1);
+    el("path", { d: pts.map((h, i) => (i ? "L" : "M") + xOf(h.evals).toFixed(1) + "," + yOf(h.best).toFixed(1)).join(" "),
+      fill: "none", stroke: r.c.color, "stroke-width": 2.4 }, svg);
+    const last = r.history[r.history.length - 1];
+    el("circle", { cx: xOf(last.evals), cy: yOf(last.best), r: 4.5, fill: r.c.color }, svg);
+    el("text", { x: X1, y: Y1 + 12 + n * 16, "text-anchor": "end", "font-size": 12, "font-weight": 700, fill: r.c.color }, svg,
+      `${r.c.name}: ${r.bestCost.toFixed(1)}`);
+  });
+}
+
+// ---------------------------------------------------------------- wiring
+function setMode(m) {
+  state.mode = m;
+  document.querySelectorAll("#modeSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.m === m));
+  $("flowTitle").textContent = m === "sa" ? "Flow of simulated annealing" : "Flow of local search (same loop, different rule)";
+  renderExplain(); resetRun();
+}
+
+function setProblem(p) {
+  state.problemId = p;
+  state.P = p === "landscape" ? makeLandscapeProblem() : makeTspProblem(TSP_INST);
+  document.querySelectorAll("#viewSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.p === p));
+  $("viewLandscape").hidden = p !== "landscape"; $("viewTsp").hidden = p !== "tsp";
+  $("weightsRow").style.display = p === "tsp" ? "" : "none";
+  $("viewTitle").textContent = p === "landscape" ? "Cost landscape" : "Small TSP — 30 cities, a permutation";
+  $("preset").value = "default";
+  setInputs(state.P.defaults);
+  clear($("cmpChart"));
+  el("text", { x: 300, y: 125, "text-anchor": "middle", "font-size": 13, fill: "#6b7c8d" }, $("cmpChart"), "Press the button to compare");
+  $("cmpOut").innerHTML = "<p class='hint'>Fast cooling (α = 0.90) is a <b>quench</b>: few temperature levels, so the search freezes in the first valley it falls into. Slow cooling spends many more evaluations and usually ends lower.</p>";
+  resetRun();
+}
+
+function applyPreset(name) {
+  const v = Object.assign({}, state.P.defaults, name === "default" ? {} : state.P.presets[name]);
+  setInputs(v);
+  resetRun();
+}
+
+document.querySelectorAll("#modeSeg button").forEach(b => b.addEventListener("click", () => setMode(b.dataset.m)));
+document.querySelectorAll("#viewSeg button").forEach(b => b.addEventListener("click", () => setProblem(b.dataset.p)));
+$("btnStep").addEventListener("click", () => { stopTimer(); stepOnce(); renderAll(); });
+$("btnLevel").addEventListener("click", () => { stopTimer(); stepLevels(1); renderAll(); });
+$("btnRun").addEventListener("click", toggleRun);
+$("btnReset").addEventListener("click", resetRun);
+$("preset").addEventListener("change", () => applyPreset($("preset").value));
+for (const id of ["T0", "alpha", "Tmin", "iters", "seed", "wSwap", "w2opt", "wIns"]) $(id).addEventListener("change", resetRun);
+$("speed").addEventListener("change", () => { if (state.timer) { stopTimer(); toggleRun(); } });
+$("btnCompare").addEventListener("click", runCompare);
+
+setProblem("landscape");
+setMode("sa");
+
+// ================================================================ self-test
+// Open the page with ?test at the end of the address to run it.
+function selftest() {
+  const out = []; let pass = 0, failN = 0;
+  const ok = (name, cond, got) => { if (cond) pass++; else { failN++; out.push("FAIL " + name + (got !== undefined ? "  got " + got : "")); } };
+
+  // acceptance rule
+  const rng = makeRng(3);
+  ok("improving move always accepted", acceptMove(-5, 0.001, "sa", rng).ok === true);
+  ok("equal move accepted by SA", acceptMove(0, 1, "sa", rng).ok === true);
+  ok("local search rejects a worse move", acceptMove(0.01, 1e9, "ls", rng).ok === false);
+  ok("local search rejects an equal move", acceptMove(0, 1, "ls", rng).ok === false);
+  const d = acceptMove(5, 10, "sa", rng);
+  ok("P = exp(-5/10)", Math.abs(d.P - Math.exp(-0.5)) < 1e-12, d.P);
+  let hot = 0, cold = 0;
+  for (let i = 0; i < 4000; i++) { if (acceptMove(5, 100, "sa", rng).ok) hot++; if (acceptMove(5, 1, "sa", rng).ok) cold++; }
+  ok("hot accepts ~95% of delta=5", Math.abs(hot / 4000 - Math.exp(-0.05)) < 0.02, hot / 4000);
+  ok("cold accepts ~0.7% of delta=5", Math.abs(cold / 4000 - Math.exp(-5)) < 0.01, cold / 4000);
+
+  // the TSP pieces (as the notebook's tests)
+  const sq = [[0, 0], [10, 0], [10, 10], [0, 10]];
+  const sqd = sq.map(a => sq.map(b => Math.hypot(a[0] - b[0], a[1] - b[1])));
+  ok("square tour = 40", Math.abs(tourCost([0, 1, 2, 3], sqd) - 40) < 1e-9);
+  const base = []; for (let i = 0; i < 30; i++) base.push(i);
+  const r2 = makeRng(9);
+  for (const f of [moveSwap, move2opt, moveInsert]) {
+    let valid = true, changed = 0;
+    for (let k = 0; k < 200; k++) {
+      const nb = f(base, r2).sol;
+      if (nb.slice().sort((a, b) => a - b).join() !== base.join()) valid = false;
+      if (nb.join() !== base.join()) changed++;
+    }
+    ok(f.name + " keeps a permutation", valid);
+    ok(f.name + " changes the tour", changed >= 195, changed);
+    ok(f.name + " leaves the input alone", base.join() === Array.from({ length: 30 }, (_, i) => i).join());
+  }
+  let swapLike = 0;
+  const r3 = makeRng(4);
+  for (let k = 0; k < 3000; k++) {
+    const nb = getNeighbour(base, [0.8, 0.1, 0.1], r3).sol;
+    if (nb.filter((c, i) => c !== base[i]).length === 2) swapLike++;
+  }
+  ok("weights 0.8 swap -> swap-like moves dominate", swapLike / 3000 > 0.6, swapLike / 3000);
+
+  // the schedule: the notebook's defaults give 1838 cooling steps
+  ok("1838 cooling levels (T0 100, alpha .995, Tmin .01)", coolingLevels(100, 0.995, 0.01) === 1838, coolingLevels(100, 0.995, 0.01));
+  const tsp = makeTspProblem(TSP_INST);
+  const o = Object.assign({ mode: "sa", seed: 0, weights: [0.34, 0.33, 0.33] }, tsp.defaults);
+  const fast = simulatedAnnealing(tsp, o);
+  ok("plain SA runs 1838 levels", fast.levels === 1838, fast.levels);
+  ok("plain SA evaluations = 183,800", fast.evals === 183800, fast.evals);
+
+  // the animated generator must give exactly the same run as the plain function
+  for (const P of [makeLandscapeProblem(), tsp]) {
+    for (const mode of ["sa", "ls"]) {
+      const oo = Object.assign({ mode, seed: 5, weights: [0.34, 0.33, 0.33] }, P.defaults);
+      const a = simulatedAnnealing(P, oo);
+      let last = null; for (const e of saSteps(P, oo)) last = e;
+      ok(`${P.id}/${mode}: generator best = plain best`, Math.abs(last.fBest - a.bestCost) < 1e-9, last.fBest + " vs " + a.bestCost);
+      ok(`${P.id}/${mode}: generator proposals = evaluations`, last.proposals === a.evals, last.proposals + " vs " + a.evals);
+    }
+  }
+
+  // the landscape demo: SA usually reaches the global valley, local search never does
+  const land = makeLandscapeProblem(), g = land.globalBest();
+  let saHits = 0, lsHits = 0, quenchHits = 0;
+  for (let s = 1; s <= 40; s++) {
+    const oo = Object.assign({ seed: s, weights: [1, 0, 0] }, land.defaults);
+    if (Math.abs(simulatedAnnealing(land, Object.assign({}, oo, { mode: "sa" })).best - g) <= 3) saHits++;
+    if (Math.abs(simulatedAnnealing(land, Object.assign({}, oo, { mode: "ls" })).best - g) <= 3) lsHits++;
+    if (Math.abs(simulatedAnnealing(land, Object.assign({}, oo, { mode: "sa", alpha: 0.90 })).best - g) <= 3) quenchHits++;
+  }
+  ok("landscape: SA reaches the global valley in most runs", saHits >= 30, saHits + "/40");
+  ok("landscape: local search never does", lsHits === 0, lsHits + "/40");
+  ok("landscape: the quench rarely does", quenchHits <= 4, quenchHits + "/40");
+  const seed3 = simulatedAnnealing(land, Object.assign({ mode: "sa", seed: 3, weights: [1, 0, 0] }, land.defaults));
+  ok("landscape: the default seed 3 reaches the global valley", Math.abs(seed3.best - g) <= 3, seed3.best);
+
+  // phases follow slide 15: P(typical worsening) > 0.5 is HOT, < 0.02 is COLD
+  setProblem("tsp");
+  ok("TSP at T0 = 100 is HOT", phaseOfT(100) === "hot", phaseOfT(100));
+  ok("TSP at T = 20 is WARM", phaseOfT(20) === "warm", phaseOfT(20));
+  ok("TSP at T = 1 is COLD", phaseOfT(1) === "cold", phaseOfT(1));
+
+  // the page itself: stepping and running do not throw
+  setProblem("tsp"); setMode("sa");
+  for (let i = 0; i < 25; i++) stepOnce();
+  renderAll();
+  ok("TSP view renders after 25 steps", $("map").childNodes.length > 30);
+  stepLevels(5); renderAll();
+  ok("5 cooling levels done", state.last.level === 5, state.last.level);
+  setProblem("landscape"); setMode("sa");
+
+  out.unshift(failN ? (failN + " FAILED, " + pass + " passed") : (pass + " passed"));
+  $("selftest").textContent = "self-test: " + out.join("\n");
+  return { pass, fail: failN };
+}
+if (new URLSearchParams(location.search).has("test")) selftest();
+</script>
+</body>
+</html>
