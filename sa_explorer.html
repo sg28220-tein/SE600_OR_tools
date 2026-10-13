@@ -170,7 +170,7 @@ table.log tr.worse_rejected td{color:#7b8794}
     <section class="card">
       <h2>Thermometer — the cooling schedule</h2>
       <svg id="thermo" viewBox="0 0 600 270" aria-label="Temperature over the run"></svg>
-      <p class="hint">T is multiplied by α after every iters_per_T moves, until it falls below T_min. What "hot" means depends on δ (slide 15). The bands use a typical worsening δ: <b style="color:#C55A11">HOT</b> = it is accepted more than half the time, <b style="color:#7a5bb5">WARM</b> = sometimes, <b style="color:#2E75B6">COLD</b> = less than 2 times in 100.</p>
+      <p class="hint">T is multiplied by α after every iters_per_T moves, until it falls below T_min. What "hot" means depends on δ (see “How hot is hot?”). The bands use a typical worsening δ: <b style="color:#C55A11">HOT</b> = it is accepted more than half the time, <b style="color:#7a5bb5">WARM</b> = sometimes, <b style="color:#2E75B6">COLD</b> = less than 2 times in 100.</p>
     </section>
   </div>
 
@@ -185,7 +185,7 @@ table.log tr.worse_rejected td{color:#7b8794}
       </div>
     </section>
     <section class="card">
-      <h2>Step log — one row per proposal (as on slide 34)</h2>
+      <h2>Step log — one row per proposal (as in “A worked trace”)</h2>
       <div class="logbox"><table class="log" id="log">
         <thead><tr><th>#</th><th>T</th><th>f(x)</th><th>move</th><th>f(x′)</th><th>δ</th><th>P</th><th>r</th><th>result</th><th>new f(x)</th></tr></thead>
         <tbody></tbody></table></div>
@@ -331,7 +331,7 @@ function moveInsert(route, rng) {
 }
 
 function getNeighbour(route, weights, rng) {
-  // the mixed neighbourhood: one random number picks the move (slide 32)
+  // the mixed neighbourhood: one random number picks the move (see “The mixed neighborhood”)
   const [pSwap, p2opt] = weights;
   const r = rng();
   if (r < pSwap) return moveSwap(route, rng);
@@ -346,7 +346,7 @@ function makeTspProblem(inst) {
     defaults: { T0: 100, alpha: 0.995, Tmin: 0.01, iters: 100 },   // the notebook's defaults
     presets: { quench: { alpha: 0.90 }, cold: { T0: 1 }, hot: { Tmin: 30 } },
     deltaMax: 200,
-    typDelta: 27,                                 // a typical worsening from a random tour (slide 15)
+    typDelta: 27,                                 // a typical worsening from a random tour (see “How hot is hot?”)
     cost(route) { return tourCost(route, inst.dist); },
     initial(rng) {
       // a random permutation (Fisher-Yates shuffle)
@@ -361,7 +361,7 @@ function makeTspProblem(inst) {
 }
 
 // =====================================================================
-//  The acceptance rule (slide 12) - the heart of SA
+//  The acceptance rule (see “The acceptance rule”) - the heart of SA
 // =====================================================================
 // mode "sa": better or equal -> always accept; worse -> accept with P = exp(-delta/T)
 // mode "ls": local search accepts only a strictly better neighbour
@@ -900,7 +900,7 @@ function curvePath(T, dMax, xOf, yOf) {
 }
 
 // ---------------------------------------------------------------- thermometer
-// HOT / WARM / COLD by temperature: how likely a typical worsening is accepted (slide 15)
+// HOT / WARM / COLD by temperature: how likely a typical worsening is accepted (see “How hot is hot?”)
 function phaseOfT(T) {
   const p = Math.exp(-state.P.typDelta / T);
   return p > 0.5 ? "hot" : p < 0.02 ? "cold" : "warm";
@@ -1311,7 +1311,7 @@ function selftest() {
   const seed3 = simulatedAnnealing(land, Object.assign({ mode: "sa", seed: 3, weights: [1, 0, 0] }, land.defaults));
   ok("landscape: the default seed 3 reaches the global valley", Math.abs(seed3.best - g) <= 3, seed3.best);
 
-  // phases follow slide 15: P(typical worsening) > 0.5 is HOT, < 0.02 is COLD
+  // phases follow “How hot is hot?”: P(typical worsening) > 0.5 is HOT, < 0.02 is COLD
   setProblem("tsp");
   ok("TSP at T0 = 100 is HOT", phaseOfT(100) === "hot", phaseOfT(100));
   ok("TSP at T = 20 is WARM", phaseOfT(20) === "warm", phaseOfT(20));
