@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>VNS Explorer — VND, RVNS, BVNS, GVNS | SE 600 Decision Making and Optimization</title>
+<title>VNS Explorer — BVNS, VND, GVNS | SE 600 Decision Making and Optimization</title>
 <style>
 :root{
   --bg:#ffffff; --panel:#f7f9fc; --panel2:#eef3f9;
@@ -82,7 +82,7 @@ table.log tr.yes td{background:var(--good-bg)}
   <div class="spacer"></div>
   <div><span class="seglabel">Method</span>
     <span class="seg" id="variantSeg">
-      <button data-v="VND">VND</button><button data-v="RVNS">RVNS</button><button data-v="BVNS">BVNS</button><button data-v="GVNS" aria-pressed="true">GVNS</button>
+      <button data-v="BVNS">BVNS</button><button data-v="VND">VND</button><button data-v="GVNS" aria-pressed="true">GVNS</button>
     </span></div>
   <div><span class="seglabel">Problem</span>
     <span class="seg" id="viewSeg">
@@ -164,15 +164,15 @@ table.log tr.yes td{background:var(--good-bg)}
       <div class="logbox"><table class="log" id="log"><thead></thead><tbody></tbody></table></div>
     </section>
     <section class="card">
-      <h2>Compare all four</h2>
+      <h2>Compare all three</h2>
       <div class="controls">
         <label>Budget <select id="cmpMode">
           <option value="iter">same max_iter</option>
           <option value="evals">same evaluations as GVNS</option>
         </select></label>
-        <button class="primary" id="btnCompare">Run all four</button>
+        <button class="primary" id="btnCompare">Run all three</button>
       </div>
-      <div id="cmpOut"><p class="hint">Runs VND, RVNS, BVNS and GVNS on this problem with the same seed and settings, then shows the best cost each one reached.</p></div>
+      <div id="cmpOut"><p class="hint">Runs BVNS, VND and GVNS on this problem with the same seed and settings, then shows the best cost each one reached.</p></div>
     </section>
   </div>
 </div>
@@ -446,7 +446,7 @@ function shake(P, x, k, rng) {
   return { y, types };
 }
 
-// variant: "VND" | "RVNS" | "BVNS" | "GVNS"
+// variant: "BVNS" | "VND" | "GVNS"
 function* runVariant(variant, P, opts) {
   const S = { rng: makeRng(opts.seed), nSamples: opts.nSamples, counter: { evals: 0 } };
   let x = (opts.start !== undefined && opts.start !== null) ? P.copy(opts.start) : P.initial(S.rng);
@@ -497,16 +497,12 @@ function* runVariant(variant, P, opts) {
       yield ev({ node: "shake", x, fx, shakeTypes: s.types,
         msg: `Shake in N_${k}: ${s.types.join(" + ")} -> cost ${fShaken.toFixed(1)}` });
 
-      // 2. LOCAL SEARCH (none for RVNS)
-      if (variant === "RVNS") {
-        cand = shaken; fCand = fShaken;
-      } else {
-        const inner = (variant === "GVNS")
-          ? vndSteps(P, shaken, S, (e) => ev(Object.assign({}, e, { node: "ls", lsX: e.x, lsF: e.fx, x, fx })))
-          : basicDescentSteps(P, shaken, S, (e) => ev(Object.assign({}, e, { node: "ls", lsX: e.x, lsF: e.fx, x, fx })));
-        const r = yield* inner;
-        cand = r.x; fCand = r.fx;
-      }
+      // 2. LOCAL SEARCH: VND for GVNS, one move type for BVNS
+      const inner = (variant === "GVNS")
+        ? vndSteps(P, shaken, S, (e) => ev(Object.assign({}, e, { node: "ls", lsX: e.x, lsF: e.fx, x, fx })))
+        : basicDescentSteps(P, shaken, S, (e) => ev(Object.assign({}, e, { node: "ls", lsX: e.x, lsF: e.fx, x, fx })));
+      const r = yield* inner;
+      cand = r.x; fCand = r.fx;
 
       // 3. NEIGHBOURHOOD CHANGE
       const kBefore = k;
@@ -524,7 +520,7 @@ function* runVariant(variant, P, opts) {
   yield ev({ node: "end", x: best, fx: fBest, msg: `Budget used: best cost ${fBest.toFixed(1)}`, done: true });
 }
 
-// Run a whole variant without pausing (used by "Compare all four")
+// Run a whole variant without pausing (used by "Compare all three")
 function runToEnd(variant, P, opts) {
   let last = null;
   for (const e of runVariant(variant, P, opts)) last = e;
@@ -592,16 +588,7 @@ const EXPLAIN = {
     tryThis: [
       "Click a start in the left half of the landscape and run VND. Which neighbourhood made the last improvement?",
       "VND stops in a valley that is clearly not the lowest. Why can it not continue? (Hint: what does 'improve' mean here?)",
-      "Switch to the small CVRP. How many vehicles does VND use, and how does its cost compare with GVNS in 'Compare all four'?",
-    ],
-  },
-  RVNS: {
-    title: "RVNS — Reduced VNS",
-    body: `<p><span class="tag">shake only</span>Shake, and accept the shaken solution if it is better — nothing else. There is no local search, so each step is very cheap. It suits very large problems where a local search would be too slow.</p>`,
-    tryThis: [
-      "Step through ten decisions. How many shaken solutions were accepted? Why are most of them rejected?",
-      "In the log, compare the columns 'after shake' and 'after LS'. Why are they always equal for RVNS?",
-      "In 'Compare all four', switch the budget to 'same evaluations'. Does RVNS catch up when it gets as many evaluations as GVNS?",
+      "Switch to the small CVRP. How many vehicles does VND use, and how does its cost compare with GVNS in 'Compare all three'?",
     ],
   },
   BVNS: {
@@ -661,16 +648,14 @@ function flowSpec(variant, P) {
     };
   }
   const lsLines = variant === "GVNS" ? ["LOCAL SEARCH from x′ → x″", `VND: ${names.join(" → ")}`]
-    : variant === "BVNS" ? ["LOCAL SEARCH from x′ → x″", `one move type only: ${names[P.lsMoveForBasic]}`]
-    : ["no local search", "x″ = x′"];
-  const startLines = variant === "RVNS" ? ["START", "a random solution x"]
-    : variant === "GVNS" ? ["START", "random solution, then VND"] : ["START", "random solution, then descent"];
+    : ["LOCAL SEARCH from x′ → x″", `one move type only: ${names[P.lsMoveForBasic]}`];
+  const startLines = variant === "GVNS" ? ["START", "random solution, then VND"] : ["START", "random solution, then descent"];
   return {
     nodes: [
       { id: "start", kind: "box", x: 190, y: 32, w: 230, h: 44, lines: startLines },
       { id: "k1", kind: "box", x: 190, y: 96, w: 150, h: 32, lines: ["new iteration: k = 1"] },
       { id: "shake", kind: "box", x: 190, y: 158, w: 250, h: 50, lines: ["SHAKE: k random moves", "x′ = a random point in N_k(x)"] },
-      { id: "ls", kind: "box", x: 190, y: 228, w: 250, h: 50, lines: lsLines, dashed: variant === "RVNS" },
+      { id: "ls", kind: "box", x: 190, y: 228, w: 250, h: 50, lines: lsLines },
       { id: "test", kind: "diamond", x: 190, y: 312, w: 180, h: 70, lines: ["f(x″) < f(x) ?"] },
       { id: "accept", kind: "box", x: 105, y: 402, w: 160, h: 50, lines: ["ACCEPT: x ← x″", "k = 1"] },
       { id: "widen", kind: "box", x: 285, y: 402, w: 160, h: 50, lines: ["KEEP x", "k = k + 1"] },
@@ -996,7 +981,7 @@ function logHeader() {
   head.innerHTML = state.variant === "VND"
     ? "<tr><th>#</th><th>l</th><th>move type</th><th>f before</th><th>f after</th><th>improved?</th><th>next l</th></tr>"
     : "<tr><th>iter</th><th>k</th><th>f(x)</th><th>after shake</th><th>after LS</th><th>better?</th><th>new k</th></tr>";
-  $("logTitle").textContent = state.variant === "VND" ? "Step log — one row per neighbourhood searched" : "Step log — one row per neighbourhood change (as on slide 27)";
+  $("logTitle").textContent = state.variant === "VND" ? "Step log — one row per neighbourhood searched" : "Step log — one row per neighbourhood change (as on slide 28)";
 }
 
 function addLogRow(ev) {
@@ -1111,13 +1096,13 @@ function toggleRun() {
   }, ms);
 }
 
-// ---------------------------------------------------------------- compare all four
+// ---------------------------------------------------------------- compare all three
 function runCompare() {
   const base = readOpts();
   const P = makeProblem();
   const out = [];
   const g = runToEnd("GVNS", P, base);
-  for (const v of ["VND", "RVNS", "BVNS", "GVNS"]) {
+  for (const v of ["BVNS", "VND", "GVNS"]) {
     let e;
     if (v === "GVNS") e = g;
     else if ($("cmpMode").value === "evals" && v !== "VND") e = runToEnd(v, makeProblem(), Object.assign({}, base, { maxIter: 100000, maxEvals: g.evals }));
@@ -1140,7 +1125,7 @@ function runCompare() {
   }
   html += "</tbody></table><p class='hint'>Shorter bar = lower cost = better. " +
     ($("cmpMode").value === "evals"
-      ? "RVNS and BVNS were given as many evaluations as GVNS used, so none of them wins by simply doing more work."
+      ? "BVNS was given as many evaluations as GVNS used, so GVNS cannot win by simply doing more work."
       : "Same max_iter for all, but look at the evaluations column: a stronger local search costs many more evaluations per iteration.") +
     "</p>";
   $("cmpOut").innerHTML = html;
