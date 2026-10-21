@@ -1,0 +1,2356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GA Explorer — Genetic Algorithm | SE 600 Decision Making and Optimization</title>
+<style>
+:root{
+  --bg:#ffffff; --panel:#f7f9fc; --panel2:#eef3f9;
+  --ink:#15202b; --ink2:#3d4c5c; --muted:#6b7c8d; --line:#dbe4ee;
+  --navy:#1F3864; --accent:#2F5597; --accent-soft:#DCE6F2; --edge:#B4C7E7;
+  --amber:#C55A11; --amber-soft:#FBE5D6;
+  --blue:#2E75B6; --good:#15803d; --good-bg:#f0fdf4; --bad:#b91c1c; --bad-bg:#fef2f2;
+  --c-value:#15803d; --c-weight:#2E75B6; --c-price:#C55A11; --c-count:#7a5bb5; --c-item:#0e7490;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --radius:10px;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top:70px}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:16px; line-height:1.55; -webkit-font-smoothing:antialiased}
+header.top{position:sticky; top:0; z-index:50; display:flex; align-items:center; gap:14px 18px; flex-wrap:wrap; padding:10px 24px; background:var(--panel); border-bottom:1px solid var(--line)}
+header.top h1{font-size:18px; margin:0; letter-spacing:-.2px; color:var(--navy)}
+header.top h1 span{display:block; font-size:12px; color:var(--muted); font-weight:400; letter-spacing:0}
+.spacer{flex:1}
+nav.jump{display:flex; flex-wrap:wrap; gap:4px 6px}
+nav.jump a{font-size:13px; font-weight:600; color:var(--ink2); text-decoration:none; padding:5px 11px; border:1px solid var(--line); border-radius:999px; background:#fff}
+nav.jump a:hover{background:var(--accent-soft); border-color:var(--accent)}
+nav.jump a b{color:var(--accent); margin-right:4px}
+.seg{display:inline-flex; border:1px solid var(--line); border-radius:9px; overflow:hidden; background:#fff}
+.seg button{border:0; border-radius:0; border-right:1px solid var(--line); padding:7px 14px}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed=true]{background:var(--accent); color:#fff}
+.seg.quad{display:grid; grid-template-columns:1fr 1fr; width:100%}
+.seg.quad button{border-right:1px solid var(--line); border-bottom:1px solid var(--line); text-align:left; padding:8px 12px}
+.seg.quad button:nth-child(2n){border-right:0}
+.seg.quad button:nth-child(n+3){border-bottom:0}
+.seglabel{font-size:12px; color:var(--muted); margin-right:6px}
+select,input[type=number],input[type=text],textarea{font-family:var(--sans); font-size:15px; color:var(--ink); border:1px solid var(--line); border-radius:8px; padding:6px 9px; background:#fff}
+select:focus,input:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+input[type=number]{width:100%}
+button{font-family:var(--sans); font-size:14.5px; font-weight:600; color:var(--ink2); background:#fff; border:1px solid var(--line); border-radius:8px; padding:7px 14px; cursor:pointer; transition:background .12s,border-color .12s}
+button:hover:not(:disabled){background:var(--accent-soft); border-color:var(--accent)}
+button:disabled{opacity:.4; cursor:not-allowed}
+button.primary{background:var(--accent); border-color:var(--accent); color:#fff}
+button.primary:hover:not(:disabled){background:var(--navy)}
+button.small{font-size:13px; padding:4px 10px}
+button.link{border:0; background:none; color:var(--accent); padding:2px 4px; font-weight:600; font-size:13px; text-decoration:underline}
+button.link:hover:not(:disabled){background:none; color:var(--navy)}
+.wrap{max-width:1280px; margin:0 auto; padding:18px 24px 50px}
+.row{display:grid; gap:18px; margin-bottom:18px}
+.row.two{grid-template-columns:minmax(0,5fr) minmax(0,7fr)}
+.row.two.even{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.row.res{grid-template-columns:minmax(0,7fr) minmax(0,5fr)}
+@media (max-width:1000px){.row.two,.row.res,.row.two.even{grid-template-columns:1fr}}
+section.card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; min-width:0}
+section.card > h2{font-size:12px; text-transform:uppercase; letter-spacing:.7px; color:var(--muted); margin:0 0 10px}
+section.card > h2 b{color:var(--accent); margin-right:6px}
+.sub{font-size:12px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); margin:14px 0 6px; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+.sub:first-child{margin-top:0}
+.sub .grow{flex:1}
+.hint{font-size:13px; color:var(--muted); margin:6px 0 0}
+svg{display:block; max-width:100%; height:auto}
+.controls{display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px; margin-bottom:10px}
+.status{display:flex; flex-wrap:wrap; gap:8px; margin:4px 0 10px}
+.stat{background:#fff; border:1px solid var(--line); border-radius:8px; padding:4px 10px; font-size:13px; color:var(--muted)}
+.stat b{color:var(--ink); font-size:15px; margin-left:4px; font-variant-numeric:tabular-nums}
+.stat.best b{color:var(--good)}
+.mono{font-family:var(--mono)}
+
+/* ---- problem table ---- */
+.tablebox{max-height:310px; overflow:auto; border:1px solid var(--line); border-radius:6px; background:#fff; margin-top:10px}
+table.items{width:100%; border-collapse:collapse; font-size:14px; font-variant-numeric:tabular-nums}
+table.items th{background:var(--accent); color:#fff; font-weight:600; text-align:right; padding:4px 9px; position:sticky; top:0; z-index:1}
+table.items th:nth-child(2), table.items td:nth-child(2){text-align:left}
+table.items th:first-child, table.items td:first-child{text-align:right; color:var(--muted); width:34px}
+table.items td{padding:3px 9px; border-bottom:1px solid var(--line); text-align:right}
+table.items tr:last-child td{border-bottom:0}
+.totals{font-size:13.5px; color:var(--ink2); margin:6px 0 0}
+.totals b{color:var(--ink)}
+textarea.paste{width:100%; min-height:130px; font-family:var(--mono); font-size:13px; resize:vertical}
+.msg-ok{color:var(--good)} .msg-bad{color:var(--bad)}
+.note{font-size:13.5px; color:var(--ink2); margin:8px 0 0}
+
+/* ---- formula ---- */
+.fwrap{display:flex; align-items:center; gap:8px}
+.fwrap .eq{font-weight:700; color:var(--navy); white-space:nowrap}
+input.formula{flex:1; min-width:0; font-family:var(--mono); font-size:17px; padding:9px 12px; border:2px solid var(--edge); border-radius:8px}
+input.formula.bad{border-color:var(--bad); background:var(--bad-bg)}
+input.formula.ok{border-color:var(--good)}
+.fstatus{margin:7px 0 0; font-size:14.5px; min-height:24px}
+.fstatus.ok{color:var(--good)} .fstatus.bad{color:var(--bad)} .fstatus.warn{color:var(--amber)}
+pre.errline{margin:4px 0 0; font-family:var(--mono); font-size:14px; color:var(--bad); background:#fff; border:1px solid #f1c4c4; border-radius:6px; padding:5px 10px; overflow-x:auto}
+.cheat{display:flex; flex-wrap:wrap; gap:5px 6px; margin:9px 0 0; align-items:center; font-size:12.5px; color:var(--muted)}
+.chipk{font-family:var(--mono); font-size:13px; padding:1px 8px; border-radius:6px; border:1px solid var(--line); background:#fff; cursor:pointer; color:var(--ink2)}
+.chipk:hover{border-color:var(--accent); background:var(--accent-soft)}
+.kV{color:var(--c-value)} .kW{color:var(--c-weight)} .kP{color:var(--c-price)} .kC{color:var(--c-count)} .kI{color:var(--c-item)}
+.kfn{color:var(--navy)} .knum{color:var(--ink2)} .kop{color:var(--ink2)} .kkw{color:var(--navy)} .kcm{color:var(--muted); font-style:italic}
+.kV,.kW,.kP,.kC,.kI{font-weight:700}
+.colorf{font-family:var(--mono); font-size:15px; background:#fff; border:1px solid var(--line); border-radius:6px; padding:5px 10px; margin-top:8px; overflow-x:auto; white-space:pre}
+pre.code{margin:0; font-family:var(--mono); font-size:13px; line-height:1.5; background:#fff; border:1px solid var(--line); border-radius:6px; padding:9px 12px; overflow-x:auto; white-space:pre}
+pre.code.dim{opacity:.45}
+
+/* ---- test a packing ---- */
+.packstrip{display:flex; flex-wrap:wrap; gap:5px 6px; margin:4px 0 8px; max-height:130px; overflow:auto}
+.packstrip label{display:inline-flex; align-items:center; gap:5px; font-size:13.5px; padding:2px 9px 2px 6px; background:#fff; border:1px solid var(--line); border-radius:999px; cursor:pointer; white-space:nowrap}
+.packstrip label.on{background:var(--accent-soft); border-color:var(--accent)}
+.packstrip label i{font-style:normal; color:var(--muted); font-size:12px}
+.packstrip input{margin:0}
+.readout{display:flex; flex-wrap:wrap; gap:6px 8px; align-items:stretch}
+.readout .stat b{font-size:16px}
+.readout .stat.fit{background:var(--accent-soft); border-color:var(--edge)}
+.readout .stat.fit b{color:var(--navy)}
+.sub-line{font-family:var(--mono); font-size:13.5px; color:var(--ink2); margin:6px 0 0; white-space:normal; overflow-wrap:anywhere}
+
+/* ---- settings ---- */
+.sgrid{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px 12px}
+@media (max-width:700px){.sgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.field{display:flex; flex-direction:column}
+.field > :last-child{margin-top:auto}
+.field label{display:block; font-size:14px; font-weight:600; color:var(--ink2); line-height:1.25}
+.field code{display:block; font-family:var(--mono); font-size:11.5px; color:var(--muted); margin:1px 0 4px}
+.field select,.field input{width:100%}
+.field.off{opacity:.45}
+.derived{font-size:13.5px; color:var(--ink2); margin:12px 0 0; padding:7px 10px; background:#fff; border:1px solid var(--line); border-radius:6px}
+.derived b{color:var(--ink)}
+.warnbox{margin:10px 0 0; padding:8px 11px; font-size:14px; border-radius:6px; border:1px solid #f1c4c4; background:var(--bad-bg); color:var(--bad)}
+.warnbox.amber{border-color:#efc9a8; background:var(--amber-soft); color:#8a3d08}
+details.fold{margin-top:12px}
+details.fold summary{cursor:pointer; font-size:14px; font-weight:600; color:var(--accent)}
+details.fold[open] summary{margin-bottom:8px}
+
+/* ---- run and step ---- */
+.btnrow{display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:8px}
+.btnrow .vr{width:1px; align-self:stretch; background:var(--line); margin:0 4px}
+.stages{display:flex; gap:6px; margin:6px 0 10px; flex-wrap:wrap}
+.stagepill{flex:1; min-width:120px; display:flex; align-items:center; gap:8px; padding:6px 10px; border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--muted); font-size:14px; font-weight:600}
+.stagepill i{font-style:normal; display:inline-flex; width:22px; height:22px; align-items:center; justify-content:center; border-radius:50%; background:var(--panel2); color:var(--muted); font-size:12.5px}
+.stagepill.done{color:var(--ink2); border-color:var(--edge)}
+.stagepill.done i{background:var(--accent-soft); color:var(--accent)}
+.stagepill.now{border-color:var(--amber); color:var(--ink); background:var(--amber-soft)}
+.stagepill.now i{background:var(--amber); color:#fff}
+.stagebox{background:#fff; border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:6px; padding:9px 12px; min-height:90px}
+.stagebox .what{font-size:15px; color:var(--ink); margin:0 0 7px}
+.stagebox .what b{color:var(--navy)}
+.stagelist{max-height:250px; overflow:auto; border-top:1px solid var(--line); padding-top:6px; font-size:13.5px}
+.srow{display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; padding:3px 0; border-bottom:1px dashed var(--line)}
+.srow:last-child{border-bottom:0}
+.srow .lab{min-width:62px; font-weight:700; color:var(--navy)}
+.srow .who{min-width:122px; color:var(--ink2)}
+.srow .detail{color:var(--ink2)}
+.bits{display:inline-flex; gap:1px; font-family:var(--mono); font-size:12.5px}
+.bits span{display:inline-block; min-width:17px; text-align:center; padding:0 1px; border-radius:3px; line-height:1.45}
+.bits .fa{background:#cfe0f5; color:#16365f}
+.bits .fb{background:#fbdcc3; color:#6d2f05}
+.bits .fl{background:#eef3f9; color:var(--ink2)}
+.bits .flip{background:var(--amber); color:#fff; font-weight:700; box-shadow:0 0 0 2px var(--amber)}
+.bits .cutl{margin-left:3px; box-shadow:-3px 0 0 -1px var(--ink)}
+.keyline{display:flex; flex-wrap:wrap; gap:4px 14px; font-size:12.5px; color:var(--muted); margin:2px 0 6px}
+.keyline i{display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:5px; vertical-align:-2px}
+
+/* ---- chart, best, population ---- */
+.legend{display:flex; flex-wrap:wrap; gap:4px 16px; font-size:13px; color:var(--ink2); margin-top:6px}
+.legend i{display:inline-block; width:18px; height:4px; border-radius:2px; margin-right:6px; vertical-align:3px}
+.legend i.dash{background:repeating-linear-gradient(90deg,var(--good) 0 5px,transparent 5px 8px)}
+.chartbar{display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:8px}
+.bestcard .packed{display:flex; flex-wrap:wrap; gap:5px; margin:6px 0 10px}
+.tag{display:inline-block; font-size:13px; font-weight:600; color:var(--accent); background:var(--accent-soft); border-radius:6px; padding:1px 9px}
+.tag.out{color:var(--muted); background:#fff; border:1px solid var(--line); font-weight:400}
+.kv{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px}
+.kv .stat{display:flex; flex-direction:column; align-items:flex-start; gap:0; padding:4px 10px}
+.kv .stat b{margin-left:0}
+.kv .stat.wide{grid-column:span 3}
+.truebox{margin-top:10px; padding:8px 11px; background:var(--good-bg); border:1px solid #bde5c9; border-radius:6px; font-size:14px}
+.truebox.neutral{background:#fff; border-color:var(--line)}
+.popbox{overflow:auto; max-height:520px; border:1px solid var(--line); border-radius:6px; background:#fff; padding:6px 8px}
+.pg-row{display:grid; grid-template-columns:var(--cols); align-items:center; gap:0; padding:1px 0; border-radius:4px}
+.pg-row.head{position:sticky; top:-6px; background:#fff; z-index:1; border-bottom:1px solid var(--line); padding-bottom:3px; margin-bottom:2px}
+.pg-row .id{font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums}
+.pg-row .fit{font-size:14px; text-align:right; font-variant-numeric:tabular-nums; padding-right:10px; font-weight:600}
+.pg-row .tg{font-size:12px; font-weight:700; padding-left:6px}
+.pg-row .gh{font-size:10.5px; color:var(--muted); text-align:center}
+.pg-row .g{height:var(--ch); margin:1px; border-radius:3px; text-align:center; font-size:11px; line-height:var(--ch); font-family:var(--mono)}
+.pg-row .g1{background:var(--accent); color:#fff}
+.pg-row .g0{background:#e9eff6; color:#9fb0c2}
+.pg-row.par{background:var(--amber-soft)}
+.pg-row.par .id{color:var(--amber); font-weight:700}
+.pg-row.elite{background:var(--good-bg)} .pg-row.elite .tg{color:var(--good)}
+.pg-row.child .tg{color:var(--accent)}
+.pg-row.parent .tg{color:var(--amber)}
+.pg-row.bestrow .fit{color:var(--good)}
+
+/* ---- results table ---- */
+table.res{width:100%; border-collapse:collapse; font-size:14px; font-variant-numeric:tabular-nums; background:#fff}
+table.res th{background:var(--accent); color:#fff; font-weight:600; text-align:right; padding:5px 9px; white-space:nowrap}
+table.res th:first-child, table.res td:first-child{text-align:left}
+table.res td{padding:3px 9px; border-bottom:1px solid var(--line); text-align:right; white-space:nowrap}
+table.res tr.sum td{background:var(--panel2); font-weight:700; border-bottom:1px solid var(--edge)}
+table.res tr.sum.last td{border-bottom:2px solid var(--edge)}
+table.res td.lab{font-weight:600; color:var(--navy)}
+.restable{max-height:420px; overflow:auto; border:1px solid var(--line); border-radius:6px}
+
+/* ---- grid demo ---- */
+.gridcell{min-width:96px}
+table.gd{border-collapse:collapse; background:#fff; font-variant-numeric:tabular-nums}
+table.gd th{background:var(--panel2); padding:6px 12px; font-size:14px; color:var(--navy); border:1px solid var(--line)}
+table.gd th.corner{font-size:12px; color:var(--muted); font-weight:400; text-align:left; line-height:1.3}
+table.gd td{padding:8px 14px; text-align:center; border:1px solid var(--line); font-size:18px; font-weight:700}
+table.gd td small{display:block; font-size:12px; font-weight:400; color:var(--ink2)}
+table.gd td.best{outline:3px solid var(--good); outline-offset:-3px}
+.gdform{display:grid; grid-template-columns:auto minmax(0,1fr); gap:8px 10px; align-items:center; max-width:640px}
+.gdform label{font-size:14px; font-weight:600; color:var(--ink2)}
+.gdform .pair{display:flex; gap:8px}
+.gdform .pair select{width:310px} .gdform .pair input{flex:1; min-width:0; font-family:var(--mono)}
+.foot{font-size:13px; color:var(--muted); margin:8px 0 0}
+.toast{position:fixed; right:18px; bottom:18px; background:var(--navy); color:#fff; padding:8px 14px; border-radius:8px; font-size:14px; opacity:0; transition:opacity .2s; pointer-events:none; z-index:80}
+.toast.show{opacity:.95}
+#selftest:empty{display:none}
+#selftest{margin-top:22px; font-family:var(--mono); font-size:11.5px; color:var(--muted); white-space:pre-wrap; border-top:1px dashed var(--line); padding-top:10px}
+@media (max-width:700px){header.top{position:static; padding:10px 16px} .wrap{padding:14px 16px 40px} .seg button{padding:7px 9px}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1>GA Explorer — Genetic Algorithm<span>SE 600 · Decision Making and Optimization</span></h1>
+  <div class="spacer"></div>
+  <nav class="jump" aria-label="Areas of this page">
+    <a href="#sec-problem"><b>1</b>Problem</a><a href="#sec-formula"><b>2</b>Fitness formula</a><a href="#sec-settings"><b>3</b>Settings</a><a href="#sec-run"><b>4</b>Run and Step</a><a href="#sec-results"><b>5</b>Results</a>
+  </nav>
+</header>
+
+<div class="wrap">
+
+  <div class="row two">
+    <!-- 1. PROBLEM -->
+    <section class="card" id="sec-problem">
+      <h2><b>1</b>Problem</h2>
+      <div class="seg quad" id="probSeg" role="group" aria-label="Choose a problem">
+        <button data-p="backpack">Backpack (6 items)</button>
+        <button data-p="camping">Camping trip (12 items)</button>
+        <button data-p="expedition">Expedition (40 items)</button>
+        <button data-p="custom">Custom (paste)</button>
+      </div>
+      <p class="note" id="probNote"></p>
+      <div id="customBox" hidden>
+        <div class="sub" style="margin-top:10px">Paste from Excel <span class="grow"></span><button class="small primary" id="btnUseItems">Use these items</button></div>
+        <textarea class="paste" id="pasteArea" spellcheck="false" aria-label="Items: name, weight, value, price"></textarea>
+        <div class="hint" id="pasteMsg">One item per line: name, weight, value, price. Tab or comma separated; the price column is optional.</div>
+      </div>
+      <div class="tablebox"><table class="items" id="itemTable"></table></div>
+      <p class="totals" id="itemTotals"></p>
+    </section>
+
+    <!-- 2. FITNESS FORMULA -->
+    <section class="card" id="sec-formula">
+      <h2><b>2</b>Fitness formula</h2>
+      <div class="fwrap"><span class="eq">fitness =</span>
+        <input type="text" class="formula" id="formula" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Fitness formula">
+        <button class="small" id="btnDefaultF" title="Put back the formula this problem starts with">Default</button></div>
+      <div class="fstatus" id="fstatus"></div>
+      <div id="ferrline"></div>
+      <div class="cheat" id="cheat">
+        <span>Totals of the packed items:</span>
+        <button class="chipk kV" data-ins="VALUE">VALUE</button><button class="chipk kW" data-ins="WEIGHT">WEIGHT</button><button class="chipk kP" data-ins="PRICE">PRICE</button><button class="chipk kC" data-ins="COUNT">COUNT</button><button class="chipk kI" data-ins="ITEM(1)">ITEM(k)</button>
+        <span>· functions:</span>
+        <button class="chipk" data-ins="MAX(0, )">MAX</button><button class="chipk" data-ins="MIN(, )">MIN</button><button class="chipk" data-ins="IF(, , )">IF</button><button class="chipk" data-ins="ABS()">ABS</button><button class="chipk" data-ins="AND(, )">AND</button><button class="chipk" data-ins="OR(, )">OR</button>
+        <span>· + − * / ^ ( ) &lt; &lt;= &gt; &gt;= = &lt;&gt;</span>
+      </div>
+      <div class="colorf" id="colorf"></div>
+
+      <div class="sub">The same fitness as a PyGAD function <span class="grow"></span><button class="small" id="btnCopyPy">Copy Python</button></div>
+      <pre class="code" id="pyfit"></pre>
+
+      <div class="sub">Test a packing — tick items and check your formula by hand <span class="grow"></span>
+        <button class="link" id="packClear">Clear</button><button class="link" id="packAll">All</button><button class="link" id="packBest">GA best</button></div>
+      <div class="packstrip" id="packstrip"></div>
+      <div class="readout" id="packread"></div>
+      <div class="sub-line" id="packsub"></div>
+    </section>
+  </div>
+
+  <div class="row two">
+    <!-- 3. SETTINGS -->
+    <section class="card" id="sec-settings">
+      <h2><b>3</b>Settings</h2>
+      <div class="sgrid">
+        <div class="field"><label for="sPop">Population size</label><code>sol_per_pop</code><input type="number" id="sPop" min="2" max="1000" step="1"></div>
+        <div class="field"><label for="sGens">Generations</label><code>num_generations</code><input type="number" id="sGens" min="1" max="5000" step="1"></div>
+        <div class="field"><label for="sPar">Parents per generation</label><code>num_parents_mating</code><input type="number" id="sPar" min="1" step="1"></div>
+        <div class="field"><label for="sSel">Parent selection</label><code>parent_selection_type</code>
+          <select id="sSel"><option value="sss">sss</option><option value="tournament">tournament</option><option value="rws">rws</option><option value="random">random</option></select></div>
+        <div class="field" id="fK"><label for="sK">Tournament size</label><code>K_tournament</code><input type="number" id="sK" min="1" step="1"></div>
+        <div class="field"><label for="sX">Crossover</label><code>crossover_type</code>
+          <select id="sX"><option value="single_point">single_point</option><option value="two_points">two_points</option><option value="uniform">uniform</option></select></div>
+        <div class="field"><label for="sMut">Mutation: % of genes</label><code>mutation_percent_genes</code><input type="number" id="sMut" min="0.1" max="100" step="any"></div>
+        <div class="field"><label for="sEl">Elitism: best kept</label><code>keep_elitism</code><input type="number" id="sEl" min="0" step="1"></div>
+        <div class="field"><label for="sSeed">Random seed</label><code>random_seed</code><input type="number" id="sSeed" min="0" step="1"></div>
+      </div>
+      <div class="derived" id="derived"></div>
+      <div id="cfgwarn"></div>
+      <details class="fold" id="pyCall">
+        <summary>Show the matching pygad.GA(...) call</summary>
+        <div class="sub" style="margin-top:8px"><span class="grow"></span><button class="small" id="btnCopyCall">Copy call</button></div>
+        <pre class="code" id="pycall"></pre>
+      </details>
+    </section>
+
+    <!-- 4. RUN AND STEP -->
+    <section class="card" id="sec-run">
+      <h2><b>4</b>Run and Step</h2>
+      <div class="btnrow">
+        <button class="primary" id="btnRun">Run</button>
+        <button class="primary" id="btnStep">Step</button>
+        <button id="btnReset">Reset</button>
+        <span class="vr"></span>
+        <button id="btnSeeds" title="Seeds 1 to 5 (or the current seed and the next four), same settings">Run 5 seeds</button>
+        <button id="btnTrue" title="Check every possible packing with the current formula">True best</button>
+        <button id="btnGridToggle" aria-expanded="false" title="Instructor demo">Grid demo ▾</button>
+      </div>
+      <div class="status" id="status"></div>
+      <div class="stages" id="stages"></div>
+      <div class="stagebox" id="stagebox"></div>
+    </section>
+  </div>
+
+  <!-- 5. RESULTS -->
+  <section class="card" id="sec-results" style="margin-bottom:18px">
+    <h2><b>5</b>Results</h2>
+    <div class="row res" style="margin-bottom:0">
+      <div>
+        <div class="sub">Convergence — fitness per generation</div>
+        <svg id="chart" viewBox="0 0 660 272" aria-label="Convergence chart: best and mean fitness per generation"></svg>
+        <div class="legend" id="chartLegend"></div>
+        <div class="chartbar">
+          <button class="small" id="btnKeep" title="Leave this curve on the chart, faintly, while you change a setting">Keep this curve</button>
+          <button class="small" id="btnClearCurves">Clear</button>
+          <span class="hint" style="margin:0" id="keepHint">Changing a setting starts a fresh run — keep the curve first to compare.</span>
+        </div>
+      </div>
+      <div class="bestcard" id="bestcard"></div>
+    </div>
+
+    <div class="sub" style="margin-top:18px"><span id="popTitle">Population</span><span class="grow"></span>
+      <span class="hint" style="margin:0">rows sorted by fitness · 1 = packed (blue) · 0 = left out</span></div>
+    <div class="popbox" id="popbox"></div>
+
+    <div class="sub" style="margin-top:18px">Results of multi-seed runs <span class="grow"></span>
+      <button class="small" id="btnCopyTable">Copy table</button><button class="small" id="btnClearTable">Clear table</button></div>
+    <div class="restable" id="restable"></div>
+    <p class="hint" id="tableHint">Press “Run 5 seeds” to add rows. Each setting gets a mean and a standard deviation (n − 1) row. The table is cleared when the problem or the formula changes.</p>
+  </section>
+
+  <!-- GRID DEMO (instructor) -->
+  <section class="card" id="sec-grid" hidden style="margin-bottom:18px">
+    <h2>Grid demo — instructor</h2>
+    <div class="gdform">
+      <label for="gdRow">Rows</label>
+      <div class="pair"><select id="gdRow"></select><input type="text" id="gdRowVals" aria-label="Row values"></div>
+      <label for="gdCol">Columns</label>
+      <div class="pair"><select id="gdCol"></select><input type="text" id="gdColVals" aria-label="Column values"></div>
+      <span></span>
+      <div class="btnrow" style="margin:0"><button class="primary" id="btnGridRun">Run grid</button><span class="hint" id="gdMsg" style="margin:0"></span></div>
+    </div>
+    <p class="hint">Every cell runs 5 seeds (the current seed and the next four) on the current problem, formula and the other settings; the table shows the mean best fitness. Values are comma-separated.</p>
+    <div id="gdOut" style="margin-top:10px; overflow-x:auto"></div>
+  </section>
+
+  <p class="foot">Same rules as PyGAD; different random numbers, so values differ slightly from a Colab run. Operators follow PyGAD 3.9.2 for 0/1 genes (<span class="mono">gene_space=[0, 1]</span>, <span class="mono">gene_type=int</span>, <span class="mono">mutation_type="random"</span>).</p>
+  <div id="selftest"></div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script id="core">
+// =====================================================================
+//  GA Explorer - core logic (no DOM). Plain functions, one per idea.
+//  The GA follows PyGAD 3.9.2 for binary genes: gene_space=[0, 1],
+//  gene_type=int, crossover_probability=None, mutation_type="random",
+//  keep_parents default (-1), random_seed as given.
+// =====================================================================
+
+// ---------- seeded random numbers (same seed -> same run) ----------
+function makeRng(seed) {
+  let a = (Math.imul((seed >>> 0) ^ 0x9E3779B9, 0x85EBCA6B) >>> 0) || 1;
+  const next = function () {                      // mulberry32, returns [0, 1)
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  next(); next(); next();                         // warm up so small seeds do not look alike
+  const rng = { next };
+  rng.int = function (lo, hi) { return lo + Math.floor(next() * (hi - lo)); };   // lo .. hi-1, like numpy randint
+  rng.sample = function (n, k) {                  // k different numbers from 0..n-1, like random.sample(range(n), k)
+    const pool = new Array(n);
+    for (let i = 0; i < n; i++) pool[i] = i;
+    const out = [];
+    for (let i = 0; i < k; i++) {
+      const j = i + Math.floor(next() * (n - i));
+      const t = pool[i]; pool[i] = pool[j]; pool[j] = t;
+      out.push(pool[i]);
+    }
+    return out;
+  };
+  return rng;
+}
+
+// =====================================================================
+//  1. Fitness formula - tokenizer, recursive-descent parser, compiler
+//     (no eval, no Function: the formula is only ever walked as a tree)
+// =====================================================================
+const TOTAL_NAMES = ["VALUE", "WEIGHT", "PRICE", "COUNT"];
+const FUNC_INFO = {
+  MAX:  { min: 1, usage: "MAX(a, b, ...)" },
+  MIN:  { min: 1, usage: "MIN(a, b, ...)" },
+  IF:   { exact: 3, usage: "IF(condition, value_if_true, value_if_false)" },
+  ABS:  { exact: 1, usage: "ABS(x)" },
+  AND:  { min: 1, usage: "AND(a, b, ...)" },
+  OR:   { min: 1, usage: "OR(a, b, ...)" },
+  ITEM: { exact: 1, usage: "ITEM(k)" },
+};
+const ALIASES = {
+  VALUES: "VALUE", WEIGHTS: "WEIGHT", PRICES: "PRICE", COST: "PRICE", COSTS: "PRICE", BUDGET: "PRICE",
+  WT: "WEIGHT", VAL: "VALUE", NUMBER: "COUNT", COUNTS: "COUNT", ITEMS: "ITEM", MAXIMUM: "MAX", MINIMUM: "MIN",
+};
+
+class FormulaError extends Error {
+  constructor(message, pos, len) { super(message); this.pos = pos == null ? 0 : pos; this.len = len == null ? 1 : len; }
+}
+class EvalFault extends Error {
+  constructor(code, message) { super(message); this.code = code; }
+}
+
+function editDistance(a, b) {
+  const m = a.length, n = b.length;
+  let prev = Array.from({ length: n + 1 }, (_, j) => j);
+  for (let i = 1; i <= m; i++) {
+    const cur = [i];
+    for (let j = 1; j <= n; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    prev = cur;
+  }
+  return prev[n];
+}
+
+function suggestName(word) {
+  const up = word.toUpperCase();
+  if (ALIASES[up]) return ALIASES[up];
+  const all = TOTAL_NAMES.concat(Object.keys(FUNC_INFO));
+  let best = null, bestD = 99;
+  for (const cand of all) {
+    const d = editDistance(up, cand);
+    if (d < bestD) { bestD = d; best = cand; }
+  }
+  const limit = up.length <= 3 ? 1 : 2;
+  return bestD <= limit ? best : null;
+}
+
+const UNI = { "−": "-", "–": "-", "—": "-", "×": "*", "·": "*", "÷": "/", "≤": "<=", "≥": ">=", "≠": "<>", ";": "," };
+
+function tokenize(src) {
+  const toks = [];
+  let i = 0;
+  const n = src.length;
+  while (i < n) {
+    const ch = src[i];
+    if (/\s/.test(ch)) { i++; continue; }
+    let m;
+    if ((m = /^(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?/.exec(src.slice(i)))) {
+      toks.push({ k: "num", text: m[0], pos: i, end: i + m[0].length, v: parseFloat(m[0]) });
+      i += m[0].length; continue;
+    }
+    if ((m = /^[A-Za-z_][A-Za-z_0-9]*/.exec(src.slice(i)))) {
+      toks.push({ k: "name", text: m[0], pos: i, end: i + m[0].length, up: m[0].toUpperCase() });
+      i += m[0].length; continue;
+    }
+    const two = src.slice(i, i + 2);
+    if (two === "==") throw new FormulaError('Use a single = for "equals" (as in Excel), not ==.', i, 2);
+    if (two === "!=") throw new FormulaError('Use <> for "not equal" (as in Excel), not !=.', i, 2);
+    if (two === "**") throw new FormulaError("Use ^ for powers (as in Excel), not **.", i, 2);
+    if (two === "&&" || two === "||") throw new FormulaError("Use AND(a, b) or OR(a, b) instead of " + two + ".", i, 2);
+    if (two === "<=" || two === ">=" || two === "<>") { toks.push({ k: "op", op: two, text: two, pos: i, end: i + 2 }); i += 2; continue; }
+    if (UNI[ch] !== undefined) {
+      const op = UNI[ch];
+      toks.push({ k: op === "," ? "," : "op", op, text: ch, pos: i, end: i + 1 });
+      i++; continue;
+    }
+    if ("+-*/^<>=".indexOf(ch) >= 0) { toks.push({ k: "op", op: ch, text: ch, pos: i, end: i + 1 }); i++; continue; }
+    if (ch === "(" || ch === ")" || ch === ",") { toks.push({ k: ch, text: ch, pos: i, end: i + 1 }); i++; continue; }
+    if (ch === "%") throw new FormulaError("The % sign is not available. Write the number as a decimal (for example 0.1 for 10%).", i, 1);
+    if (ch === "!") throw new FormulaError("There is no ! operator. Use <> for \"not equal\".", i, 1);
+    throw new FormulaError('Unexpected character "' + ch + '".', i, 1);
+  }
+  return toks;
+}
+
+// grammar (Excel precedence, low to high):
+//   comparison  <  +,-  <  *,/  <  ^  <  unary minus  <  atom
+function parseFormula(text, nItems) {
+  let src = String(text).replace(/ /g, " ");
+  let lead = 0;
+  const lm = /^\s*=/.exec(src);                       // Excel habit: a leading = is allowed
+  if (lm) { src = src.slice(0, lm[0].length - 1).replace(/./g, " ") + " " + src.slice(lm[0].length); lead = lm[0].length; }
+  if (!src.trim()) return { ok: false, error: { message: "Type a formula, for example  VALUE - 10*MAX(0, WEIGHT - 15)", pos: 0, len: 0 }, tokens: [] };
+  let toks = [];
+  try { toks = tokenize(src); }
+  catch (e) {
+    if (e instanceof FormulaError) return { ok: false, error: { message: e.message, pos: e.pos, len: e.len }, tokens: [] };
+    throw e;
+  }
+  let p = 0;
+  const peek = () => toks[p];
+  const at = (k, op) => p < toks.length && toks[p].k === k && (op === undefined || toks[p].op === op);
+  const endPos = src.replace(/\s+$/, "").length;
+
+  function fail(msg, tok) {
+    if (tok) throw new FormulaError(msg, tok.pos, tok.end - tok.pos);
+    throw new FormulaError(msg, endPos, 1);
+  }
+  function describe(tok) {
+    if (!tok) return "the end of the formula";
+    return '"' + tok.text + '"';
+  }
+
+  function parseCmp() {
+    let a = parseAdd();
+    while (at("op") && ["<", "<=", ">", ">=", "=", "<>"].indexOf(peek().op) >= 0) {
+      const op = toks[p++].op;
+      if (p >= toks.length) fail('The formula ends after "' + op + '" - something is missing on its right.', toks[p - 1]);
+      const b = parseAdd();
+      a = { t: "cmp", op, a, b };
+    }
+    return a;
+  }
+  function parseAdd() {
+    let a = parseMul();
+    while (at("op") && (peek().op === "+" || peek().op === "-")) {
+      const op = toks[p++].op;
+      if (p >= toks.length) fail('The formula ends after "' + op + '" - something is missing on its right.', toks[p - 1]);
+      const b = parseMul();
+      a = { t: "bin", op, a, b };
+    }
+    return a;
+  }
+  function parseMul() {
+    let a = parsePow();
+    while (at("op") && (peek().op === "*" || peek().op === "/")) {
+      const op = toks[p++].op;
+      if (p >= toks.length) fail('The formula ends after "' + op + '" - something is missing on its right.', toks[p - 1]);
+      const b = parsePow();
+      a = { t: "bin", op, a, b };
+    }
+    return a;
+  }
+  function parsePow() {                                // Excel: a^b^c = (a^b)^c, and -2^2 = 4
+    let a = parseUnary();
+    while (at("op", "^")) {
+      p++;
+      if (p >= toks.length) fail('The formula ends after "^" - something is missing on its right.', toks[p - 1]);
+      const b = parseUnary();
+      a = { t: "bin", op: "^", a, b };
+    }
+    return a;
+  }
+  function parseUnary() {
+    if (at("op", "-")) {
+      const t = toks[p++];
+      if (p >= toks.length) fail('The formula ends after "-" - something is missing.', t);
+      return { t: "neg", a: parseUnary() };
+    }
+    if (at("op", "+")) {
+      const t = toks[p++];
+      if (p >= toks.length) fail('The formula ends after "+" - something is missing.', t);
+      return parseUnary();
+    }
+    return parseAtom();
+  }
+  function parseAtom() {
+    const t = peek();
+    if (!t) fail("The formula ends too early - it needs a number or a name at the end.");
+    if (t.k === "num") { p++; return { t: "num", v: t.v, raw: t.text }; }
+    if (t.k === "(") {
+      p++;
+      if (at(")")) fail("Empty brackets - put something between ( and ).", t);
+      const e = parseCmp();
+      if (!at(")")) {
+        if (p >= toks.length) fail("Missing ) - the bracket opened at character " + (t.pos + 1) + " is never closed.", t);
+        fail("Expected ) but found " + describe(peek()) + " - the bracket opened at character " + (t.pos + 1) + " is not closed yet.", peek());
+      }
+      p++;
+      return e;
+    }
+    if (t.k === "name") {
+      p++;
+      const hasCall = at("(");
+      const up = t.up;
+      if (TOTAL_NAMES.indexOf(up) >= 0) {
+        if (hasCall) fail(up + " is a total of the packed items - write " + up + " without brackets.", t);
+        return { t: "name", name: up };
+      }
+      if (FUNC_INFO[up]) {
+        if (!hasCall) {
+          if (up === "ITEM") fail("ITEM needs an item number: ITEM(1) is 1 when item 1 is packed, otherwise 0.", t);
+          fail(up + " is a function - write it with brackets, like " + FUNC_INFO[up].usage + ".", t);
+        }
+        p++;                                           // (
+        const args = [];
+        if (at(")")) fail(up + " needs inputs: " + FUNC_INFO[up].usage + ".", t);
+        for (;;) {
+          if (p >= toks.length) fail("Missing ) - the bracket of " + up + "( is never closed.", t);
+          if (at(")") || at(",")) fail("An input is missing inside " + up + "( ... ) - check the commas.", peek());
+          args.push(parseCmp());
+          if (at(",")) { p++; continue; }
+          if (at(")")) { p++; break; }
+          if (p >= toks.length) fail("Missing ) - the bracket of " + up + "( is never closed.", t);
+          fail("Expected a comma or ) inside " + up + "( ... ) but found " + describe(peek()) + ".", peek());
+        }
+        const info = FUNC_INFO[up];
+        if (info.exact !== undefined && args.length !== info.exact) {
+          fail(up + " needs " + info.exact + " input" + (info.exact > 1 ? "s" : "") + ", written " + info.usage + " - you gave " + args.length + ".", t);
+        }
+        if (info.min !== undefined && args.length < info.min) fail(up + " needs at least " + info.min + " input: " + info.usage + ".", t);
+        if (up === "ITEM") {
+          const k = constFold(args[0]);
+          if (k === null) fail("ITEM needs a plain item number, such as ITEM(3).", t);
+          if (Math.floor(k) !== k) fail("ITEM(" + trimNum(k) + ") - the item number must be a whole number.", t);
+          if (nItems != null && (k < 1 || k > nItems)) {
+            if (k < 1) fail("Items are numbered from 1, so ITEM(" + trimNum(k) + ") does not exist (use 1 to " + nItems + ").", t);
+            fail("ITEM(" + trimNum(k) + ") does not exist - there are only " + nItems + " items (use 1 to " + nItems + ").", t);
+          }
+          return { t: "item", k };
+        }
+        return { t: "call", fn: up, args };
+      }
+      // unknown word
+      const sug = suggestName(t.text);
+      if (hasCall) fail("Unknown function " + t.text.toUpperCase() + (sug ? " - did you mean " + sug + "?" : ". Functions you can use: MAX, MIN, IF, ABS, AND, OR, ITEM."), t);
+      fail("Unknown name " + t.text.toUpperCase() + (sug ? " - did you mean " + sug + "?" : ". Names you can use: VALUE, WEIGHT, PRICE, COUNT, ITEM(k)."), t);
+    }
+    if (t.k === ")") fail("Extra ) - there is no ( to match it.", t);
+    if (t.k === ",") fail("A comma can only be used inside a function, like MAX(a, b).", t);
+    if (t.k === "op") {
+      const prev = toks[p - 1];
+      if (prev && prev.k === "op") fail('Two operators in a row: "' + prev.text + '" and then "' + t.text + '" - a number or name is missing between them.', t);
+      fail('"' + t.text + '" needs a number or name before it.', t);
+    }
+    fail("Unexpected " + describe(t) + ".", t);
+  }
+
+  try {
+    const ast = parseCmp();
+    if (p < toks.length) {
+      const t = peek();
+      if (t.k === ")") fail("Extra ) - there is no ( to match it.", t);
+      if (t.k === ",") fail("A comma can only be used inside a function, like MAX(a, b).", t);
+      if (t.k === "num" || t.k === "name" || t.k === "(") fail("Something is missing before " + describe(t) + " - did you forget an operator such as + - * / ?", t);
+      fail("Unexpected " + describe(t) + ".", t);
+    }
+    const used = new Set();
+    let usesItem = false;
+    (function walk(n) {
+      if (n.t === "name") used.add(n.name);
+      else if (n.t === "item") usesItem = true;
+      else if (n.t === "neg") walk(n.a);
+      else if (n.t === "bin" || n.t === "cmp") { walk(n.a); walk(n.b); }
+      else if (n.t === "call") n.args.forEach(walk);
+    })(ast);
+    return { ok: true, ast, tokens: toks, used, usesItem, src, lead };
+  } catch (e) {
+    if (e instanceof FormulaError) return { ok: false, error: { message: e.message, pos: e.pos, len: e.len }, tokens: toks };
+    throw e;
+  }
+}
+
+function trimNum(v) { return String(Math.round(v * 1e6) / 1e6); }
+
+function constFold(n) {                                   // value of a constant expression, or null
+  if (n.t === "num") return n.v;
+  if (n.t === "neg") { const a = constFold(n.a); return a === null ? null : -a; }
+  if (n.t === "bin") {
+    const a = constFold(n.a), b = constFold(n.b);
+    if (a === null || b === null) return null;
+    switch (n.op) {
+      case "+": return a + b; case "-": return a - b; case "*": return a * b;
+      case "/": return b === 0 ? null : a / b; case "^": return Math.pow(a, b);
+    }
+  }
+  return null;
+}
+
+// compile the tree to nested closures: c = { V, W, P, C, x }
+function compileFormula(ast) {
+  function chk(v) {
+    if (!isFinite(v)) throw new EvalFault("num", "The formula gives a result that is not a number (for example a power or a root of a negative number).");
+    return v;
+  }
+  function build(n) {
+    switch (n.t) {
+      case "num": { const v = n.v; return () => v; }
+      case "name":
+        switch (n.name) {
+          case "VALUE": return c => c.V;
+          case "WEIGHT": return c => c.W;
+          case "PRICE": return c => c.P;
+          default: return c => c.C;
+        }
+      case "item": { const i = n.k - 1; return c => c.x[i]; }
+      case "neg": { const a = build(n.a); return c => -a(c); }
+      case "bin": {
+        const a = build(n.a), b = build(n.b);
+        switch (n.op) {
+          case "+": return c => a(c) + b(c);
+          case "-": return c => a(c) - b(c);
+          case "*": return c => a(c) * b(c);
+          case "/": return c => {
+            const d = b(c);
+            if (d === 0) throw new EvalFault("div0", "The formula divides by zero for some packings.");
+            return a(c) / d;
+          };
+          default: return c => chk(Math.pow(a(c), b(c)));
+        }
+      }
+      case "cmp": {
+        const a = build(n.a), b = build(n.b);
+        switch (n.op) {
+          case "<": return c => (a(c) < b(c) ? 1 : 0);
+          case "<=": return c => (a(c) <= b(c) ? 1 : 0);
+          case ">": return c => (a(c) > b(c) ? 1 : 0);
+          case ">=": return c => (a(c) >= b(c) ? 1 : 0);
+          case "=": return c => (a(c) === b(c) ? 1 : 0);
+          default: return c => (a(c) !== b(c) ? 1 : 0);
+        }
+      }
+      case "call": {
+        const args = n.args.map(build);
+        switch (n.fn) {
+          case "MAX": return c => { let m = -Infinity; for (let i = 0; i < args.length; i++) { const v = args[i](c); if (v > m) m = v; } return m; };
+          case "MIN": return c => { let m = Infinity; for (let i = 0; i < args.length; i++) { const v = args[i](c); if (v < m) m = v; } return m; };
+          case "ABS": return c => Math.abs(args[0](c));
+          case "IF": return c => (args[0](c) !== 0 ? args[1](c) : args[2](c));
+          case "AND": return c => { for (let i = 0; i < args.length; i++) if (args[i](c) === 0) return 0; return 1; };
+          default: return c => { for (let i = 0; i < args.length; i++) if (args[i](c) !== 0) return 1; return 0; };
+        }
+      }
+    }
+    throw new Error("unknown node " + n.t);
+  }
+  const f = build(ast);
+  return c => chk(f(c));
+}
+
+function packingTotals(items, x) {
+  let V = 0, W = 0, P = 0, C = 0;
+  for (let i = 0; i < items.length; i++) if (x[i]) { V += items[i].v; W += items[i].w; P += items[i].p; C++; }
+  return { V, W, P, C };
+}
+
+// fitness(x) for a 0/1 array x, from a compiled formula
+function makeFitnessFn(items, compiled) {
+  const n = items.length;
+  const v = items.map(it => it.v), w = items.map(it => it.w), pr = items.map(it => it.p);
+  const ctx = { V: 0, W: 0, P: 0, C: 0, x: null };
+  return function (x) {
+    let V = 0, W = 0, P = 0, C = 0;
+    for (let i = 0; i < n; i++) if (x[i]) { V += v[i]; W += w[i]; P += pr[i]; C++; }
+    ctx.V = V; ctx.W = W; ctx.P = P; ctx.C = C; ctx.x = x;
+    return compiled(ctx);
+  };
+}
+
+// the formula with the totals written in as numbers (for checking by hand)
+function substituteFormula(parsed, ctx) {
+  const toks = parsed.tokens, src = parsed.src;
+  let out = "", last = 0;
+  for (let i = 0; i < toks.length; i++) {
+    const t = toks[i];
+    out += src.slice(last, t.pos);
+    last = t.end;
+    if (t.k === "name" && TOTAL_NAMES.indexOf(t.up) >= 0) {
+      out += String({ VALUE: ctx.V, WEIGHT: ctx.W, PRICE: ctx.P, COUNT: ctx.C }[t.up]);
+    } else if (t.k === "name" && t.up === "ITEM" && toks[i + 1] && toks[i + 1].k === "(" && toks[i + 2] && toks[i + 3] && toks[i + 3].k === ")" && toks[i + 2].k === "num") {
+      out += String(ctx.x[toks[i + 2].v - 1] ? 1 : 0);
+      i += 3; last = toks[i].end;
+    } else out += src.slice(t.pos, t.end);
+  }
+  return out.replace(/\s+/g, " ").trim();
+}
+
+// =====================================================================
+//  2. Python translation (a PyGAD fitness_func) with colour kinds
+//     segment kinds: V W P C (the four totals), I (ITEM), fn, num, op, txt, kw
+// =====================================================================
+const PY_PREC = { or: 2, and: 3, cmp: 5, add: 6, mul: 7, neg: 8, pow: 9, atom: 10 };
+
+function pyExpr(ast) {
+  // returns { segs, prec } ; segs = [ {t:text, k:kind} ]
+  const S = (t, k) => ({ t, k: k || "txt" });
+  const paren = (segs) => [S("(", "op")].concat(segs, [S(")", "op")]);
+  function need(r, minPrec) { return r.prec >= minPrec ? r.segs : paren(r.segs); }
+  function val(n) {                                      // printed as a number
+    switch (n.t) {
+      case "num": return { segs: [S(n.raw[0] === "." ? "0" + n.raw : n.raw, "num")], prec: PY_PREC.atom };
+      case "name": {
+        const m = { VALUE: ["numpy.sum(solution * values)", "V"], WEIGHT: ["numpy.sum(solution * weights)", "W"],
+                    PRICE: ["numpy.sum(solution * prices)", "P"], COUNT: ["numpy.sum(solution)", "C"] }[n.name];
+        return { segs: [S(m[0], m[1])], prec: PY_PREC.atom };
+      }
+      case "item": return { segs: [S("solution[" + (n.k - 1) + "]", "I")], prec: PY_PREC.atom };
+      case "neg": return { segs: [S("-", "op")].concat(need(val(n.a), PY_PREC.atom)), prec: PY_PREC.neg };
+      case "bin": {
+        const A = val(n.a), B = val(n.b);
+        if (n.op === "+" || n.op === "-") {
+          return { segs: need(A, PY_PREC.add).concat([S(" " + n.op + " ", "op")], need(B, PY_PREC.add + 1)), prec: PY_PREC.add };
+        }
+        if (n.op === "*" || n.op === "/") {
+          return { segs: need(A, PY_PREC.mul).concat([S(" " + n.op + " ", "op")], need(B, PY_PREC.mul + 1)), prec: PY_PREC.mul };
+        }
+        return { segs: need(A, PY_PREC.atom).concat([S("**", "op")], need(B, PY_PREC.neg)), prec: PY_PREC.pow };
+      }
+      case "cmp": return { segs: [S("int", "fn"), S("(", "op")].concat(cond(n).segs, [S(")", "op")]), prec: PY_PREC.atom };
+      case "call": {
+        if (n.fn === "AND" || n.fn === "OR") {
+          return { segs: [S("int", "fn"), S("(", "op"), S("bool", "fn"), S("(", "op")].concat(cond(n).segs, [S(")", "op"), S(")", "op")]), prec: PY_PREC.atom };
+        }
+        if (n.fn === "IF") {
+          const segs = [S("(", "op")].concat(need(val(n.args[1]), PY_PREC.or), [S(" if ", "kw")], need(cond(n.args[0]), PY_PREC.or),
+            [S(" else ", "kw")], need(val(n.args[2]), PY_PREC.or), [S(")", "op")]);
+          return { segs, prec: PY_PREC.atom };
+        }
+        const name = { MAX: "max", MIN: "min", ABS: "abs" }[n.fn];
+        let segs = [S(name, "fn"), S("(", "op")];
+        n.args.forEach((a, i) => { if (i) segs.push(S(", ", "op")); segs = segs.concat(val(a).segs); });
+        segs.push(S(")", "op"));
+        return { segs, prec: PY_PREC.atom };
+      }
+    }
+    throw new Error("bad node");
+  }
+  function cond(n) {                                     // printed as a yes/no test
+    if (n.t === "cmp") {
+      const op = n.op === "=" ? "==" : n.op === "<>" ? "!=" : n.op;
+      const A = n.a.t === "cmp" ? { segs: paren(cond(n.a).segs), prec: PY_PREC.atom } : val(n.a);
+      const B = n.b.t === "cmp" ? { segs: paren(cond(n.b).segs), prec: PY_PREC.atom } : val(n.b);
+      return { segs: need(A, PY_PREC.add).concat([S(" " + op + " ", "op")], need(B, PY_PREC.add)), prec: PY_PREC.cmp };
+    }
+    if (n.t === "call" && (n.fn === "AND" || n.fn === "OR")) {
+      const word = n.fn === "AND" ? "and" : "or";
+      const prec = n.fn === "AND" ? PY_PREC.and : PY_PREC.or;
+      let segs = [];
+      n.args.forEach((a, i) => {
+        if (i) segs.push(S(" " + word + " ", "kw"));
+        segs = segs.concat(need(cond(a), prec + 1));
+      });
+      return n.args.length === 1 ? cond(n.args[0]) : { segs, prec };
+    }
+    return val(n);
+  }
+  return { val, cond };
+}
+
+// flatten a chain of + and - at the top of the tree into terms
+function topTerms(ast) {
+  const terms = [];
+  (function go(n, sign) {
+    if (n.t === "bin" && (n.op === "+" || n.op === "-")) {
+      go(n.a, sign);
+      go(n.b, n.op === "-" ? -sign : sign);
+    } else terms.push({ n, sign });
+  })(ast, 1);
+  return terms;
+}
+
+function segsText(segs) { return segs.map(s => s.t).join(""); }
+
+// returns { lines: [ [seg, ...], ... ], text }
+function pythonFitness(parsed, items) {
+  const pe = pyExpr(parsed.ast);
+  const used = parsed.used;
+  const lines = [];
+  const S = (t, k) => ({ t, k: k || "txt" });
+  const push = (...segs) => lines.push(segs);
+  push(S("import numpy", "kw"));
+  push();
+  const arrays = [["V", "values", "values", "v"], ["W", "weights", "weights", "w"], ["P", "prices", "prices", "p"]];
+  const needed = arrays.filter(a => used.has({ V: "VALUE", W: "WEIGHT", P: "PRICE" }[a[0]]));
+  if (needed.length) {
+    push(S("# one number per item, in the same order as the item table", "cm"));
+    for (const a of needed) {
+      const nums = items.map(it => it[a[3]]);
+      const head = a[1] + " = numpy.array([";
+      const pad = " ".repeat(head.length);
+      let cur = head, first = true, rows = [];
+      nums.forEach((v, i) => {
+        const piece = String(v) + (i < nums.length - 1 ? ", " : "");
+        if (cur.length + piece.length > 84 && !first) { rows.push(cur.replace(/\s+$/, "")); cur = pad; first = true; }
+        cur += piece; first = false;
+      });
+      rows.push(cur + "])");
+      rows.forEach((r, ri) => {
+        if (ri === 0) push(S(r.slice(0, head.length - 0 - "numpy.array([".length), a[0]), S(r.slice(head.length - "numpy.array([".length), "txt"));
+        else push(S(r, "txt"));
+      });
+    }
+    push();
+  }
+  push(S("def ", "kw"), S("fitness_func", "fn"), S("(ga_instance, solution, solution_idx):", "txt"));
+  push(S("    # solution = a list of 0/1 genes, one gene per item (1 = packed)", "cm"));
+  if (parsed.usesItem) {
+    const ks = [];
+    (function w(n) {
+      if (n.t === "item") { if (ks.indexOf(n.k) < 0) ks.push(n.k); }
+      else if (n.t === "neg") w(n.a);
+      else if (n.t === "bin" || n.t === "cmp") { w(n.a); w(n.b); }
+      else if (n.t === "call") n.args.forEach(w);
+    })(parsed.ast);
+    ks.sort((a, b) => a - b);
+    const shown = ks.slice(0, 4).map(k => "ITEM(" + k + ") is solution[" + (k - 1) + "]").join(", ") + (ks.length > 4 ? ", ..." : "");
+    push(S("    # " + shown + " - Python counts from 0, so ITEM(k) becomes solution[k-1]", "cm"));
+  }
+  const terms = topTerms(parsed.ast);
+  const oneLine = [S("    fitness = ", "txt")].concat(pe.val(parsed.ast).segs);
+  if (terms.length > 1 && segsText(oneLine).length > 70) {
+    const first = S("    fitness = (", "txt");
+    const cont = "               ";
+    terms.forEach((tm, i) => {
+      const r = pe.val(tm.n);
+      let segs;
+      if (i === 0) {
+        segs = [first].concat(tm.sign < 0 ? [S("-", "op")].concat(need2(r)) : r.segs);
+      } else {
+        segs = [S(cont + (tm.sign < 0 ? "- " : "+ "), "op")].concat(need2(r, true));
+      }
+      if (i === terms.length - 1) segs.push(S(")", "txt"));
+      lines.push(segs);
+    });
+    function need2(r, isRight) {
+      return r.prec >= (isRight ? PY_PREC.mul : PY_PREC.neg) ? r.segs : [S("(", "op")].concat(r.segs, [S(")", "op")]);
+    }
+  } else {
+    lines.push(oneLine);
+  }
+  push(S("    return fitness", "txt"));
+  const text = lines.map(l => segsText(l)).join("\n");
+  return { lines, text };
+}
+
+// =====================================================================
+//  3. Settings (PyGAD names) and validation
+// =====================================================================
+const DEFAULT_CFG = { pop: 20, gens: 50, parents: 10, sel: "sss", K: 3, xover: "single_point", mutPct: 10, elite: 1, seed: 1 };
+const SEL_NAMES = { sss: "sss", tournament: "tournament", rws: "rws", random: "random" };
+const XOVER_NAMES = ["single_point", "two_points", "uniform"];
+
+function checkCfg(cfg, nGenes) {
+  const errors = [], notes = [];
+  const isInt = v => typeof v === "number" && isFinite(v) && Math.floor(v) === v;
+  if (!isInt(cfg.pop) || cfg.pop < 2) errors.push("sol_per_pop must be a whole number of at least 2.");
+  else if (cfg.pop > 1000) errors.push("sol_per_pop up to 1000 is allowed in this tool.");
+  if (!isInt(cfg.gens) || cfg.gens < 1) errors.push("num_generations must be a whole number of at least 1.");
+  else if (cfg.gens > 5000) errors.push("num_generations up to 5000 is allowed in this tool.");
+  if (!isInt(cfg.parents) || cfg.parents < 1) errors.push("num_parents_mating must be a whole number of at least 1.");
+  else if (isInt(cfg.pop) && cfg.parents > cfg.pop) errors.push("num_parents_mating cannot be larger than sol_per_pop (" + cfg.pop + ").");
+  if (cfg.sel === "tournament") {
+    if (!isInt(cfg.K) || cfg.K < 1) errors.push("K_tournament must be a whole number of at least 1.");
+    else if (isInt(cfg.pop) && cfg.K > cfg.pop) notes.push("K_tournament is larger than the population, so PyGAD uses K = " + cfg.pop + ".");
+  }
+  if (typeof cfg.mutPct !== "number" || !isFinite(cfg.mutPct) || cfg.mutPct <= 0 || cfg.mutPct > 100) errors.push("mutation_percent_genes must be above 0 and at most 100.");
+  if (!isInt(cfg.elite) || cfg.elite < 0) errors.push("keep_elitism must be 0 or a positive whole number.");
+  else if (isInt(cfg.pop) && cfg.elite > cfg.pop) errors.push("keep_elitism cannot be larger than sol_per_pop (" + cfg.pop + ").");
+  if (!isInt(cfg.seed) || cfg.seed < 0 || cfg.seed > 4294967295) errors.push("random_seed must be a whole number from 0 to 4294967295.");
+  return { ok: errors.length === 0, errors, notes };
+}
+
+function numOffspring(cfg) { return cfg.elite === 0 ? cfg.pop - cfg.parents : cfg.pop - cfg.elite; }
+function mutGenesFor(cfg, n) { return Math.max(1, Math.floor(cfg.mutPct * n / 100)); }
+
+function cfgLabel(cfg) {
+  const sel = cfg.sel === "tournament" ? "tournament k=" + Math.min(cfg.K, cfg.pop) : cfg.sel;
+  let s = sel + ", " + cfg.xover + ", " + trimNum(cfg.mutPct) + "%";
+  if (cfg.pop !== DEFAULT_CFG.pop) s += ", pop " + cfg.pop;
+  if (cfg.gens !== DEFAULT_CFG.gens) s += ", gens " + cfg.gens;
+  if (cfg.parents !== DEFAULT_CFG.parents) s += ", parents " + cfg.parents;
+  if (cfg.elite !== DEFAULT_CFG.elite) s += ", elite " + cfg.elite;
+  return s;
+}
+function cfgKey(cfg) {
+  return [cfg.pop, cfg.gens, cfg.parents, cfg.sel, cfg.sel === "tournament" ? Math.min(cfg.K, cfg.pop) : "-", cfg.xover, cfg.mutPct, cfg.elite].join("|");
+}
+// which settings differ (for the "what changed" label of a kept curve)
+function cfgDiff(a, b) {
+  const parts = [];
+  if (a.sel !== b.sel || (b.sel === "tournament" && a.K !== b.K)) parts.push(b.sel === "tournament" ? "tournament k=" + b.K : b.sel);
+  if (a.xover !== b.xover) parts.push(b.xover);
+  if (a.mutPct !== b.mutPct) parts.push("mutation " + trimNum(b.mutPct) + "%");
+  if (a.pop !== b.pop) parts.push("pop " + b.pop);
+  if (a.gens !== b.gens) parts.push("gens " + b.gens);
+  if (a.parents !== b.parents) parts.push("parents " + b.parents);
+  if (a.elite !== b.elite) parts.push("elite " + b.elite);
+  if (a.seed !== b.seed) parts.push("seed " + b.seed);
+  return parts;
+}
+
+function pyGadCall(cfg, n) {
+  const L = [];
+  L.push("import pygad");
+  L.push("");
+  L.push("ga_instance = pygad.GA(");
+  L.push("    num_generations=" + cfg.gens + ",");
+  L.push("    num_parents_mating=" + cfg.parents + ",");
+  L.push("    fitness_func=fitness_func,");
+  L.push("    sol_per_pop=" + cfg.pop + ",");
+  L.push("    num_genes=" + n + ",");
+  L.push("    gene_space=[0, 1],");
+  L.push("    gene_type=int,");
+  L.push('    parent_selection_type="' + cfg.sel + '",');
+  if (cfg.sel === "tournament") L.push("    K_tournament=" + cfg.K + ",");
+  L.push('    crossover_type="' + cfg.xover + '",');
+  L.push('    mutation_type="random",');
+  L.push("    mutation_percent_genes=" + trimNum(cfg.mutPct) + ",");
+  L.push("    keep_elitism=" + cfg.elite + ",");
+  L.push("    random_seed=" + cfg.seed + ",");
+  L.push(")");
+  L.push("ga_instance.run()");
+  L.push("solution, solution_fitness, solution_idx = ga_instance.best_solution()");
+  return L.join("\n");
+}
+
+// =====================================================================
+//  4. The GA engine (one function per PyGAD operator)
+// =====================================================================
+class GAFault extends Error {}
+
+function sortDesc(fit) {
+  // PyGAD: sorted(range(n), key=fitness) then reversed -> best first, ties: higher index first
+  const idx = fit.map((_, i) => i);
+  idx.sort((a, b) => (fit[a] - fit[b]) || (a - b));
+  idx.reverse();
+  return idx;
+}
+
+// roulette-wheel probabilities, as in PyGAD 3.9.2 fitness_selection_probabilities
+function rwsProbs(fit) {
+  const lowest = Math.min.apply(null, fit), highest = Math.max.apply(null, fit);
+  const total0 = fit.reduce((s, v) => s + v, 0);
+  if (lowest >= 0) {
+    if (total0 === 0) throw new GAFault("Roulette cannot run: every fitness is 0, so the wheel has no slices.");
+    return fit.map(v => v / total0);
+  }
+  const scale = Math.max(Math.abs(lowest), Math.abs(highest));
+  const w = fit.map(v => v / scale - lowest / scale);
+  const total = w.reduce((s, v) => s + v, 0);
+  if (total === 0) return fit.map(() => 1 / fit.length);
+  return w.map(v => v / total);
+}
+
+function selectParents(ga, trace) {
+  const cfg = ga.cfg, N = cfg.pop, P = cfg.parents, fit = ga.fit;
+  const rng = ga.rng;
+  let idx = [];
+  let info = { type: cfg.sel };
+  if (cfg.sel === "sss") {
+    idx = sortDesc(fit).slice(0, P);
+  } else if (cfg.sel === "random") {
+    for (let i = 0; i < P; i++) idx.push(rng.int(0, N));
+  } else if (cfg.sel === "tournament") {
+    const K = Math.min(cfg.K, N);
+    const order = sortDesc(fit);
+    const rank = new Array(N);
+    order.forEach((s, r) => { rank[s] = r; });
+    const draws = [];
+    for (let i = 0; i < P; i++) {
+      const cand = [];
+      for (let j = 0; j < K; j++) cand.push(rng.int(0, N));
+      let bi = 0;
+      for (let j = 1; j < K; j++) if (rank[cand[j]] < rank[cand[bi]]) bi = j;
+      idx.push(cand[bi]);
+      if (trace) draws.push({ cand, winner: cand[bi] });
+    }
+    info.draws = draws; info.K = K;
+  } else if (cfg.sel === "rws") {
+    const probs = rwsProbs(fit);
+    if (Math.min.apply(null, fit) <= 0) ga.rwsWarning = true;
+    // PyGAD lays the slices out in order of increasing probability
+    const order = probs.map((_, i) => i).sort((a, b) => (probs[a] - probs[b]) || (a - b));
+    const ends = [];
+    let cum = 0;
+    order.forEach(s => { cum += probs[s]; ends.push(cum); });
+    for (let i = 0; i < P; i++) {
+      const r = rng.next();
+      let pick = order[order.length - 1];
+      for (let j = 0; j < order.length; j++) if (r < ends[j]) { pick = order[j]; break; }
+      idx.push(pick);
+    }
+    info.probs = probs;
+  }
+  return { idx, info };
+}
+
+function crossoverStage(ga, parentsGenes, trace) {
+  const cfg = ga.cfg, n = ga.n, P = parentsGenes.length, m = ga.numOffspring, rng = ga.rng;
+  const kids = [], meta = [];
+  let cuts = null, cuts2 = null, masks = null;
+  if (cfg.xover === "single_point") {
+    cuts = []; for (let k = 0; k < m; k++) cuts.push(rng.int(0, n));
+  } else if (cfg.xover === "two_points") {
+    const a = [], b = [];
+    for (let k = 0; k < m; k++) a.push(rng.int(0, n + 1));
+    for (let k = 0; k < m; k++) b.push(rng.int(0, n));
+    for (let k = 0; k < m; k++) if (b[k] >= a[k]) b[k] += 1;
+    cuts = a.map((v, k) => Math.min(v, b[k]));
+    cuts2 = a.map((v, k) => Math.max(v, b[k]));
+  } else {
+    masks = [];
+    for (let k = 0; k < m; k++) { const row = new Uint8Array(n); for (let g = 0; g < n; g++) row[g] = rng.int(0, 2); masks.push(row); }
+  }
+  for (let k = 0; k < m; k++) {
+    const pa = k % P, pb = (k + 1) % P;
+    const A = parentsGenes[pa], B = parentsGenes[pb];
+    const child = new Uint8Array(n);
+    const src = trace ? new Uint8Array(n) : null;
+    for (let g = 0; g < n; g++) {
+      let fromB;
+      if (cuts && !cuts2) fromB = g >= cuts[k] ? 1 : 0;
+      else if (cuts2) fromB = (g >= cuts[k] && g < cuts2[k]) ? 1 : 0;
+      else fromB = masks[k][g];
+      child[g] = fromB ? B[g] : A[g];
+      if (src) src[g] = fromB;
+    }
+    kids.push(child);
+    if (trace) meta.push({ pa, pb, cut: cuts ? cuts[k] : null, cut2: cuts2 ? cuts2[k] : null, src });
+  }
+  return { kids, meta };
+}
+
+function mutationStage(ga, kids, trace) {
+  const n = ga.n, count = ga.mutGenes, rng = ga.rng;
+  const flips = [];
+  for (let k = 0; k < kids.length; k++) {
+    const pick = rng.sample(n, count);            // PyGAD: random.sample(range(num_genes), mutation_num_genes)
+    for (const g of pick) kids[k][g] = kids[k][g] ? 0 : 1;   // gene_space [0, 1]: PyGAD always draws the other value
+    if (trace) flips.push(pick.slice().sort((a, b) => a - b));
+  }
+  return flips;
+}
+
+function createGA(items, fitnessFn, cfg) {
+  const n = items.length;
+  const ga = {
+    items, fitnessFn, cfg, n,
+    rng: makeRng(cfg.seed),
+    numOffspring: numOffspring(cfg),
+    mutGenes: mutGenesFor(cfg, n),
+    pop: [], fit: [], gen: 0,
+    history: [],
+    best: null,                                 // best ever seen: {fit, genes, gen}
+    rwsWarning: false,
+  };
+  for (let s = 0; s < cfg.pop; s++) {
+    const g = new Uint8Array(n);
+    for (let i = 0; i < n; i++) g[i] = ga.rng.int(0, 2);
+    ga.pop.push(g);
+  }
+  evaluate(ga);
+  return ga;
+}
+
+function evaluate(ga) {
+  ga.fit = ga.pop.map(g => ga.fitnessFn(g));
+  let bi = 0, sum = 0, worst = Infinity;
+  for (let i = 0; i < ga.fit.length; i++) {
+    if (ga.fit[i] > ga.fit[bi]) bi = i;
+    sum += ga.fit[i];
+    if (ga.fit[i] < worst) worst = ga.fit[i];
+  }
+  ga.history.push({ gen: ga.gen, best: ga.fit[bi], mean: sum / ga.fit.length, worst });
+  if (!ga.best || ga.fit[bi] > ga.best.fit) ga.best = { fit: ga.fit[bi], genes: Uint8Array.from(ga.pop[bi]), gen: ga.gen };
+}
+
+// one generation, in four stages. stage objects are filled only when trace is true
+function runGeneration(ga, trace) {
+  const t = trace ? { before: { best: ga.history[ga.history.length - 1].best, mean: ga.history[ga.history.length - 1].mean } } : null;
+  const sel = selectParents(ga, trace);
+  const parents = sel.idx.map(i => Uint8Array.from(ga.pop[i]));
+  if (trace) t.selection = { idx: sel.idx, info: sel.info, parents, fit: sel.idx.map(i => ga.fit[i]) };
+  const cx = crossoverStage(ga, parents, trace);
+  if (trace) t.crossover = { kids: cx.kids.map(k => Uint8Array.from(k)), meta: cx.meta, parentIdx: sel.idx };
+  const flips = mutationStage(ga, cx.kids, trace);
+  if (trace) t.mutation = { kids: cx.kids.map(k => Uint8Array.from(k)), flips, count: ga.mutGenes };
+  // new population: elite (or the selected parents when keep_elitism = 0) first, then the children
+  const next = [], tags = [];
+  if (ga.cfg.elite > 0) {
+    const order = sortDesc(ga.fit).slice(0, ga.cfg.elite);
+    order.forEach(i => { next.push(Uint8Array.from(ga.pop[i])); tags.push("elite"); });
+    if (trace) t.eliteIdx = order;
+  } else {
+    parents.forEach(p => { next.push(Uint8Array.from(p)); tags.push("parent"); });
+  }
+  cx.kids.forEach(k => { next.push(k); tags.push("child"); });
+  ga.pop = next;
+  ga.tags = tags;
+  ga.gen += 1;
+  evaluate(ga);
+  if (trace) {
+    const h = ga.history[ga.history.length - 1];
+    t.after = { best: h.best, mean: h.mean };
+  }
+  return t;
+}
+
+function runToEnd(ga) {
+  while (ga.gen < ga.cfg.gens) runGeneration(ga, false);
+  return ga;
+}
+
+function runOnce(items, fitnessFn, cfg) {
+  const ga = createGA(items, fitnessFn, cfg);
+  runToEnd(ga);
+  return ga;
+}
+
+// =====================================================================
+//  5. Statistics, multi-seed runs, brute force, grid
+// =====================================================================
+function mean(a) { return a.reduce((s, v) => s + v, 0) / a.length; }
+function stdev(a) {                                // sample standard deviation (n - 1), like Excel STDEV
+  if (a.length < 2) return 0;
+  const m = mean(a);
+  return Math.sqrt(a.reduce((s, v) => s + (v - m) * (v - m), 0) / (a.length - 1));
+}
+
+function resultRow(ga, items, label) {
+  const tot = packingTotals(items, ga.best.genes);
+  return { label, seed: ga.cfg.seed, fitness: ga.best.fit, value: tot.V, weight: tot.W, price: tot.P, gen: ga.best.gen, genes: ga.best.genes, rwsWarn: ga.rwsWarning };
+}
+
+function runSeeds(items, fitnessFn, cfg, count) {
+  const rows = [];
+  for (let s = 0; s < count; s++) {
+    const c = Object.assign({}, cfg, { seed: cfg.seed + s });
+    rows.push(resultRow(runOnce(items, fitnessFn, c), items, cfgLabel(c)));
+  }
+  return rows;
+}
+
+// all 2^n packings by Gray code, one bit flip at a time. Resumable.
+function bruteStart(items, compiled) {
+  const n = items.length;
+  const st = {
+    items, compiled, n, total: Math.pow(2, n), m: 0, g: 0,
+    x: new Uint8Array(n), ctx: { V: 0, W: 0, P: 0, C: 0, x: null },
+    best: -Infinity, bestMask: 0, ties: 0, done: false, error: null,
+  };
+  st.ctx.x = st.x;
+  bruteEval(st);
+  return st;
+}
+function bruteEval(st) {
+  let v;
+  try { v = st.compiled(st.ctx); }
+  catch (e) {
+    if (e instanceof EvalFault) { st.error = { message: e.message, mask: st.g }; st.done = true; return; }
+    throw e;
+  }
+  if (v > st.best + 1e-9) { st.best = v; st.bestMask = st.g; st.ties = 1; }
+  else if (Math.abs(v - st.best) <= 1e-9) { st.ties++; if (st.g < st.bestMask) st.bestMask = st.g; }
+}
+function bruteRun(st, steps) {
+  const items = st.items, x = st.x, ctx = st.ctx;
+  let k = 0;
+  while (!st.done && k < steps) {
+    st.m++;
+    if (st.m >= st.total) { st.done = true; break; }
+    let bit = 0, mm = st.m;
+    while ((mm & 1) === 0) { mm >>>= 1; bit++; }
+    const it = items[bit];
+    if (x[bit]) { x[bit] = 0; ctx.V -= it.v; ctx.W -= it.w; ctx.P -= it.p; ctx.C--; }
+    else { x[bit] = 1; ctx.V += it.v; ctx.W += it.w; ctx.P += it.p; ctx.C++; }
+    st.g ^= (1 << bit);
+    bruteEval(st);
+    k++;
+  }
+  return st.done;
+}
+function bruteResult(st) {
+  if (st.error) return { error: st.error };
+  const genes = new Uint8Array(st.n);
+  for (let i = 0; i < st.n; i++) genes[i] = (st.bestMask >>> i) & 1;
+  return { fitness: st.best, genes, ties: st.ties, total: st.total };
+}
+function bruteForce(items, compiled) {
+  const st = bruteStart(items, compiled);
+  while (!bruteRun(st, 1 << 16)) { /* keep going */ }
+  return bruteResult(st);
+}
+
+// settings that the grid demo can vary
+const GRID_PARAMS = {
+  pop:    { label: "Population size", py: "sol_per_pop", values: [10, 30, 100] },
+  mutPct: { label: "Mutation % of genes", py: "mutation_percent_genes", values: [2, 10, 30] },
+  gens:   { label: "Generations", py: "num_generations", values: [20, 50, 100] },
+  K:      { label: "K_tournament", py: "K_tournament", values: [2, 3, 5] },
+  elite:  { label: "Elitism", py: "keep_elitism", values: [0, 1, 2] },
+};
+function gridConfig(base, rowKey, rowVal, colKey, colVal) {
+  const c = Object.assign({}, base);
+  c[rowKey] = rowVal; c[colKey] = colVal;
+  if (rowKey === "K" || colKey === "K") c.sel = "tournament";
+  if (c.parents > c.pop) c.parents = c.pop;      // keep the setting legal when the population is small
+  if (c.elite > c.pop) c.elite = c.pop;
+  return c;
+}
+
+// =====================================================================
+//  Problems: item tables and their default fitness formulas
+// =====================================================================
+const PROBLEMS = {
+  backpack: {
+    id: "backpack", label: "Backpack (6 items)", short: "Backpack",
+    note: "Lecture 9 backpack, weight limit 15 kg.",
+    formula: "VALUE - 10*MAX(0, WEIGHT - 15)",
+    items: [
+      { name: "Laptop", w: 5, v: 12, p: 40 },
+      { name: "Camera", w: 4, v: 10, p: 30 },
+      { name: "Water bottle", w: 3, v: 6, p: 5 },
+      { name: "Jacket", w: 6, v: 9, p: 25 },
+      { name: "First aid kit", w: 2, v: 5, p: 10 },
+      { name: "Food", w: 5, v: 11, p: 15 },
+    ],
+  },
+  camping: {
+    id: "camping", label: "Camping trip (12 items)", short: "Camping trip",
+    note: "Weight limit 20 kg; a $200 budget can be added to the formula.",
+    formula: "VALUE - 10*MAX(0, WEIGHT - 20)",
+    items: [
+      { name: "Tent", w: 5, v: 9, p: 60 },
+      { name: "Sleeping bag", w: 3, v: 8, p: 40 },
+      { name: "Stove", w: 2, v: 6, p: 35 },
+      { name: "Water filter", w: 1, v: 7, p: 30 },
+      { name: "Food pack", w: 4, v: 9, p: 20 },
+      { name: "Water", w: 3, v: 8, p: 5 },
+      { name: "First-aid kit", w: 1, v: 6, p: 15 },
+      { name: "Jacket", w: 2, v: 5, p: 45 },
+      { name: "Camera", w: 2, v: 4, p: 80 },
+      { name: "Headlamp", w: 1, v: 4, p: 10 },
+      { name: "Rope", w: 2, v: 3, p: 12 },
+      { name: "Book", w: 1, v: 2, p: 8 },
+    ],
+  },
+  expedition: {
+    id: "expedition", label: "Expedition (40 items)", short: "Expedition",
+    note: "Weight limit 28 kg and budget $1200 - both limits are in the formula, and both are tight.",
+    formula: "VALUE - 10*MAX(0, WEIGHT - 28) - 1*MAX(0, PRICE - 1200)",
+    items: [
+      { name: "Four-season tent", w: 6, v: 30, p: 320 },
+      { name: "Bivouac sack", w: 2, v: 16, p: 90 },
+      { name: "Winter sleeping bag", w: 4, v: 28, p: 260 },
+      { name: "Sleeping mat", w: 2, v: 9, p: 70 },
+      { name: "Down jacket", w: 2, v: 16, p: 240 },
+      { name: "Fleece jacket", w: 1, v: 7, p: 60 },
+      { name: "Waterproof shell", w: 2, v: 13, p: 180 },
+      { name: "Hiking trousers", w: 1, v: 5, p: 55 },
+      { name: "Thermal base layer", w: 1, v: 8, p: 65 },
+      { name: "Mountain boots", w: 3, v: 15, p: 210 },
+      { name: "Spare socks", w: 1, v: 4, p: 30 },
+      { name: "Gloves and hat", w: 1, v: 5, p: 40 },
+      { name: "Gaiters", w: 1, v: 3, p: 35 },
+      { name: "Gas stove", w: 1, v: 9, p: 45 },
+      { name: "Fuel canisters", w: 2, v: 8, p: 20 },
+      { name: "Cooking pot set", w: 2, v: 5, p: 25 },
+      { name: "Dehydrated meals", w: 5, v: 24, p: 75 },
+      { name: "Energy bars", w: 2, v: 10, p: 30 },
+      { name: "Coffee and tea kit", w: 1, v: 2, p: 15 },
+      { name: "Water bottles", w: 1, v: 4, p: 12 },
+      { name: "Water filter", w: 1, v: 10, p: 55 },
+      { name: "Drinking water", w: 4, v: 12, p: 4 },
+      { name: "GPS unit", w: 1, v: 12, p: 250 },
+      { name: "Satellite messenger", w: 1, v: 15, p: 300 },
+      { name: "Map and compass", w: 1, v: 6, p: 25 },
+      { name: "First-aid kit", w: 2, v: 12, p: 60 },
+      { name: "Headlamp", w: 1, v: 8, p: 45 },
+      { name: "Spare batteries", w: 1, v: 4, p: 30 },
+      { name: "Signal mirror", w: 1, v: 2, p: 10 },
+      { name: "Emergency blanket", w: 1, v: 3, p: 8 },
+      { name: "Climbing rope", w: 4, v: 14, p: 150 },
+      { name: "Ice axe", w: 2, v: 10, p: 90 },
+      { name: "Crampons", w: 3, v: 11, p: 120 },
+      { name: "Helmet", w: 1, v: 7, p: 70 },
+      { name: "Trekking poles", w: 1, v: 6, p: 80 },
+      { name: "Multi-tool", w: 1, v: 3, p: 40 },
+      { name: "Repair kit", w: 1, v: 3, p: 12 },
+      { name: "Camera and lenses", w: 3, v: 9, p: 400 },
+      { name: "Power bank and solar panel", w: 2, v: 6, p: 110 },
+      { name: "Binoculars", w: 1, v: 3, p: 90 },
+    ],
+  },
+  custom: {
+    id: "custom", label: "Custom (paste)", short: "Custom",
+    note: "Paste your own items.",
+    formula: "VALUE - 10*MAX(0, WEIGHT - 15)",
+    items: [],
+  },
+};
+</script>
+<script id="ui">
+// =====================================================================
+//  GA Explorer - page logic (DOM). The core functions come from the
+//  first script block; everything here only reads state and draws.
+// =====================================================================
+(function () {
+"use strict";
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fmt = v => {
+  if (v === null || v === undefined || (typeof v === "number" && !isFinite(v))) return "–";
+  if (Number.isInteger(v)) return String(v);
+  return String(Math.round(v * 100) / 100);
+};
+const fmt1 = v => (Math.round(v * 10) / 10).toFixed(1);
+const KIND = { V: "kV", W: "kW", P: "kP", C: "kC", I: "kI", fn: "kfn", kw: "kkw", cm: "kcm", num: "knum", op: "kop", txt: "" };
+
+const S = {
+  pid: "camping", items: PROBLEMS.camping.items, customItems: null, customText: "",
+  formulas: {}, parsed: null, compiled: null, fit: null, fkey: "", fdebounce: null,
+  cfg: Object.assign({}, DEFAULT_CFG), cfgCheck: { ok: true, errors: [], notes: [] },
+  ga: null, stage: 0, view: null, anim: null, runFault: null,
+  curves: [], curveSeq: 0, lastCurveCfg: null,
+  trueBest: null, brute: null,
+  groups: [], tableWarn: false,
+  pack: new Uint8Array(0), lastPyHtml: "",
+};
+
+// ---------------------------------------------------------------- small helpers
+let toastTimer = null;
+function toast(msg) {
+  const t = $("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 1900);
+}
+function copyText(text, okMsg) {
+  const done = () => toast(okMsg || "Copied");
+  const fallback = () => {
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); done(); } catch (e) { toast("Copy failed - select the text and copy it by hand"); }
+    document.body.removeChild(ta);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback);
+  else fallback();
+}
+function niceTicks(lo, hi, target) {
+  if (!(hi > lo)) { hi = lo + 1; }
+  const raw = (hi - lo) / Math.max(1, target);
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const norm = raw / mag;
+  const step = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10) * mag;
+  const start = Math.ceil(lo / step) * step;
+  const out = [];
+  for (let v = start; v <= hi + step * 1e-9; v += step) out.push(Math.abs(v) < step * 1e-9 ? 0 : Math.round(v / step) * step);
+  return { ticks: out, step };
+}
+function segsHtml(segs) {
+  return segs.map(s => {
+    const c = KIND[s.k];
+    return c ? '<span class="' + c + '">' + esc(s.t) + "</span>" : esc(s.t);
+  }).join("");
+}
+function itemName(i) { return S.items[i] ? S.items[i].name : "item " + (i + 1); }
+function nItems() { return S.items.length; }
+function itemsSig() { return S.items.map(it => it.name + ":" + it.w + ":" + it.v + ":" + it.p).join(";"); }
+
+// ---------------------------------------------------------------- 1. problem
+function renderProblem() {
+  document.querySelectorAll("#probSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.p === S.pid ? "true" : "false"));
+  $("probNote").textContent = PROBLEMS[S.pid].note;
+  $("customBox").hidden = S.pid !== "custom";
+  const rows = S.items.map((it, i) => "<tr><td>" + (i + 1) + "</td><td>" + esc(it.name) + "</td><td>" + fmt(it.w) + "</td><td>" + fmt(it.v) + "</td><td>" + fmt(it.p) + "</td></tr>").join("");
+  $("itemTable").innerHTML = "<thead><tr><th>#</th><th>Item</th><th>Weight</th><th>Value</th><th>Price</th></tr></thead><tbody>" + rows + "</tbody>";
+  const tw = S.items.reduce((s, it) => s + it.w, 0), tv = S.items.reduce((s, it) => s + it.v, 0), tp = S.items.reduce((s, it) => s + it.p, 0);
+  $("itemTotals").innerHTML = "<b>" + S.items.length + "</b> items · totals if everything is packed: weight <b>" + fmt(tw) + "</b> · value <b>" + fmt(tv) + "</b> · price <b>" + fmt(tp) + "</b>";
+}
+
+function parsePaste(text) {
+  const lines = text.split(/\r?\n/).map(l => l.replace(/\s+$/, "")).filter(l => l.trim() !== "");
+  const items = [], errors = [];
+  let first = true;
+  for (let li = 0; li < lines.length; li++) {
+    const line = lines[li];
+    const parts = (line.indexOf("\t") >= 0 ? line.split("\t") : line.indexOf(",") >= 0 ? line.split(",") : line.indexOf(";") >= 0 ? line.split(";") : line.split(/\s{2,}/)).map(s => s.trim());
+    if (parts.length < 3) { errors.push("Line " + (li + 1) + ": needs name, weight, value (and optionally price)."); continue; }
+    const nums = parts.slice(1, 4).map(s => (s === "" ? NaN : Number(s.replace(/^\$/, ""))));
+    const priceMissing = parts.length < 4 || parts[3] === "";
+    if (first && (isNaN(nums[0]) || isNaN(nums[1]))) { first = false; continue; }      // a header row
+    first = false;
+    if (isNaN(nums[0]) || isNaN(nums[1]) || (!priceMissing && isNaN(nums[2]))) { errors.push("Line " + (li + 1) + ": weight, value and price must be numbers."); continue; }
+    if (nums[0] < 0 || nums[1] < 0 || (!priceMissing && nums[2] < 0)) { errors.push("Line " + (li + 1) + ": numbers cannot be negative."); continue; }
+    items.push({ name: parts[0] || "Item " + (items.length + 1), w: nums[0], v: nums[1], p: priceMissing ? 0 : nums[2] });
+  }
+  if (items.length === 0 && errors.length === 0) errors.push("No items found.");
+  if (items.length > 100) errors.push("At most 100 items can be used (you pasted " + items.length + ").");
+  return { items, errors };
+}
+function itemsToText(items) { return items.map(it => [it.name, it.w, it.v, it.p].join("\t")).join("\n"); }
+
+function useCustomItems() {
+  const r = parsePaste($("pasteArea").value);
+  const msg = $("pasteMsg");
+  if (r.errors.length) {
+    msg.innerHTML = '<span class="msg-bad">' + r.errors.slice(0, 4).map(esc).join("<br>") + (r.errors.length > 4 ? "<br>… and " + (r.errors.length - 4) + " more" : "") + "</span>";
+    if (!r.items.length || r.items.length > 100) return;
+  } else {
+    msg.innerHTML = '<span class="msg-ok">' + r.items.length + " items loaded.</span> Weight, value and price are the three numbers after the name.";
+  }
+  S.customItems = r.items; S.customText = $("pasteArea").value;
+  S.items = r.items;
+  hardReset();
+}
+
+function setProblem(pid) {
+  S.formulas[S.pid] = $("formula").value;
+  S.pid = pid;
+  if (pid === "custom") {
+    if (!S.customItems) { S.customItems = PROBLEMS.backpack.items.map(x => Object.assign({}, x)); S.customText = itemsToText(S.customItems); }
+    S.items = S.customItems;
+    $("pasteArea").value = S.customText;
+    $("pasteMsg").textContent = "One item per line: name, weight, value, price. Tab or comma separated; the price column is optional. Press “Use these items” after pasting.";
+  } else S.items = PROBLEMS[pid].items;
+  $("formula").value = S.formulas[pid] !== undefined ? S.formulas[pid] : PROBLEMS[pid].formula;
+  hardReset();
+}
+
+// ---------------------------------------------------------------- 2. formula
+function normText(t) { return t.replace(/\s+/g, "").toUpperCase(); }
+
+function reparse() {
+  const text = $("formula").value;
+  const n = nItems();
+  const p = n ? parseFormula(text, n) : { ok: false, error: { message: "Add some items first.", pos: 0, len: 0 }, tokens: [] };
+  S.parsed = p;
+  if (p.ok) {
+    S.compiled = compileFormula(p.ast);
+    S.fit = makeFitnessFn(S.items, S.compiled);
+  } else { S.compiled = null; S.fit = null; }
+  return p;
+}
+function keyNow() { return S.pid + "|" + itemsSig() + "|" + (S.parsed && S.parsed.ok ? normText($("formula").value.replace(/^\s*=/, "")) : "invalid"); }
+
+function colorFormula() {
+  const p = S.parsed, text = $("formula").value;
+  if (!text.trim()) return '<span class="kcm">your formula, coloured by term</span>';
+  const toks = p && p.tokens && p.tokens.length ? p.tokens : null;
+  if (!toks) return esc(text);
+  const src = p.src || text;
+  let out = "", last = 0;
+  for (let i = 0; i < toks.length; i++) {
+    const t = toks[i];
+    out += esc(src.slice(last, t.pos));
+    last = t.end;
+    let cls = "";
+    if (t.k === "num") cls = "knum";
+    else if (t.k === "name") {
+      const u = t.up;
+      cls = u === "VALUE" ? "kV" : u === "WEIGHT" ? "kW" : u === "PRICE" ? "kP" : u === "COUNT" ? "kC" : u === "ITEM" ? "kI" : FUNC_INFO[u] ? "kfn" : "";
+    } else if (t.k === "op" || t.k === "," || t.k === "(" || t.k === ")") cls = "kop";
+    out += cls ? '<span class="' + cls + '">' + esc(src.slice(t.pos, t.end)) + "</span>" : esc(src.slice(t.pos, t.end));
+  }
+  out += esc(src.slice(last));
+  return out;
+}
+
+function renderFormula() {
+  const p = S.parsed, input = $("formula");
+  const st = $("fstatus"), el = $("ferrline");
+  el.innerHTML = "";
+  input.classList.remove("bad", "ok");
+  if (!p.ok) {
+    const empty = !input.value.trim();
+    st.className = "fstatus " + (empty ? "" : "bad");
+    st.textContent = (empty ? "" : "✗ ") + p.error.message;
+    if (!empty) {
+      input.classList.add("bad");
+      const t = input.value;
+      const pos = Math.min(p.error.pos, t.length), len = Math.max(1, Math.min(p.error.len || 1, Math.max(1, t.length - pos)));
+      el.innerHTML = '<pre class="errline">' + esc(t) + "\n" + " ".repeat(pos) + "^".repeat(len) + "</pre>";
+    }
+    $("pyfit").classList.add("dim");
+    $("pyfit").innerHTML = S.lastPyHtml || '<span class="kcm"># fix the formula above to see the Python version</span>';
+  } else {
+    input.classList.add("ok");
+    st.className = "fstatus ok";
+    st.textContent = "✓ Formula is valid" + (S.runFault ? "" : ".");
+    if (S.runFault) { st.className = "fstatus warn"; st.textContent = "⚠ " + S.runFault; }
+    const py = pythonFitness(p, S.items);
+    S.lastPyHtml = py.lines.map(segsHtml).join("\n");
+    S.lastPyText = py.text;
+    $("pyfit").classList.remove("dim");
+    $("pyfit").innerHTML = S.lastPyHtml;
+  }
+  $("colorf").innerHTML = colorFormula();
+  renderPack();
+}
+
+function onFormulaInput() {
+  reparse();
+  renderFormula();
+  renderControls();
+  clearTimeout(S.fdebounce);
+  S.fdebounce = setTimeout(applyFormula, 450);
+}
+function applyFormula() {
+  clearTimeout(S.fdebounce); S.fdebounce = null;
+  if (!S.parsed || !S.parsed.ok) { renderRunArea(); return; }
+  const key = keyNow();
+  if (key === S.fkey) { renderRunArea(); return; }
+  const hadStuff = S.groups.length || S.curves.length || S.trueBest;
+  S.fkey = key;
+  S.curves = []; S.lastCurveCfg = null; S.trueBest = null; S.brute = null; S.groups = []; S.tableWarn = false;
+  if (hadStuff) toast("Formula changed: kept curves, True best and the multi-seed table were cleared");
+  resetGA();
+}
+function flushFormula() { if (S.fdebounce) applyFormula(); }
+
+function insertAtCursor(text) {
+  const inp = $("formula");
+  const a = inp.selectionStart == null ? inp.value.length : inp.selectionStart, b = inp.selectionEnd == null ? a : inp.selectionEnd;
+  inp.value = inp.value.slice(0, a) + text + inp.value.slice(b);
+  const caret = text.indexOf("(") >= 0 ? a + text.indexOf("(") + 1 : a + text.length;
+  inp.focus(); inp.setSelectionRange(caret, caret);
+  onFormulaInput();
+}
+
+// ---- test a packing
+function renderPackStrip() {
+  const n = nItems();
+  if (S.pack.length !== n) S.pack = new Uint8Array(n);
+  $("packstrip").innerHTML = S.items.map((it, i) =>
+    '<label class="' + (S.pack[i] ? "on" : "") + '"><input type="checkbox" data-i="' + i + '"' + (S.pack[i] ? " checked" : "") + "><i>" + (i + 1) + "</i> " + esc(it.name) + "</label>").join("");
+}
+function renderPack() {
+  const t = packingTotals(S.items, S.pack);
+  let fitHtml = "–", sub = "";
+  if (S.parsed && S.parsed.ok && S.fit) {
+    try {
+      const f = S.fit(S.pack);
+      fitHtml = fmt(f);
+      const ctx = { V: t.V, W: t.W, P: t.P, C: t.C, x: S.pack };
+      const subst = substituteFormula(S.parsed, ctx);
+      sub = "fitness = " + subst + (subst === String(f) ? "" : " = " + fmt(f));
+    } catch (e) {
+      if (e instanceof EvalFault) { fitHtml = "error"; sub = e.message; } else throw e;
+    }
+  } else sub = "Fix the formula to see the fitness of this packing.";
+  $("packread").innerHTML =
+    '<div class="stat">WEIGHT<b class="kW">' + fmt(t.W) + "</b></div>" +
+    '<div class="stat">VALUE<b class="kV">' + fmt(t.V) + "</b></div>" +
+    '<div class="stat">PRICE<b class="kP">' + fmt(t.P) + "</b></div>" +
+    '<div class="stat">COUNT<b class="kC">' + t.C + "</b></div>" +
+    '<div class="stat fit">fitness<b>' + fitHtml + "</b></div>";
+  $("packsub").textContent = sub;
+}
+
+// ---------------------------------------------------------------- 3. settings
+const CFG_INPUTS = { pop: "sPop", gens: "sGens", parents: "sPar", K: "sK", mutPct: "sMut", elite: "sEl", seed: "sSeed" };
+function writeCfg() {
+  for (const k in CFG_INPUTS) $(CFG_INPUTS[k]).value = S.cfg[k];
+  $("sSel").value = S.cfg.sel; $("sX").value = S.cfg.xover;
+}
+function readCfg() {
+  const c = Object.assign({}, S.cfg);
+  for (const k in CFG_INPUTS) { const raw = $(CFG_INPUTS[k]).value.trim(); c[k] = raw === "" ? NaN : Number(raw); }
+  c.sel = $("sSel").value; c.xover = $("sX").value;
+  return c;
+}
+function renderSettingsInfo() {
+  const c = S.cfg, n = nItems(), chk = S.cfgCheck;
+  $("fK").classList.toggle("off", c.sel !== "tournament");
+  $("sK").disabled = c.sel !== "tournament";
+  let h = "";
+  if (chk.ok && n) {
+    const m = numOffspring(c), g = mutGenesFor(c, n);
+    h = "Each generation: <b>" + m + "</b> children are built" + (c.elite > 0 ? " (population " + c.pop + " − " + c.elite + " elite)" : " (population " + c.pop + " − " + c.parents + " parents carried over)") +
+        " · each child gets <b>" + g + "</b> of its " + n + " genes flipped (" + trimNum(c.mutPct) + "%, at least 1).";
+  } else if (!chk.ok) h = "Fix the settings marked below to run.";
+  const sd = { sss: "sss: the fittest solutions become the parents", tournament: "tournament: each parent wins a small random contest", rws: "rws: the chance of becoming a parent is proportional to fitness", random: "random: parents are drawn at random, fitness is ignored" }[c.sel];
+  const xd = { single_point: "single_point: one cut, the genes before it come from one parent and the rest from the other", two_points: "two_points: two cuts, the middle part comes from the second parent", uniform: "uniform: every gene comes from either parent by a coin flip" }[c.xover];
+  h += "<div class='hint' style='margin-top:4px'>" + esc(sd) + " · " + esc(xd) + ".</div>";
+  $("derived").innerHTML = h;
+  let w = "";
+  if (!chk.ok) w += '<div class="warnbox">' + chk.errors.map(esc).join("<br>") + "</div>";
+  else if (chk.notes.length) w += '<div class="warnbox amber">' + chk.notes.map(esc).join("<br>") + "</div>";
+  if (c.sel === "rws" && S.ga && (S.ga.rwsWarning || Math.min.apply(null, S.ga.fit) <= 0)) {
+    w += '<div class="warnbox amber">Roulette needs positive fitness — some packings have fitness ≤ 0, so the wheel is not fair.</div>';
+  }
+  $("cfgwarn").innerHTML = w;
+  if (chk.ok && n) {
+    S.callText = pyGadCall(c, n);
+    $("pycall").textContent = S.callText;
+  }
+}
+function onCfgInput() {
+  S.cfg = readCfg();
+  S.cfgCheck = checkCfg(S.cfg, nItems());
+  resetGA();
+}
+
+// ---------------------------------------------------------------- GA control
+function stopAnim() {
+  if (S.anim) { clearTimeout(S.anim); S.anim = null; }
+  S.running = false;
+}
+function fault(e) {
+  if (e instanceof EvalFault) {
+    S.runFault = e.message + " (For example COUNT is 0 for the empty packing - wrap it in IF, like IF(COUNT=0, 0, VALUE/COUNT).)";
+    return true;
+  }
+  if (e instanceof GAFault) { S.runFault = e.message; return true; }
+  return false;
+}
+function canRun() { return !!(S.fit && S.parsed && S.parsed.ok && S.cfgCheck.ok && nItems() > 0); }
+
+function resetGA() {
+  stopAnim();
+  S.stage = 0; S.view = null; S.runFault = null; S.ga = null;
+  if (canRun()) {
+    try { S.ga = createGA(S.items, S.fit, S.cfg); }
+    catch (e) { if (!fault(e)) throw e; }
+  }
+  renderAll();
+}
+function hardReset() {
+  stopAnim();
+  clearTimeout(S.fdebounce); S.fdebounce = null;
+  S.curves = []; S.lastCurveCfg = null; S.trueBest = null; S.brute = null; S.groups = []; S.tableWarn = false;
+  S.pack = new Uint8Array(nItems());
+  renderProblem();
+  renderPackStrip();
+  reparse();
+  S.fkey = keyNow();
+  S.cfgCheck = checkCfg(S.cfg, nItems());
+  renderFormula();
+  resetGA();
+}
+
+function shownLen() { return S.ga ? (S.stage >= 1 && S.stage <= 3 ? S.ga.history.length - 1 : S.ga.history.length) : 0; }
+function shownBest() { return S.stage >= 1 && S.stage <= 3 && S.view ? S.view.bestBefore : (S.ga ? S.ga.best : null); }
+function isFinished() { return !!S.ga && S.ga.gen >= S.cfg.gens && (S.stage === 0 || S.stage === 4); }
+
+function startGeneration() {
+  const ga = S.ga;
+  const view = { oldPop: ga.pop.map(g => Uint8Array.from(g)), oldFit: ga.fit.slice(), oldTags: ga.tags ? ga.tags.slice() : null, bestBefore: ga.best, cache: {} };
+  try { view.trace = runGeneration(ga, true); }
+  catch (e) { if (fault(e)) { S.ga = null; renderAll(); return; } throw e; }
+  S.view = view; S.stage = 1;
+}
+function doStep() {
+  flushFormula();
+  if (!canRun()) { renderAll(); return; }
+  stopAnim();
+  if (!S.ga) { resetGA(); if (!S.ga) return; }
+  if (S.stage === 0 || S.stage === 4) {
+    if (S.ga.gen >= S.cfg.gens) { toast("This run is finished - press Reset to start again"); return; }
+    startGeneration();
+  } else S.stage += 1;
+  renderAll();
+}
+function doRun() {
+  if (S.running) { stopAnim(); renderAll(); return; }
+  flushFormula();
+  if (!canRun()) { renderAll(); return; }
+  if (!S.ga) { resetGA(); if (!S.ga) return; }
+  if (S.stage >= 1 && S.stage < 4) S.stage = 4;
+  if (S.ga.gen >= S.cfg.gens) resetGA();
+  if (!S.ga) return;
+  S.stage = 0; S.view = null;
+  const per = Math.max(1, Math.ceil(S.cfg.gens / 60));
+  S.running = true;
+  const tick = () => {
+    S.anim = null;
+    try {
+      for (let i = 0; i < per && S.ga.gen < S.cfg.gens; i++) runGeneration(S.ga, false);
+    } catch (e) { S.running = false; if (fault(e)) { S.ga = null; renderAll(); return; } throw e; }
+    if (S.ga.gen < S.cfg.gens) S.anim = setTimeout(tick, 28); else S.running = false;
+    renderAll();
+  };
+  S.anim = setTimeout(tick, 10);
+  renderAll();
+}
+
+function curveLabel() {
+  const c = S.cfg;
+  if (!S.lastCurveCfg) return cfgLabel(c) + ", seed " + c.seed;
+  const d = cfgDiff(S.lastCurveCfg, c);
+  return d.length ? d.join(", ") : "same settings";
+}
+function keepCurve() {
+  if (!S.ga || S.ga.history.length < 2) { toast("Run or Step first, then keep the curve"); return; }
+  const h = S.ga.history.slice(0, shownLen());
+  const label = curveLabel();
+  const first = !S.lastCurveCfg;
+  S.curves.push({ id: ++S.curveSeq, label: first ? label : "then " + label, best: h.map(x => x.best), cfg: Object.assign({}, S.cfg) });
+  if (S.curves.length > 6) S.curves.shift();
+  S.lastCurveCfg = Object.assign({}, S.cfg);
+  renderResults();
+  toast("Curve kept - change a setting and run again to compare");
+}
+
+// ---------------------------------------------------------------- multi-seed, true best
+function doSeeds() {
+  flushFormula();
+  if (!canRun()) { renderAll(); return; }
+  stopAnim();
+  let rows;
+  try { rows = runSeeds(S.items, S.fit, S.cfg, 5); }
+  catch (e) { if (fault(e)) { renderAll(); return; } throw e; }
+  const key = cfgKey(S.cfg) + "|" + S.cfg.seed;
+  const g = { key, label: cfgLabel(S.cfg), rows };
+  const at = S.groups.findIndex(x => x.key === key);
+  if (at >= 0) S.groups[at] = g; else S.groups.push(g);
+  S.tableWarn = S.groups.some(x => x.rows.some(r => r.rwsWarn));
+  renderTable();
+  const m = mean(rows.map(r => r.fitness));
+  toast("5 seeds: mean best fitness " + fmt1(m));
+  $("restable").scrollTop = $("restable").scrollHeight;
+}
+
+function tableLines() {
+  const head = ["Run", "Seed", "Best fitness", "Value", "Weight", "Price", "Generation of best"];
+  const lines = [head];
+  for (const g of S.groups) {
+    for (const r of g.rows) lines.push([g.label, r.seed, fmt(r.fitness), fmt(r.value), fmt(r.weight), fmt(r.price), r.gen]);
+    const cols = [r => r.fitness, r => r.value, r => r.weight, r => r.price, r => r.gen];
+    lines.push([g.label + " - mean", ""].concat(cols.map(f => fmt1(mean(g.rows.map(f))))));
+    lines.push([g.label + " - std", ""].concat(cols.map(f => fmt1(stdev(g.rows.map(f))))));
+  }
+  return lines;
+}
+function renderTable() {
+  const box = $("restable");
+  if (!S.groups.length) { box.innerHTML = ""; box.style.display = "none"; }
+  else {
+    box.style.display = "";
+    let h = "<table class='res'><thead><tr><th>Run</th><th>Seed</th><th>Best fitness</th><th>Value</th><th>Weight</th><th>Price</th><th>Generation of best</th></tr></thead><tbody>";
+    for (const g of S.groups) {
+      g.rows.forEach((r, i) => {
+        h += "<tr><td class='lab'>" + (i === 0 ? esc(g.label) : "") + "</td><td>" + r.seed + "</td><td>" + fmt(r.fitness) + "</td><td>" + fmt(r.value) + "</td><td>" + fmt(r.weight) + "</td><td>" + fmt(r.price) + "</td><td>" + r.gen + "</td></tr>";
+      });
+      const cols = [r => r.fitness, r => r.value, r => r.weight, r => r.price, r => r.gen];
+      h += "<tr class='sum'><td>mean</td><td></td>" + cols.map(f => "<td>" + fmt1(mean(g.rows.map(f))) + "</td>").join("") + "</tr>";
+      h += "<tr class='sum last'><td>std (n − 1)</td><td></td>" + cols.map(f => "<td>" + fmt1(stdev(g.rows.map(f))) + "</td>").join("") + "</tr>";
+    }
+    h += "</tbody></table>";
+    box.innerHTML = h;
+  }
+  let hint = "Press “Run 5 seeds” to add rows. Each setting gets a mean and a standard deviation (n − 1) row. The table is cleared when the problem or the formula changes.";
+  if (S.tableWarn) hint = "Roulette needs positive fitness — some packings have fitness ≤ 0, so the wheel is not fair. (" + hint + ")";
+  $("tableHint").textContent = hint;
+  $("btnCopyTable").disabled = !S.groups.length; $("btnClearTable").disabled = !S.groups.length;
+}
+
+function doTrueBest() {
+  flushFormula();
+  if (!canRun() || nItems() > 20) return;
+  stopAnim();
+  const st = bruteStart(S.items, S.compiled);
+  S.brute = st;
+  const total = st.total;
+  const step = () => {
+    if (S.brute !== st) return;
+    let done;
+    try { done = bruteRun(st, 1 << 15); } catch (e) { if (fault(e)) { S.brute = null; renderAll(); return; } throw e; }
+    if (!done) {
+      $("status").innerHTML = '<div class="stat">Checking all ' + total.toLocaleString("en-US") + " packings… <b>" + Math.round(100 * st.m / total) + "%</b></div>";
+      setTimeout(step, 0);
+      return;
+    }
+    S.brute = null;
+    const r = bruteResult(st);
+    if (r.error) { S.runFault = r.error.message + " (For example COUNT is 0 for the empty packing - wrap it in IF, like IF(COUNT=0, 0, VALUE/COUNT).)"; renderAll(); return; }
+    r.key = S.fkey;
+    S.trueBest = r;
+    renderAll();
+    toast("True best fitness: " + fmt(r.fitness));
+  };
+  setTimeout(step, 0);
+  $("status").innerHTML = '<div class="stat">Checking all ' + total.toLocaleString("en-US") + " packings…</div>";
+}
+function trueBestNow() { return S.trueBest && S.trueBest.key === S.fkey ? S.trueBest : null; }
+
+// ---------------------------------------------------------------- 4. run and step: stage text
+function stageIntro() {
+  const g = S.ga;
+  if (!g) return "<p class='what'>Set a valid formula and settings, then press <b>Step</b> to watch one generation in four stages, or <b>Run</b> to play the whole run.</p>";
+  if (g.gen === 0) {
+    return "<p class='what'>This is the <b>starting population</b>: " + S.cfg.pop + " random packings (generation 0). Press <b>Step</b> to watch one generation in four stages — selection, crossover, mutation, elitism — or <b>Run</b> to play all " + S.cfg.gens + " generations.</p>";
+  }
+  if (isFinished() && g.gen >= S.cfg.gens) {
+    const b = g.best;
+    return "<p class='what'><b>Run finished.</b> Best fitness <b>" + fmt(b.fit) + "</b>, first reached in generation <b>" + b.gen + "</b>. Press <b>Reset</b> to start again, or change a setting (that also starts a new run).</p>";
+  }
+  return "<p class='what'>Generation <b>" + g.gen + "</b> of " + S.cfg.gens + ". Press <b>Step</b> for the next generation, or <b>Run</b> to play the rest.</p>";
+}
+
+function bitsHtml(genes, cls, flips, cut) {
+  let h = '<span class="bits">';
+  for (let i = 0; i < genes.length; i++) {
+    let c = cls ? cls[i] : "fl";
+    if (flips && flips.indexOf(i) >= 0) c = "flip";
+    h += '<span class="' + c + '" title="' + (i + 1) + " " + esc(itemName(i)) + '">' + genes[i] + "</span>";
+  }
+  return h + "</span>";
+}
+
+function renderStageBox() {
+  const box = $("stagebox"), v = S.view, g = S.ga, cfg = S.cfg;
+  if (!v || S.stage === 0) { box.innerHTML = stageIntro(); return; }
+  const t = v.trace, n = nItems();
+  const P = cfg.parents, id = i => "#" + (i + 1);
+  let h = "";
+  if (S.stage === 1) {
+    const sel = t.selection;
+    const what = {
+      sss: "Steady-state selection takes the <b>" + P + " fittest</b> solutions as parents (highlighted in the population below).",
+      tournament: "For each of the " + P + " parent places, <b>draw " + sel.info.K + " solutions at random</b> (the same one can be drawn twice) — the fittest of the draw wins.",
+      rws: "Roulette wheel: every solution gets a <b>slice of the wheel in proportion to its fitness</b>; the wheel is spun " + P + " times. A parent’s share is the size of its slice.",
+      random: "Random selection: <b>" + P + " solutions are drawn completely at random</b> — fitness plays no part.",
+    }[cfg.sel];
+    h += "<p class='what'><b>1 · Selection.</b> " + what + "</p>";
+    if (cfg.sel === "rws" && Math.min.apply(null, v.oldFit) <= 0) h += "<div class='warnbox amber' style='margin:0 0 8px'>Roulette needs positive fitness — some packings have fitness ≤ 0, so the wheel is not fair.</div>";
+    h += "<div class='stagelist'>";
+    sel.idx.forEach((pi, k) => {
+      let det = "";
+      if (cfg.sel === "tournament") {
+        const d = sel.info.draws[k];
+        det = "drew " + d.cand.map(c => id(c) + " (" + fmt(v.oldFit[c]) + ")").join(", ") + " → " + id(d.winner) + " wins";
+      } else if (cfg.sel === "rws") det = "share " + (sel.info.probs[pi] * 100).toFixed(1) + "% of the wheel";
+      h += "<div class='srow'><span class='lab'>P" + (k + 1) + "</span><span class='who'>" + id(pi) + " · fitness " + fmt(v.oldFit[pi]) + "</span><span class='detail'>" + det + "</span></div>";
+    });
+    h += "</div>";
+  } else if (S.stage === 2) {
+    const cx = t.crossover, m = cx.kids.length;
+    const how = {
+      single_point: "<b>One cut point</b> per child: genes before the cut come from the first parent (blue), the rest from the second (orange).",
+      two_points: "<b>Two cut points</b> per child: the middle part comes from the second parent (orange), both ends from the first (blue).",
+      uniform: "<b>Uniform</b>: for every gene a coin flip decides whether it comes from the first parent (blue) or the second (orange).",
+    }[cfg.xover];
+    h += "<p class='what'><b>2 · Crossover.</b> " + (m ? m + " children are built from neighbouring parents — child 1 from P1 and P2, child 2 from P2 and P3, … and the last parent wraps round to P1. " + how : "No children are built, because keep_elitism equals the population size.") + "</p>";
+    h += "<div class='stagelist'>";
+    cx.kids.forEach((kid, k) => {
+      const me = cx.meta[k];
+      const cls = Array.from(me.src, s => (s ? "fb" : "fa"));
+      let det;
+      if (cfg.xover === "single_point") det = me.cut === 0 ? "cut at 0: all from the 2nd parent" : "cut after gene " + me.cut;
+      else if (cfg.xover === "two_points") det = "genes " + (me.cut + 1) + "–" + me.cut2 + " from the 2nd parent";
+      else det = me.src.reduce((a, b) => a + b, 0) + " of " + n + " genes from the 2nd parent";
+      h += "<div class='srow'><span class='lab'>child " + (k + 1) + "</span><span class='who'>P" + (me.pa + 1) + " " + id(cx.parentIdx[me.pa]) + " × P" + (me.pb + 1) + " " + id(cx.parentIdx[me.pb]) + "</span>" + bitsHtml(kid, cls) + "<span class='detail'>" + det + "</span></div>";
+    });
+    h += "</div>";
+  } else if (S.stage === 3) {
+    const mu = t.mutation, m = mu.kids.length, cx = t.crossover;
+    h += "<p class='what'><b>3 · Mutation.</b> In every child, <b>" + mu.count + " randomly chosen gene" + (mu.count > 1 ? "s are" : " is") + " flipped</b> (" + trimNum(cfg.mutPct) + "% of " + n + " genes, at least 1): a 1 becomes 0 and a 0 becomes 1, so an item is dropped or added. Flipped genes are marked in orange.</p>";
+    if (!v.cache.mut) v.cache.mut = mu.kids.map((kid, k) => [S.fit(cx.kids[k]), S.fit(kid)]);
+    h += "<div class='stagelist'>";
+    mu.kids.forEach((kid, k) => {
+      const fl = mu.flips[k], ff = v.cache.mut[k];
+      h += "<div class='srow'><span class='lab'>child " + (k + 1) + "</span>" + bitsHtml(kid, null, fl) + "<span class='detail'>flipped gene" + (fl.length > 1 ? "s " : " ") + fl.map(x => x + 1).join(", ") + " · fitness " + fmt(ff[0]) + " → " + fmt(ff[1]) + "</span></div>";
+    });
+    if (!m) h += "<div class='srow'>No children to mutate.</div>";
+    h += "</div>";
+  } else {
+    const te = t.eliteIdx;
+    h += "<p class='what'><b>4 · Elitism.</b> ";
+    if (cfg.elite > 0) h += "The <b>" + cfg.elite + " best</b> solution" + (cfg.elite > 1 ? "s" : "") + " of the old population " + (cfg.elite > 1 ? "are" : "is") + " copied <b>unchanged</b> into the new population, and the " + t.crossover.kids.length + " children fill the rest.";
+    else h += "With keep_elitism = 0 nothing is protected: the " + P + " selected parents are carried over (PyGAD’s default <span class='mono'>keep_parents</span>) and the " + t.crossover.kids.length + " children fill the rest.";
+    h += " The new population is shown below, sorted by fitness.</p>";
+    h += "<div class='stagelist'>";
+    if (cfg.elite > 0) te.forEach(i => { h += "<div class='srow'><span class='lab'>elite</span><span class='who'>" + id(i) + " · fitness " + fmt(v.oldFit[i]) + "</span><span class='detail'>copied unchanged</span></div>"; });
+    h += "<div class='srow'><span class='lab'>best</span><span class='who'>" + fmt(t.before.best) + " → <b>" + fmt(t.after.best) + "</b></span><span class='detail'>" + (t.after.best > t.before.best ? "a child beat the old best" : "no child beat the old best") + "</span></div>";
+    h += "<div class='srow'><span class='lab'>mean</span><span class='who'>" + fmt1(t.before.mean) + " → <b>" + fmt1(t.after.mean) + "</b></span><span class='detail'>generation " + (g.gen - 1) + " → " + g.gen + "</span></div>";
+    h += "</div>";
+  }
+  box.innerHTML = h;
+}
+
+function renderStages() {
+  const names = ["Selection", "Crossover", "Mutation", "Elitism"];
+  $("stages").innerHTML = names.map((nm, i) => {
+    const s = i + 1;
+    const cls = S.stage === s ? "now" : (S.stage > s ? "done" : "");
+    return '<div class="stagepill ' + cls + '"><i>' + s + "</i>" + nm + "</div>";
+  }).join("");
+}
+
+function renderStatus() {
+  const g = S.ga, c = S.cfg;
+  let h = "";
+  if (S.runFault && !g) h = '<div class="warnbox" style="margin:0;width:100%">' + esc(S.runFault) + "</div>";
+  else if (!S.parsed || !S.parsed.ok) h = '<div class="stat">Fix the formula (area 2) to run.</div>';
+  else if (!S.cfgCheck.ok) h = '<div class="stat">Fix the settings (area 3) to run.</div>';
+  else if (!nItems()) h = '<div class="stat">Add some items (area 1) to run.</div>';
+  else if (g) {
+    const L = shownLen(), hist = g.history[L - 1], b = shownBest();
+    h += '<div class="stat">generation<b>' + hist.gen + " / " + c.gens + "</b></div>";
+    h += '<div class="stat best">best fitness<b>' + fmt(b.fit) + "</b></div>";
+    h += '<div class="stat">mean fitness<b>' + fmt1(hist.mean) + "</b></div>";
+    h += '<div class="stat">found in generation<b>' + b.gen + "</b></div>";
+    const tb = trueBestNow();
+    if (tb) h += '<div class="stat">true best<b style="color:var(--good)">' + fmt(tb.fitness) + "</b></div>";
+  }
+  $("status").innerHTML = h;
+}
+
+function renderControls() {
+  const ok = canRun();
+  const running = !!S.running;
+  const stepBtn = $("btnStep");
+  const lab = { 0: "Step", 1: "Next: Crossover", 2: "Next: Mutation", 3: "Next: Elitism", 4: "Step" }[S.stage];
+  stepBtn.textContent = lab;
+  stepBtn.disabled = !ok || running || isFinished() && S.ga && S.ga.gen >= S.cfg.gens;
+  $("btnRun").textContent = running ? "Pause" : "Run";
+  $("btnRun").disabled = !ok;
+  $("btnReset").disabled = !ok && !S.ga;
+  $("btnSeeds").disabled = !ok;
+  const big = nItems() > 20;
+  $("btnTrue").disabled = !ok || big;
+  $("btnTrue").title = big ? "True best checks all 2^n packings, so it is only available for up to 20 items" : "Check every possible packing with the current formula";
+  $("btnGridRun").disabled = !ok;
+}
+
+function renderRunArea() {
+  renderStatus(); renderStages(); renderStageBox(); renderControls();
+}
+
+// ---------------------------------------------------------------- 5. results
+const CURVE_COLORS = ["#7aa7d9", "#d9a07a", "#8fc79a", "#b79ad9", "#d6bf6e", "#72c3c3"];
+
+function renderChart() {
+  const svg = $("chart");
+  const W = 660, H = 272, L = 54, R = 16, T = 14, Bm = 40;
+  const g = S.ga;
+  const Ln = g ? shownLen() : 0;
+  const hist = g ? g.history.slice(0, Ln) : [];
+  const tb = trueBestNow();
+  let xmax = S.cfg.gens > 0 ? S.cfg.gens : 1;
+  S.curves.forEach(c => { xmax = Math.max(xmax, c.best.length - 1); });
+  let lo = Infinity, hi = -Infinity;
+  const take = v => { if (isFinite(v)) { if (v < lo) lo = v; if (v > hi) hi = v; } };
+  hist.forEach(p => { take(p.best); take(p.mean); });
+  S.curves.forEach(c => c.best.forEach(take));
+  if (tb) take(tb.fitness);
+  // the mean can start far below the best; do not let it squash the picture
+  let clipped = false;
+  if (hist.length && isFinite(lo)) {
+    let bLo = Infinity, bHi = -Infinity;
+    const tb2 = v => { if (isFinite(v)) { if (v < bLo) bLo = v; if (v > bHi) bHi = v; } };
+    hist.forEach(p => tb2(p.best)); S.curves.forEach(c => c.best.forEach(tb2)); if (tb) tb2(tb.fitness);
+    const floor = bLo - 1.2 * (bHi - bLo) - 0.05 * Math.max(Math.abs(bHi), 1);
+    if (lo < floor) { lo = floor; clipped = true; }
+  }
+  if (!isFinite(lo)) { lo = 0; hi = 1; }
+  if (hi === lo) { hi = lo + 1; }
+  const padv = (hi - lo) * 0.06; lo -= padv; hi += padv;
+  const yt = niceTicks(lo, hi, 5), xt = niceTicks(0, xmax, 6);
+  lo = Math.min(lo, yt.ticks[0]); hi = Math.max(hi, yt.ticks[yt.ticks.length - 1]);
+  const X = x => L + (W - L - R) * x / xmax, Y = y => T + (H - T - Bm) * (1 - (y - lo) / (hi - lo));
+  let s = "";
+  s += '<rect x="' + L + '" y="' + T + '" width="' + (W - L - R) + '" height="' + (H - T - Bm) + '" fill="#fff" stroke="#dbe4ee"/>';
+  yt.ticks.forEach(v => {
+    const y = Y(v);
+    s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y + '" y2="' + y + '" stroke="' + (v === 0 ? "#9aa9b8" : "#e6edf5") + '"/>';
+    s += '<text x="' + (L - 7) + '" y="' + (y + 4) + '" text-anchor="end" font-size="12.5" fill="#6b7c8d">' + fmt(v) + "</text>";
+  });
+  xt.ticks.forEach(v => {
+    const x = X(v);
+    s += '<line x1="' + x + '" x2="' + x + '" y1="' + T + '" y2="' + (H - Bm) + '" stroke="#f0f4f9"/>';
+    s += '<text x="' + x + '" y="' + (H - Bm + 17) + '" text-anchor="middle" font-size="12.5" fill="#6b7c8d">' + fmt(v) + "</text>";
+  });
+  s += '<text x="' + (L + (W - L - R) / 2) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="13" fill="#3d4c5c">generation</text>';
+  s += '<text transform="translate(14 ' + (T + (H - T - Bm) / 2) + ') rotate(-90)" text-anchor="middle" font-size="13" fill="#3d4c5c">fitness</text>';
+  const Yc = v => Math.min(H - Bm, Math.max(T, Y(v)));
+  const poly = (arr, key) => arr.map((p, i) => X(i).toFixed(1) + "," + Yc(key ? p[key] : p).toFixed(1)).join(" ");
+  S.curves.forEach((c, i) => {
+    s += '<polyline fill="none" stroke="' + CURVE_COLORS[i % CURVE_COLORS.length] + '" stroke-width="2.2" opacity=".75" points="' + poly(c.best) + '"/>';
+  });
+  if (tb) {
+    const y = Y(tb.fitness);
+    s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y + '" y2="' + y + '" stroke="#15803d" stroke-width="1.8" stroke-dasharray="7 5"/>';
+    s += '<text x="' + (L + 6) + '" y="' + (y - 6) + '" text-anchor="start" font-size="12.5" fill="#15803d" font-weight="700">true best ' + fmt(tb.fitness) + "</text>";
+  }
+  if (hist.length) {
+    s += '<polyline fill="none" stroke="#C55A11" stroke-width="2" points="' + poly(hist, "mean") + '"/>';
+    s += '<polyline fill="none" stroke="#2F5597" stroke-width="3" stroke-linejoin="round" points="' + poly(hist, "best") + '"/>';
+    const last = hist[hist.length - 1], px = X(last.gen);
+    s += '<circle cx="' + px + '" cy="' + Y(last.best) + '" r="4.5" fill="#2F5597"/>';
+    s += '<circle cx="' + px + '" cy="' + Yc(last.mean) + '" r="4" fill="#C55A11"/>';
+    const lx = px > W - 90 ? px - 8 : px + 8, anchor = px > W - 90 ? "end" : "start";
+    s += '<text x="' + lx + '" y="' + (Y(last.best) - 8) + '" text-anchor="' + anchor + '" font-size="13" font-weight="700" fill="#2F5597">' + fmt(last.best) + "</text>";
+  } else {
+    s += '<text x="' + (L + (W - L - R) / 2) + '" y="' + (T + (H - T - Bm) / 2) + '" text-anchor="middle" font-size="14" fill="#6b7c8d">Press Run or Step to draw the curve</text>';
+  }
+  svg.innerHTML = s;
+  let lg = '<span><i style="background:#2F5597"></i>best fitness</span><span><i style="background:#C55A11"></i>mean fitness of the population</span>';
+  if (tb) lg += '<span><i class="dash"></i>true best</span>';
+  if (clipped) lg += '<span class="hint" style="margin:0">(the mean starts below the bottom of the chart)</span>';
+  S.curves.forEach((c, i) => { lg += '<span><i style="background:' + CURVE_COLORS[i % CURVE_COLORS.length] + '"></i>kept: ' + esc(c.label) + "</span>"; });
+  $("chartLegend").innerHTML = lg;
+  $("btnKeep").disabled = !g || Ln < 2;
+  $("btnClearCurves").disabled = !S.curves.length;
+}
+
+function chipsFor(genes, packedOnly) {
+  const a = [];
+  for (let i = 0; i < genes.length; i++) if (!!genes[i] === packedOnly) a.push(i);
+  return a;
+}
+function renderBest() {
+  const box = $("bestcard"), g = S.ga, b = shownBest();
+  let h = "<div class='sub'>Best packing found" + (g && b ? " <span class='grow'></span><button class='small' id='btnTestBest'>Test it</button>" : "") + "</div>";
+  if (!g || !b) {
+    h += "<p class='hint'>Nothing to show yet. Fix the formula and settings, then press Run or Step.</p>";
+  } else {
+    const t = packingTotals(S.items, b.genes);
+    const packed = chipsFor(b.genes, true), out = chipsFor(b.genes, false);
+    h += "<div class='packed'>" + (packed.length ? packed.map(i => "<span class='tag'>" + (i + 1) + " " + esc(itemName(i)) + "</span>").join("") : "<span class='hint'>nothing packed</span>") + "</div>";
+    if (nItems() <= 20 && out.length) h += "<div class='packed' style='margin-top:-4px'>" + out.map(i => "<span class='tag out'>" + (i + 1) + " " + esc(itemName(i)) + "</span>").join("") + "</div>";
+    h += "<div class='kv'>" +
+      "<div class='stat'>fitness<b style='color:var(--good)'>" + fmt(b.fit) + "</b></div>" +
+      "<div class='stat'>found in generation<b>" + b.gen + "</b></div>" +
+      "<div class='stat'>items packed<b>" + t.C + " of " + nItems() + "</b></div>" +
+      "<div class='stat'>weight<b class='kW'>" + fmt(t.W) + "</b></div>" +
+      "<div class='stat'>value<b class='kV'>" + fmt(t.V) + "</b></div>" +
+      "<div class='stat'>price<b class='kP'>" + fmt(t.P) + "</b></div></div>";
+    if (S.parsed && S.parsed.ok) {
+      const sub = substituteFormula(S.parsed, { V: t.V, W: t.W, P: t.P, C: t.C, x: b.genes });
+      h += "<div class='sub-line'>fitness = " + esc(sub) + (sub === String(b.fit) ? "" : " = " + fmt(b.fit)) + "</div>";
+    }
+  }
+  const tb = trueBestNow();
+  if (tb) {
+    const tp = chipsFor(tb.genes, true);
+    const tt = packingTotals(S.items, tb.genes);
+    const found = g && b && Math.abs(b.fit - tb.fitness) < 1e-9;
+    let msg;
+    if (!g || !b) msg = "";
+    else if (found) msg = "The GA found the true best.";
+    else msg = "The GA is " + fmt(tb.fitness - b.fit) + " below the true best.";
+    h += "<div class='truebox'><b>True best: " + fmt(tb.fitness) + "</b> <span class='hint' style='margin:0'>(all " + tb.total.toLocaleString("en-US") + " packings checked" + (tb.ties > 1 ? "; " + tb.ties + " packings tie" : "") + ")</span><br>" +
+      (msg ? "<b style='color:" + (found ? "var(--good)" : "var(--amber)") + "'>" + msg + "</b><br>" : "") +
+      "<span class='hint'>" + (tp.length ? tp.map(i => esc(itemName(i))).join(", ") : "nothing packed") + " · weight " + fmt(tt.W) + ", value " + fmt(tt.V) + ", price " + fmt(tt.P) + "</span></div>";
+  } else if (nItems() <= 20) {
+    h += "<div class='truebox neutral'><span class='hint' style='margin:0'>Press <b>True best</b> to check all " + Math.pow(2, nItems()).toLocaleString("en-US") + " packings with the current formula.</span></div>";
+  } else {
+    h += "<div class='truebox neutral'><span class='hint' style='margin:0'>With " + nItems() + " items there are " + (Math.pow(2, nItems()) >= 1e12 ? "more than a trillion" : Math.pow(2, nItems()).toLocaleString("en-US")) + " packings, too many to check one by one — which is why a GA is useful.</span></div>";
+  }
+  box.innerHTML = h;
+  const tbtn = $("btnTestBest");
+  if (tbtn) tbtn.onclick = () => { loadPack(b.genes); document.getElementById("sec-formula").scrollIntoView({ behavior: "smooth" }); };
+}
+
+function loadPack(genes) {
+  S.pack = Uint8Array.from(genes);
+  renderPackStrip(); renderPack();
+}
+
+function renderPop() {
+  const g = S.ga, box = $("popbox");
+  if (!g) { box.innerHTML = "<p class='hint' style='margin:6px'>No population yet.</p>"; $("popTitle").textContent = "Population"; return; }
+  const n = nItems();
+  let pop, fit, tags = null, parentsOf = null, title;
+  if (S.stage >= 1 && S.stage <= 3 && S.view) {
+    pop = S.view.oldPop; fit = S.view.oldFit;
+    parentsOf = {};
+    S.view.trace.selection.idx.forEach((pi, k) => { (parentsOf[pi] = parentsOf[pi] || []).push(k + 1); });
+    title = "Population — generation " + (g.gen - 1) + " (parents highlighted)";
+  } else {
+    pop = g.pop; fit = g.fit; tags = g.gen > 0 ? g.tags : null;
+    title = "Population — generation " + g.gen;
+  }
+  $("popTitle").textContent = title;
+  const cw = n <= 12 ? 28 : n <= 24 ? 22 : n <= 45 ? 15 : 11, ch = n <= 24 ? 22 : 19;
+  const order = sortDesc(fit);
+  const bestFit = Math.max.apply(null, fit);
+  let h = '<div style="--cw:' + cw + "px;--ch:" + ch + "px;--cols:46px repeat(" + n + ",var(--cw)) 78px 84px;min-width:max-content\">";
+  h += '<div class="pg-row head"><span class="id">#</span>';
+  for (let i = 0; i < n; i++) h += '<span class="gh" title="' + (i + 1) + " " + esc(itemName(i)) + '">' + ((n <= 24 || (i + 1) % 5 === 0 || i === 0) ? i + 1 : "") + "</span>";
+  h += '<span class="fit gh" style="text-align:right;padding-right:10px">fitness</span><span class="tg gh" style="text-align:left"></span></div>';
+  order.forEach((idx, r) => {
+    const genes = pop[idx];
+    let cls = "pg-row";
+    let tg = "";
+    if (parentsOf && parentsOf[idx]) { cls += " par"; tg = "P" + parentsOf[idx].join(", P"); }
+    else if (tags) { cls += " " + tags[idx]; tg = tags[idx]; }
+    h += '<div class="' + cls + '"><span class="id">#' + (idx + 1) + "</span>";
+    for (let i = 0; i < n; i++) h += '<span class="g ' + (genes[i] ? "g1" : "g0") + '">' + (n <= 24 ? genes[i] : "") + "</span>";
+    h += '<span class="fit" ' + (fit[idx] === bestFit && r === 0 ? 'style="color:var(--good)"' : "") + ">" + fmt(fit[idx]) + '</span><span class="tg">' + tg + "</span></div>";
+  });
+  h += "</div>";
+  box.innerHTML = h;
+}
+
+function renderResults() { renderChart(); renderBest(); renderPop(); }
+function renderAll() {
+  renderSettingsInfo();
+  renderRunArea();
+  renderResults();
+  renderTable();
+  renderFormulaStatusOnly();
+}
+function renderFormulaStatusOnly() {
+  // the fault message (division by zero ...) lives in the formula status line
+  if (S.parsed && S.parsed.ok) {
+    const st = $("fstatus");
+    if (S.runFault) { st.className = "fstatus warn"; st.textContent = "⚠ " + S.runFault; }
+    else { st.className = "fstatus ok"; st.textContent = "✓ Formula is valid."; }
+  }
+}
+
+// ---------------------------------------------------------------- grid demo
+function fillGridSelects() {
+  const opts = Object.keys(GRID_PARAMS).map(k => '<option value="' + k + '">' + GRID_PARAMS[k].label + " (" + GRID_PARAMS[k].py + ")</option>").join("");
+  $("gdRow").innerHTML = opts; $("gdCol").innerHTML = opts;
+  $("gdRow").value = "pop"; $("gdCol").value = "mutPct";
+  $("gdRowVals").value = GRID_PARAMS.pop.values.join(", ");
+  $("gdColVals").value = GRID_PARAMS.mutPct.values.join(", ");
+}
+function parseVals(txt, key) {
+  const parts = txt.split(/[,;\s]+/).filter(Boolean);
+  if (!parts.length) return { error: "Give at least one value." };
+  const vals = [];
+  for (const p of parts) {
+    const v = Number(p);
+    if (!isFinite(v)) return { error: "“" + p + "” is not a number." };
+    if (key !== "mutPct" && Math.floor(v) !== v) return { error: GRID_PARAMS[key].py + " must be whole numbers." };
+    vals.push(v);
+  }
+  if (vals.length > 6) return { error: "At most 6 values per axis." };
+  return { vals };
+}
+function doGrid() {
+  flushFormula();
+  if (!canRun()) { renderAll(); return; }
+  stopAnim();
+  const rk = $("gdRow").value, ck = $("gdCol").value, msg = $("gdMsg");
+  if (rk === ck) { msg.innerHTML = '<span class="msg-bad">Choose two different settings for rows and columns.</span>'; return; }
+  const rv = parseVals($("gdRowVals").value, rk), cv = parseVals($("gdColVals").value, ck);
+  if (rv.error || cv.error) { msg.innerHTML = '<span class="msg-bad">' + esc(rv.error || cv.error) + "</span>"; return; }
+  const cells = [];
+  for (const r of rv.vals) for (const c of cv.vals) {
+    const cfg = gridConfig(S.cfg, rk, r, ck, c);
+    const chk = checkCfg(cfg, nItems());
+    if (!chk.ok) { msg.innerHTML = '<span class="msg-bad">' + esc("Row " + r + ", column " + c + ": " + chk.errors[0]) + "</span>"; return; }
+    cells.push({ r, c, cfg });
+  }
+  const total = cells.length * 5;
+  $("btnGridRun").disabled = true;
+  const results = [];
+  let i = 0;
+  const t0 = performance.now();
+  const stepGrid = () => {
+    if (i < cells.length) {
+      const cell = cells[i];
+      try { results.push(runSeeds(S.items, S.fit, cell.cfg, 5).map(x => x.fitness)); }
+      catch (e) { $("btnGridRun").disabled = false; if (fault(e)) { msg.innerHTML = '<span class="msg-bad">' + esc(S.runFault) + "</span>"; renderAll(); return; } throw e; }
+      i++;
+      msg.textContent = "Running… " + i + " of " + cells.length + " cells";
+      setTimeout(stepGrid, 0);
+      return;
+    }
+    $("btnGridRun").disabled = !canRun();
+    msg.textContent = total + " runs finished in " + ((performance.now() - t0) / 1000).toFixed(1) + " s.";
+    renderGridTable(rk, ck, rv.vals, cv.vals, results, total);
+  };
+  setTimeout(stepGrid, 0);
+}
+function renderGridTable(rk, ck, rvals, cvals, results, total) {
+  const means = results.map(a => mean(a));
+  const lo = Math.min.apply(null, means), hi = Math.max.apply(null, means);
+  const bestAt = means.indexOf(hi);
+  const tb = trueBestNow();
+  let h = "<p class='note' style='margin:0 0 6px'><b>Mean best fitness</b> over 5 seeds (" + S.cfg.seed + "–" + (S.cfg.seed + 4) + ") · " + rvals.length + " × " + cvals.length + " cells × 5 seeds = <b>" + total + " runs</b>" + (tb ? " · true best " + fmt(tb.fitness) : "") + ".</p>";
+  h += "<table class='gd'><thead><tr><th class='corner'>rows: " + GRID_PARAMS[rk].py + "<br>columns: " + GRID_PARAMS[ck].py + " →</th>" + cvals.map(c => "<th>" + fmt(c) + "</th>").join("") + "</tr></thead><tbody>";
+  rvals.forEach((r, ri) => {
+    h += "<tr><th>" + fmt(r) + "</th>";
+    cvals.forEach((c, ci) => {
+      const k = ri * cvals.length + ci, v = means[k];
+      const frac = hi > lo ? (v - lo) / (hi - lo) : 1;
+      const bg = "rgba(47,85,151," + (0.06 + 0.5 * frac).toFixed(3) + ")";
+      h += "<td class='" + (k === bestAt ? "best" : "") + "' style='background:" + bg + ";color:" + (frac > 0.75 ? "#fff" : "#15202b") + "'>" + fmt1(v) + "<small style='color:" + (frac > 0.75 ? "#e6eef9" : "") + "'>± " + fmt1(stdev(results[k])) + " · n = 5</small></td>";
+    });
+    h += "</tr>";
+  });
+  h += "</tbody></table>";
+  const notes = [];
+  if (rk === "K" || ck === "K") notes.push("K_tournament is varied, so parent selection is set to tournament for this grid.");
+  if (S.cfg.parents > Math.min.apply(null, (rk === "pop" ? rvals : ck === "pop" ? cvals : [S.cfg.pop]))) notes.push("Where the population is smaller than num_parents_mating, the number of parents is reduced to the population size.");
+  if (notes.length) h += "<p class='hint'>" + notes.join(" ") + "</p>";
+  $("gdOut").innerHTML = h;
+}
+
+// ---------------------------------------------------------------- wiring
+function wire() {
+  document.querySelectorAll("#probSeg button").forEach(b => b.addEventListener("click", () => { if (b.dataset.p !== S.pid) setProblem(b.dataset.p); }));
+  $("btnUseItems").addEventListener("click", useCustomItems);
+  $("formula").addEventListener("input", onFormulaInput);
+  $("btnDefaultF").addEventListener("click", () => { $("formula").value = PROBLEMS[S.pid].formula; onFormulaInput(); applyFormula(); });
+  document.querySelectorAll("#cheat [data-ins]").forEach(b => b.addEventListener("click", () => insertAtCursor(b.dataset.ins)));
+  $("btnCopyPy").addEventListener("click", () => { if (S.lastPyText && S.parsed && S.parsed.ok) copyText(S.lastPyText, "Python function copied"); else toast("Fix the formula first"); });
+  $("btnCopyCall").addEventListener("click", () => { if (S.callText) copyText(S.callText, "pygad.GA call copied"); });
+  $("packstrip").addEventListener("change", e => {
+    const i = e.target && e.target.dataset ? e.target.dataset.i : undefined;
+    if (i === undefined) return;
+    S.pack[+i] = e.target.checked ? 1 : 0;
+    e.target.parentNode.classList.toggle("on", e.target.checked);
+    renderPack();
+  });
+  $("packClear").addEventListener("click", () => loadPack(new Uint8Array(nItems())));
+  $("packAll").addEventListener("click", () => loadPack(new Uint8Array(nItems()).fill(1)));
+  $("packBest").addEventListener("click", () => { if (S.ga && shownBest()) loadPack(shownBest().genes); else toast("Run first - there is no GA best yet"); });
+  ["sPop", "sGens", "sPar", "sSel", "sK", "sX", "sMut", "sEl", "sSeed"].forEach(id => $(id).addEventListener("input", onCfgInput));
+  $("sSel").addEventListener("change", onCfgInput); $("sX").addEventListener("change", onCfgInput);
+  $("btnRun").addEventListener("click", doRun);
+  $("btnStep").addEventListener("click", doStep);
+  $("btnReset").addEventListener("click", () => { resetGA(); });
+  $("btnSeeds").addEventListener("click", doSeeds);
+  $("btnTrue").addEventListener("click", doTrueBest);
+  $("btnGridToggle").addEventListener("click", () => {
+    const sec = $("sec-grid"), open = sec.hidden;
+    sec.hidden = !open;
+    $("btnGridToggle").setAttribute("aria-expanded", open ? "true" : "false");
+    $("btnGridToggle").textContent = open ? "Grid demo ▴" : "Grid demo ▾";
+    if (open) sec.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  $("btnKeep").addEventListener("click", keepCurve);
+  $("btnClearCurves").addEventListener("click", () => { S.curves = []; S.lastCurveCfg = null; renderChart(); });
+  $("btnCopyTable").addEventListener("click", () => copyText(tableLines().map(l => l.join("\t")).join("\n"), "Table copied - paste it into Word or Excel"));
+  $("btnClearTable").addEventListener("click", () => { S.groups = []; S.tableWarn = false; renderTable(); });
+  $("gdRow").addEventListener("change", () => { $("gdRowVals").value = GRID_PARAMS[$("gdRow").value].values.join(", "); });
+  $("gdCol").addEventListener("change", () => { $("gdColVals").value = GRID_PARAMS[$("gdCol").value].values.join(", "); });
+  $("btnGridRun").addEventListener("click", doGrid);
+}
+
+function init() {
+  fillGridSelects();
+  writeCfg();
+  $("formula").value = PROBLEMS[S.pid].formula;
+  wire();
+  hardReset();
+}
+init();
+window.GAX = { S, setProblem, doRun, doStep, doSeeds, doTrueBest, doGrid, resetGA };
+})();
+</script>
+</body>
+</html>
