@@ -31,10 +31,11 @@ nav.jump a b{color:var(--accent); margin-right:4px}
 .seg button{border:0; border-radius:0; border-right:1px solid var(--line); padding:7px 14px}
 .seg button:last-child{border-right:0}
 .seg button[aria-pressed=true]{background:var(--accent); color:#fff}
+.seg button[aria-pressed=true]:hover:not(:disabled){background:var(--navy); border-color:var(--line); color:#fff}
 .seg.quad{display:grid; grid-template-columns:1fr 1fr; width:100%}
 .seg.quad button{border-right:1px solid var(--line); border-bottom:1px solid var(--line); text-align:left; padding:8px 12px}
 .seg.quad button:nth-child(2n){border-right:0}
-.seg.quad button:nth-child(n+3){border-bottom:0}
+.seg.quad button:last-child{grid-column:1 / -1; border-right:0; border-bottom:0}
 .seglabel{font-size:12px; color:var(--muted); margin-right:6px}
 select,input[type=number],input[type=text],textarea{font-family:var(--sans); font-size:15px; color:var(--ink); border:1px solid var(--line); border-radius:8px; padding:6px 9px; background:#fff}
 select:focus,input:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
@@ -82,6 +83,20 @@ textarea.paste{width:100%; min-height:130px; font-family:var(--mono); font-size:
 .msg-ok{color:var(--good)} .msg-bad{color:var(--bad)}
 .note{font-size:13.5px; color:var(--ink2); margin:8px 0 0}
 
+/* ---- magnet mix: gene table and formulas ---- */
+table.items.genes td:first-child, table.items.genes th:first-child{text-align:left; width:auto; font-weight:700; font-family:var(--mono)}
+table.items.genes td:first-child{color:var(--ink)}
+table.items.genes th:first-child{color:#fff; font-family:var(--sans)}
+table.items.genes td:nth-child(3), table.items.genes td:nth-child(4){text-align:right}
+table.items.genes th:nth-child(3), table.items.genes th:nth-child(4){text-align:right}
+.mrow{margin-top:10px}
+.mlab{font-size:12px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); margin-bottom:4px}
+.mlab span{text-transform:none; letter-spacing:0; font-size:12.5px}
+.mline{display:flex; align-items:flex-start; gap:8px}
+.mline code{flex:1; min-width:0; font-family:var(--mono); font-size:13.5px; line-height:1.45; background:#fff; border:1px solid var(--line); border-radius:6px; padding:5px 9px; overflow-wrap:anywhere}
+.mline button{flex:none; margin-top:2px}
+.cgrp{display:contents} .cgrp[hidden]{display:none}
+
 /* ---- formula ---- */
 .fwrap{display:flex; align-items:center; gap:8px}
 .fwrap .eq{font-weight:700; color:var(--navy); white-space:nowrap}
@@ -97,7 +112,7 @@ pre.errline{margin:4px 0 0; font-family:var(--mono); font-size:14px; color:var(-
 .kV{color:var(--c-value)} .kW{color:var(--c-weight)} .kP{color:var(--c-price)} .kC{color:var(--c-count)} .kI{color:var(--c-item)}
 .kfn{color:var(--navy)} .knum{color:var(--ink2)} .kop{color:var(--ink2)} .kkw{color:var(--navy)} .kcm{color:var(--muted); font-style:italic}
 .kV,.kW,.kP,.kC,.kI{font-weight:700}
-.colorf{font-family:var(--mono); font-size:15px; background:#fff; border:1px solid var(--line); border-radius:6px; padding:5px 10px; margin-top:8px; overflow-x:auto; white-space:pre}
+.colorf{font-family:var(--mono); font-size:15px; background:#fff; border:1px solid var(--line); border-radius:6px; padding:5px 10px; margin-top:8px; overflow-x:auto; white-space:pre-wrap; overflow-wrap:anywhere}
 pre.code{margin:0; font-family:var(--mono); font-size:13px; line-height:1.5; background:#fff; border:1px solid var(--line); border-radius:6px; padding:9px 12px; overflow-x:auto; white-space:pre}
 pre.code.dim{opacity:.45}
 
@@ -112,6 +127,13 @@ pre.code.dim{opacity:.45}
 .readout .stat.fit{background:var(--accent-soft); border-color:var(--edge)}
 .readout .stat.fit b{color:var(--navy)}
 .sub-line{font-family:var(--mono); font-size:13.5px; color:var(--ink2); margin:6px 0 0; white-space:normal; overflow-wrap:anywhere}
+
+/* ---- test a mix ---- */
+.mixstrip{display:flex; flex-wrap:wrap; gap:10px 14px; margin:4px 0 8px}
+.mixstrip label{display:flex; align-items:center; gap:8px; font-size:14px; color:var(--ink2)}
+.mixstrip label b{font-family:var(--mono); font-size:15px}
+.mixstrip input{width:84px; font-family:var(--mono); font-size:16px; padding:5px 8px}
+.mixstrip input.out{border-color:var(--bad); background:var(--bad-bg)}
 
 /* ---- settings ---- */
 .sgrid{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px 12px}
@@ -189,6 +211,7 @@ details.fold[open] summary{margin-bottom:8px}
 .pg-row.child .tg{color:var(--accent)}
 .pg-row.parent .tg{color:var(--amber)}
 .pg-row.bestrow .fit{color:var(--good)}
+.pg-row .g.gr{color:var(--ink); font-size:13px; font-variant-numeric:tabular-nums}
 
 /* ---- results table ---- */
 table.res{width:100%; border-collapse:collapse; font-size:14px; font-variant-numeric:tabular-nums; background:#fff}
@@ -217,6 +240,7 @@ table.gd td.best{outline:3px solid var(--good); outline-offset:-3px}
 .toast.show{opacity:.95}
 #selftest:empty{display:none}
 #selftest{margin-top:22px; font-family:var(--mono); font-size:11.5px; color:var(--muted); white-space:pre-wrap; border-top:1px dashed var(--line); padding-top:10px}
+@media (max-width:700px){.gdform{grid-template-columns:minmax(0,1fr)} .gdform .pair{flex-wrap:wrap} .gdform .pair select{width:100%} .gdform .pair input{flex:1 1 100%}}
 @media (max-width:700px){header.top{position:static; padding:10px 16px} .wrap{padding:14px 16px 40px} .seg button{padding:7px 9px}}
 </style>
 </head>
@@ -240,6 +264,7 @@ table.gd td.best{outline:3px solid var(--good); outline-offset:-3px}
         <button data-p="backpack">Backpack (6 items)</button>
         <button data-p="camping">Camping trip (12 items)</button>
         <button data-p="expedition">Expedition (40 items)</button>
+        <button data-p="magnet">Magnet mix (3 metals)</button>
         <button data-p="custom">Custom (paste)</button>
       </div>
       <p class="note" id="probNote"></p>
@@ -248,8 +273,15 @@ table.gd td.best{outline:3px solid var(--good); outline-offset:-3px}
         <textarea class="paste" id="pasteArea" spellcheck="false" aria-label="Items: name, weight, value, price"></textarea>
         <div class="hint" id="pasteMsg">One item per line: name, weight, value, price. Tab or comma separated; the price column is optional.</div>
       </div>
-      <div class="tablebox"><table class="items" id="itemTable"></table></div>
+      <div class="tablebox" id="tableBox"><table class="items" id="itemTable"></table></div>
       <p class="totals" id="itemTotals"></p>
+      <div id="magnetBox" hidden>
+        <div class="mrow"><div class="mlab">Magnetic power <span>(made-up formula for teaching)</span></div>
+          <div class="mline"><code id="mPower"></code><button class="small" id="btnCopyPower">Copy</button></div></div>
+        <div class="mrow"><div class="mlab">Cost per kg</div>
+          <div class="mline"><code id="mCost"></code><button class="small" id="btnCopyCost">Copy</button></div></div>
+        <p class="note" style="margin-top:8px"><b>Rules:</b> the fractions must add up to 1; the cost must be at most 12.</p>
+      </div>
     </section>
 
     <!-- 2. FITNESS FORMULA -->
@@ -261,8 +293,10 @@ table.gd td.best{outline:3px solid var(--good); outline-offset:-3px}
       <div class="fstatus" id="fstatus"></div>
       <div id="ferrline"></div>
       <div class="cheat" id="cheat">
-        <span>Totals of the packed items:</span>
-        <button class="chipk kV" data-ins="VALUE">VALUE</button><button class="chipk kW" data-ins="WEIGHT">WEIGHT</button><button class="chipk kP" data-ins="PRICE">PRICE</button><button class="chipk kC" data-ins="COUNT">COUNT</button><button class="chipk kI" data-ins="ITEM(1)">ITEM(k)</button>
+        <span class="cgrp" id="cheatPack"><span>Totals of the packed items:</span>
+        <button class="chipk kV" data-ins="VALUE">VALUE</button><button class="chipk kW" data-ins="WEIGHT">WEIGHT</button><button class="chipk kP" data-ins="PRICE">PRICE</button><button class="chipk kC" data-ins="COUNT">COUNT</button><button class="chipk kI" data-ins="ITEM(1)">ITEM(k)</button></span>
+        <span class="cgrp" id="cheatReal" hidden><span>Genes of the mix:</span>
+        <button class="chipk kV" data-ins="FE">FE</button><button class="chipk kW" data-ins="CO">CO</button><button class="chipk kP" data-ins="NI">NI</button></span>
         <span>· functions:</span>
         <button class="chipk" data-ins="MAX(0, )">MAX</button><button class="chipk" data-ins="MIN(, )">MIN</button><button class="chipk" data-ins="IF(, , )">IF</button><button class="chipk" data-ins="ABS()">ABS</button><button class="chipk" data-ins="AND(, )">AND</button><button class="chipk" data-ins="OR(, )">OR</button>
         <span>· + − * / ^ ( ) &lt; &lt;= &gt; &gt;= = &lt;&gt;</span>
@@ -272,7 +306,7 @@ table.gd td.best{outline:3px solid var(--good); outline-offset:-3px}
       <div class="sub">The same fitness as a PyGAD function <span class="grow"></span><button class="small" id="btnCopyPy">Copy Python</button></div>
       <pre class="code" id="pyfit"></pre>
 
-      <div class="sub">Test a packing — tick items and check your formula by hand <span class="grow"></span>
+      <div class="sub"><span id="packTitle">Test a packing — tick items and check your formula by hand</span> <span class="grow"></span>
         <button class="link" id="packClear">Clear</button><button class="link" id="packAll">All</button><button class="link" id="packBest">GA best</button></div>
       <div class="packstrip" id="packstrip"></div>
       <div class="readout" id="packread"></div>
@@ -342,7 +376,7 @@ table.gd td.best{outline:3px solid var(--good); outline-offset:-3px}
     </div>
 
     <div class="sub" style="margin-top:18px"><span id="popTitle">Population</span><span class="grow"></span>
-      <span class="hint" style="margin:0">rows sorted by fitness · 1 = packed (blue) · 0 = left out</span></div>
+      <span class="hint" style="margin:0" id="popHint">rows sorted by fitness · 1 = packed (blue) · 0 = left out</span></div>
     <div class="popbox" id="popbox"></div>
 
     <div class="sub" style="margin-top:18px">Results of multi-seed runs <span class="grow"></span>
@@ -366,7 +400,7 @@ table.gd td.best{outline:3px solid var(--good); outline-offset:-3px}
     <div id="gdOut" style="margin-top:10px; overflow-x:auto"></div>
   </section>
 
-  <p class="foot">Same rules as PyGAD; different random numbers, so values differ slightly from a Colab run. Operators follow PyGAD 3.9.2 for 0/1 genes (<span class="mono">gene_space=[0, 1]</span>, <span class="mono">gene_type=int</span>, <span class="mono">mutation_type="random"</span>).</p>
+  <p class="foot" id="foot">Same rules as PyGAD; different random numbers, so values differ slightly from a Colab run. Operators follow PyGAD 3.9.2 for 0/1 genes (<span class="mono">gene_space=[0, 1]</span>, <span class="mono">gene_type=int</span>, <span class="mono">mutation_type="random"</span>).</p>
   <div id="selftest"></div>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -377,6 +411,8 @@ table.gd td.best{outline:3px solid var(--good); outline-offset:-3px}
 //  The GA follows PyGAD 3.9.2 for binary genes: gene_space=[0, 1],
 //  gene_type=int, crossover_probability=None, mutation_type="random",
 //  keep_parents default (-1), random_seed as given.
+//  Real-number mode (Magnet mix): three float genes in [0, 1], like
+//  gene_space=[{'low': 0, 'high': 1}] * 3 with gene_type=float.
 // =====================================================================
 
 // ---------- seeded random numbers (same seed -> same run) ----------
@@ -420,6 +456,15 @@ const FUNC_INFO = {
   OR:   { min: 1, usage: "OR(a, b, ...)" },
   ITEM: { exact: 1, usage: "ITEM(k)" },
 };
+const REAL_NAMES = ["FE", "CO", "NI"];                    // genes of the Magnet mix problem
+const REAL_TEXT_HINTS = {                                  // words a student might try in the Magnet mix
+  POWER: "POWER is not a name in the formula box - write the power formula out with FE, CO and NI.",
+  COST: "COST is not a name in the formula box - write it out, for example 2*FE + 40*CO + 10*NI.",
+  SUM: "SUM is not a name in the formula box - write FE + CO + NI.",
+};
+const REAL_ALIASES = { IRON: "FE", COBALT: "CO", NICKEL: "NI", F: "FE", C: "CO", N: "NI" };
+const NO_ITEMS_MSG = "This problem has genes FE, CO and NI \u2014 there are no items.";
+const NO_GENES_MSG = "FE, CO and NI are the genes of the Magnet mix problem. In this problem use VALUE, WEIGHT, PRICE, COUNT or ITEM(k).";
 const ALIASES = {
   VALUES: "VALUE", WEIGHTS: "WEIGHT", PRICES: "PRICE", COST: "PRICE", COSTS: "PRICE", BUDGET: "PRICE",
   WT: "WEIGHT", VAL: "VALUE", NUMBER: "COUNT", COUNTS: "COUNT", ITEMS: "ITEM", MAXIMUM: "MAX", MINIMUM: "MIN",
@@ -445,10 +490,12 @@ function editDistance(a, b) {
   return prev[n];
 }
 
-function suggestName(word) {
+function suggestName(word, kind) {
   const up = word.toUpperCase();
-  if (ALIASES[up]) return ALIASES[up];
-  const all = TOTAL_NAMES.concat(Object.keys(FUNC_INFO));
+  const real = kind === "real";
+  if (real && REAL_ALIASES[up]) return REAL_ALIASES[up];
+  if (!real && ALIASES[up]) return ALIASES[up];
+  const all = real ? REAL_NAMES.concat(Object.keys(FUNC_INFO).filter(f => f !== "ITEM")) : TOTAL_NAMES.concat(Object.keys(FUNC_INFO));
   let best = null, bestD = 99;
   for (const cand of all) {
     const d = editDistance(up, cand);
@@ -498,12 +545,13 @@ function tokenize(src) {
 
 // grammar (Excel precedence, low to high):
 //   comparison  <  +,-  <  *,/  <  ^  <  unary minus  <  atom
-function parseFormula(text, nItems) {
+function parseFormula(text, nItems, kind) {
+  const real = kind === "real";
   let src = String(text).replace(/ /g, " ");
   let lead = 0;
   const lm = /^\s*=/.exec(src);                       // Excel habit: a leading = is allowed
   if (lm) { src = src.slice(0, lm[0].length - 1).replace(/./g, " ") + " " + src.slice(lm[0].length); lead = lm[0].length; }
-  if (!src.trim()) return { ok: false, error: { message: "Type a formula, for example  VALUE - 10*MAX(0, WEIGHT - 15)", pos: 0, len: 0 }, tokens: [] };
+  if (!src.trim()) return { ok: false, error: { message: real ? "Type a formula, for example  80*FE + 300*CO + 100*NI" : "Type a formula, for example  VALUE - 10*MAX(0, WEIGHT - 15)", pos: 0, len: 0 }, tokens: [] };
   let toks = [];
   try { toks = tokenize(src); }
   catch (e) {
@@ -596,7 +644,14 @@ function parseFormula(text, nItems) {
       p++;
       const hasCall = at("(");
       const up = t.up;
-      if (TOTAL_NAMES.indexOf(up) >= 0) {
+      if (real) {
+        if (up === "ITEM" || TOTAL_NAMES.indexOf(up) >= 0) fail(NO_ITEMS_MSG, t);
+        if (REAL_NAMES.indexOf(up) >= 0) {
+          if (hasCall) fail(up + " is a number between 0 and 1 - write " + up + " without brackets.", t);
+          return { t: "name", name: up };
+        }
+      } else if (REAL_NAMES.indexOf(up) >= 0) fail(NO_GENES_MSG, t);
+      if (!real && TOTAL_NAMES.indexOf(up) >= 0) {
         if (hasCall) fail(up + " is a total of the packed items - write " + up + " without brackets.", t);
         return { t: "name", name: up };
       }
@@ -635,9 +690,10 @@ function parseFormula(text, nItems) {
         return { t: "call", fn: up, args };
       }
       // unknown word
-      const sug = suggestName(t.text);
-      if (hasCall) fail("Unknown function " + t.text.toUpperCase() + (sug ? " - did you mean " + sug + "?" : ". Functions you can use: MAX, MIN, IF, ABS, AND, OR, ITEM."), t);
-      fail("Unknown name " + t.text.toUpperCase() + (sug ? " - did you mean " + sug + "?" : ". Names you can use: VALUE, WEIGHT, PRICE, COUNT, ITEM(k)."), t);
+      if (real && !hasCall && REAL_TEXT_HINTS[t.up]) fail(REAL_TEXT_HINTS[t.up], t);
+      const sug = suggestName(t.text, kind);
+      if (hasCall) fail("Unknown function " + t.text.toUpperCase() + (sug ? " - did you mean " + sug + "?" : ". Functions you can use: MAX, MIN, IF, ABS, AND, OR" + (real ? "." : ", ITEM.")), t);
+      fail("Unknown name " + t.text.toUpperCase() + (sug ? " - did you mean " + sug + "?" : (real ? ". Names you can use: FE, CO, NI." : ". Names you can use: VALUE, WEIGHT, PRICE, COUNT, ITEM(k).")), t);
     }
     if (t.k === ")") fail("Extra ) - there is no ( to match it.", t);
     if (t.k === ",") fail("A comma can only be used inside a function, like MAX(a, b).", t);
@@ -667,7 +723,7 @@ function parseFormula(text, nItems) {
       else if (n.t === "bin" || n.t === "cmp") { walk(n.a); walk(n.b); }
       else if (n.t === "call") n.args.forEach(walk);
     })(ast);
-    return { ok: true, ast, tokens: toks, used, usesItem, src, lead };
+    return { ok: true, ast, tokens: toks, used, usesItem, src, lead, real };
   } catch (e) {
     if (e instanceof FormulaError) return { ok: false, error: { message: e.message, pos: e.pos, len: e.len }, tokens: toks };
     throw e;
@@ -690,8 +746,9 @@ function constFold(n) {                                   // value of a constant
   return null;
 }
 
-// compile the tree to nested closures: c = { V, W, P, C, x }
-function compileFormula(ast) {
+// compile the tree to nested closures: c = { V, W, P, C, x } for packings, c = { FE, CO, NI } for the Magnet mix
+function compileFormula(ast, kind) {
+  const what = kind === "real" ? "mixes" : "packings";
   function chk(v) {
     if (!isFinite(v)) throw new EvalFault("num", "The formula gives a result that is not a number (for example a power or a root of a negative number).");
     return v;
@@ -704,6 +761,9 @@ function compileFormula(ast) {
           case "VALUE": return c => c.V;
           case "WEIGHT": return c => c.W;
           case "PRICE": return c => c.P;
+          case "FE": return c => c.FE;
+          case "CO": return c => c.CO;
+          case "NI": return c => c.NI;
           default: return c => c.C;
         }
       case "item": { const i = n.k - 1; return c => c.x[i]; }
@@ -716,7 +776,7 @@ function compileFormula(ast) {
           case "*": return c => a(c) * b(c);
           case "/": return c => {
             const d = b(c);
-            if (d === 0) throw new EvalFault("div0", "The formula divides by zero for some packings.");
+            if (d === 0) throw new EvalFault("div0", "The formula divides by zero for some " + what + ".");
             return a(c) / d;
           };
           default: return c => chk(Math.pow(a(c), b(c)));
@@ -770,6 +830,19 @@ function makeFitnessFn(items, compiled) {
   };
 }
 
+// ---- Magnet mix: the made-up power and cost formulas, and the fitness of a mix x = [FE, CO, NI]
+function magnetPower(FE, CO, NI) {
+  return 80 * FE + 300 * CO + 100 * NI + 100 * FE * CO + 300 * FE * NI + 50 * CO * NI - 150 * FE * FE - 200 * CO * CO - 250 * NI * NI;
+}
+function magnetCost(FE, CO, NI) { return 2 * FE + 40 * CO + 10 * NI; }
+function mixTotals(x) {
+  return { FE: x[0], CO: x[1], NI: x[2], SUM: x[0] + x[1] + x[2], POWER: magnetPower(x[0], x[1], x[2]), COST: magnetCost(x[0], x[1], x[2]) };
+}
+function makeRealFitnessFn(compiled) {
+  const ctx = { FE: 0, CO: 0, NI: 0, x: null };
+  return function (x) { ctx.FE = x[0]; ctx.CO = x[1]; ctx.NI = x[2]; ctx.x = x; return compiled(ctx); };
+}
+
 // the formula with the totals written in as numbers (for checking by hand)
 function substituteFormula(parsed, ctx) {
   const toks = parsed.tokens, src = parsed.src;
@@ -778,8 +851,8 @@ function substituteFormula(parsed, ctx) {
     const t = toks[i];
     out += src.slice(last, t.pos);
     last = t.end;
-    if (t.k === "name" && TOTAL_NAMES.indexOf(t.up) >= 0) {
-      out += String({ VALUE: ctx.V, WEIGHT: ctx.W, PRICE: ctx.P, COUNT: ctx.C }[t.up]);
+    if (t.k === "name" && (TOTAL_NAMES.indexOf(t.up) >= 0 || REAL_NAMES.indexOf(t.up) >= 0)) {
+      out += String({ VALUE: ctx.V, WEIGHT: ctx.W, PRICE: ctx.P, COUNT: ctx.C, FE: ctx.FE, CO: ctx.CO, NI: ctx.NI }[t.up]);
     } else if (t.k === "name" && t.up === "ITEM" && toks[i + 1] && toks[i + 1].k === "(" && toks[i + 2] && toks[i + 3] && toks[i + 3].k === ")" && toks[i + 2].k === "num") {
       out += String(ctx.x[toks[i + 2].v - 1] ? 1 : 0);
       i += 3; last = toks[i].end;
@@ -789,7 +862,7 @@ function substituteFormula(parsed, ctx) {
 }
 
 // =====================================================================
-//  2. Python translation (a PyGAD fitness_func) with colour kinds
+//  2. Python translation (a PyGAD fitness_func) with color kinds
 //     segment kinds: V W P C (the four totals), I (ITEM), fn, num, op, txt, kw
 // =====================================================================
 const PY_PREC = { or: 2, and: 3, cmp: 5, add: 6, mul: 7, neg: 8, pow: 9, atom: 10 };
@@ -804,7 +877,8 @@ function pyExpr(ast) {
       case "num": return { segs: [S(n.raw[0] === "." ? "0" + n.raw : n.raw, "num")], prec: PY_PREC.atom };
       case "name": {
         const m = { VALUE: ["numpy.sum(solution * values)", "V"], WEIGHT: ["numpy.sum(solution * weights)", "W"],
-                    PRICE: ["numpy.sum(solution * prices)", "P"], COUNT: ["numpy.sum(solution)", "C"] }[n.name];
+                    PRICE: ["numpy.sum(solution * prices)", "P"], COUNT: ["numpy.sum(solution)", "C"],
+                    FE: ["FE", "V"], CO: ["CO", "W"], NI: ["NI", "P"] }[n.name];
         return { segs: [S(m[0], m[1])], prec: PY_PREC.atom };
       }
       case "item": return { segs: [S("solution[" + (n.k - 1) + "]", "I")], prec: PY_PREC.atom };
@@ -881,10 +955,9 @@ function pythonFitness(parsed, items) {
   const lines = [];
   const S = (t, k) => ({ t, k: k || "txt" });
   const push = (...segs) => lines.push(segs);
-  push(S("import numpy", "kw"));
-  push();
+  if (!parsed.real) { push(S("import numpy", "kw")); push(); }
   const arrays = [["V", "values", "values", "v"], ["W", "weights", "weights", "w"], ["P", "prices", "prices", "p"]];
-  const needed = arrays.filter(a => used.has({ V: "VALUE", W: "WEIGHT", P: "PRICE" }[a[0]]));
+  const needed = parsed.real ? [] : arrays.filter(a => used.has({ V: "VALUE", W: "WEIGHT", P: "PRICE" }[a[0]]));
   if (needed.length) {
     push(S("# one number per item, in the same order as the item table", "cm"));
     for (const a of needed) {
@@ -906,7 +979,12 @@ function pythonFitness(parsed, items) {
     push();
   }
   push(S("def ", "kw"), S("fitness_func", "fn"), S("(ga_instance, solution, solution_idx):", "txt"));
-  push(S("    # solution = a list of 0/1 genes, one gene per item (1 = packed)", "cm"));
+  if (parsed.real) {
+    push(S("    # three genes (each 0 to 1): fractions of iron, cobalt, nickel", "cm"));
+    push(S("    "), S("FE", "V"), S(" = solution[0]"));
+    push(S("    "), S("CO", "W"), S(" = solution[1]"));
+    push(S("    "), S("NI", "P"), S(" = solution[2]"));
+  } else push(S("    # solution = a list of 0/1 genes, one gene per item (1 = packed)", "cm"));
   if (parsed.usesItem) {
     const ks = [];
     (function w(n) {
@@ -1002,7 +1080,7 @@ function cfgDiff(a, b) {
   return parts;
 }
 
-function pyGadCall(cfg, n) {
+function pyGadCall(cfg, n, real) {
   const L = [];
   L.push("import pygad");
   L.push("");
@@ -1012,8 +1090,13 @@ function pyGadCall(cfg, n) {
   L.push("    fitness_func=fitness_func,");
   L.push("    sol_per_pop=" + cfg.pop + ",");
   L.push("    num_genes=" + n + ",");
-  L.push("    gene_space=[0, 1],");
-  L.push("    gene_type=int,");
+  if (real) {
+    L.push("    gene_space=[{'low': 0, 'high': 1}] * 3,");
+    L.push("    gene_type=float,");
+  } else {
+    L.push("    gene_space=[0, 1],");
+    L.push("    gene_type=int,");
+  }
   L.push('    parent_selection_type="' + cfg.sel + '",');
   if (cfg.sel === "tournament") L.push("    K_tournament=" + cfg.K + ",");
   L.push('    crossover_type="' + cfg.xover + '",');
@@ -1118,7 +1201,7 @@ function crossoverStage(ga, parentsGenes, trace) {
   for (let k = 0; k < m; k++) {
     const pa = k % P, pb = (k + 1) % P;
     const A = parentsGenes[pa], B = parentsGenes[pb];
-    const child = new Uint8Array(n);
+    const child = ga.real ? new Float64Array(n) : new Uint8Array(n);
     const src = trace ? new Uint8Array(n) : null;
     for (let g = 0; g < n; g++) {
       let fromB;
@@ -1139,16 +1222,23 @@ function mutationStage(ga, kids, trace) {
   const flips = [];
   for (let k = 0; k < kids.length; k++) {
     const pick = rng.sample(n, count);            // PyGAD: random.sample(range(num_genes), mutation_num_genes)
-    for (const g of pick) kids[k][g] = kids[k][g] ? 0 : 1;   // gene_space [0, 1]: PyGAD always draws the other value
+    if (ga.real) {
+      // Real genes, gene_space {'low': 0, 'high': 1}: PyGAD (mutation_by_space -> generate_gene_value_from_space) draws a
+      // FRESH uniform number in [low, high) for each chosen gene and stores it as is (gene_type=float has no rounding).
+      for (const g of pick) kids[k][g] = ga.real.low + rng.next() * (ga.real.high - ga.real.low);
+    } else {
+      for (const g of pick) kids[k][g] = kids[k][g] ? 0 : 1;   // gene_space [0, 1]: PyGAD always draws the other value
+    }
     if (trace) flips.push(pick.slice().sort((a, b) => a - b));
   }
   return flips;
 }
 
-function createGA(items, fitnessFn, cfg) {
-  const n = items.length;
+// real: null for the packing problems, or { n: 3, low: 0, high: 1 } for the Magnet mix (float genes)
+function createGA(items, fitnessFn, cfg, real) {
+  const n = real ? real.n : items.length;
   const ga = {
-    items, fitnessFn, cfg, n,
+    items, fitnessFn, cfg, n, real: real || null,
     rng: makeRng(cfg.seed),
     numOffspring: numOffspring(cfg),
     mutGenes: mutGenesFor(cfg, n),
@@ -1158,8 +1248,9 @@ function createGA(items, fitnessFn, cfg) {
     rwsWarning: false,
   };
   for (let s = 0; s < cfg.pop; s++) {
-    const g = new Uint8Array(n);
-    for (let i = 0; i < n; i++) g[i] = ga.rng.int(0, 2);
+    const g = real ? new Float64Array(n) : new Uint8Array(n);
+    if (real) for (let i = 0; i < n; i++) g[i] = real.low + ga.rng.next() * (real.high - real.low);   // PyGAD: uniform in [low, high)
+    else for (let i = 0; i < n; i++) g[i] = ga.rng.int(0, 2);
     ga.pop.push(g);
   }
   evaluate(ga);
@@ -1175,27 +1266,27 @@ function evaluate(ga) {
     if (ga.fit[i] < worst) worst = ga.fit[i];
   }
   ga.history.push({ gen: ga.gen, best: ga.fit[bi], mean: sum / ga.fit.length, worst });
-  if (!ga.best || ga.fit[bi] > ga.best.fit) ga.best = { fit: ga.fit[bi], genes: Uint8Array.from(ga.pop[bi]), gen: ga.gen };
+  if (!ga.best || ga.fit[bi] > ga.best.fit) ga.best = { fit: ga.fit[bi], genes: ga.pop[bi].slice(), gen: ga.gen };
 }
 
 // one generation, in four stages. stage objects are filled only when trace is true
 function runGeneration(ga, trace) {
   const t = trace ? { before: { best: ga.history[ga.history.length - 1].best, mean: ga.history[ga.history.length - 1].mean } } : null;
   const sel = selectParents(ga, trace);
-  const parents = sel.idx.map(i => Uint8Array.from(ga.pop[i]));
+  const parents = sel.idx.map(i => ga.pop[i].slice());
   if (trace) t.selection = { idx: sel.idx, info: sel.info, parents, fit: sel.idx.map(i => ga.fit[i]) };
   const cx = crossoverStage(ga, parents, trace);
-  if (trace) t.crossover = { kids: cx.kids.map(k => Uint8Array.from(k)), meta: cx.meta, parentIdx: sel.idx };
+  if (trace) t.crossover = { kids: cx.kids.map(k => k.slice()), meta: cx.meta, parentIdx: sel.idx };
   const flips = mutationStage(ga, cx.kids, trace);
-  if (trace) t.mutation = { kids: cx.kids.map(k => Uint8Array.from(k)), flips, count: ga.mutGenes };
+  if (trace) t.mutation = { kids: cx.kids.map(k => k.slice()), flips, count: ga.mutGenes };
   // new population: elite (or the selected parents when keep_elitism = 0) first, then the children
   const next = [], tags = [];
   if (ga.cfg.elite > 0) {
     const order = sortDesc(ga.fit).slice(0, ga.cfg.elite);
-    order.forEach(i => { next.push(Uint8Array.from(ga.pop[i])); tags.push("elite"); });
+    order.forEach(i => { next.push(ga.pop[i].slice()); tags.push("elite"); });
     if (trace) t.eliteIdx = order;
   } else {
-    parents.forEach(p => { next.push(Uint8Array.from(p)); tags.push("parent"); });
+    parents.forEach(p => { next.push(p.slice()); tags.push("parent"); });
   }
   cx.kids.forEach(k => { next.push(k); tags.push("child"); });
   ga.pop = next;
@@ -1214,8 +1305,8 @@ function runToEnd(ga) {
   return ga;
 }
 
-function runOnce(items, fitnessFn, cfg) {
-  const ga = createGA(items, fitnessFn, cfg);
+function runOnce(items, fitnessFn, cfg, real) {
+  const ga = createGA(items, fitnessFn, cfg, real);
   runToEnd(ga);
   return ga;
 }
@@ -1231,15 +1322,19 @@ function stdev(a) {                                // sample standard deviation 
 }
 
 function resultRow(ga, items, label) {
+  if (ga.real) {
+    const m = mixTotals(ga.best.genes);
+    return { label, seed: ga.cfg.seed, fitness: ga.best.fit, FE: m.FE, CO: m.CO, NI: m.NI, SUM: m.SUM, POWER: m.POWER, COST: m.COST, gen: ga.best.gen, genes: ga.best.genes, rwsWarn: ga.rwsWarning };
+  }
   const tot = packingTotals(items, ga.best.genes);
   return { label, seed: ga.cfg.seed, fitness: ga.best.fit, value: tot.V, weight: tot.W, price: tot.P, gen: ga.best.gen, genes: ga.best.genes, rwsWarn: ga.rwsWarning };
 }
 
-function runSeeds(items, fitnessFn, cfg, count) {
+function runSeeds(items, fitnessFn, cfg, count, real) {
   const rows = [];
   for (let s = 0; s < count; s++) {
     const c = Object.assign({}, cfg, { seed: cfg.seed + s });
-    rows.push(resultRow(runOnce(items, fitnessFn, c), items, cfgLabel(c)));
+    rows.push(resultRow(runOnce(items, fitnessFn, c, real), items, cfgLabel(c)));
   }
   return rows;
 }
@@ -1295,6 +1390,52 @@ function bruteForce(items, compiled) {
   return bruteResult(st);
 }
 
+// ---- Magnet mix "True best": every mix with FE, CO, NI in steps of 0.01 (101^3 = 1,030,301 mixes). Resumable.
+//      One FE value (101 x 101 = 10,201 mixes) per step, so the page can show progress between chunks.
+function mixGridStart(compiled) {
+  return { compiled, ctx: { FE: 0, CO: 0, NI: 0, x: null }, i: 0, N: 101, total: 101 * 101 * 101,
+           best: -Infinity, bi: 0, bj: 0, bk: 0, ties: 0, done: false, error: null };
+}
+function mixGridRun(st, nFE) {
+  const N = st.N, ctx = st.ctx, f = st.compiled;
+  let k0 = 0;
+  while (!st.done && k0 < nFE) {
+    const i = st.i;
+    ctx.FE = i / 100;
+    for (let j = 0; j < N; j++) {
+      ctx.CO = j / 100;
+      for (let k = 0; k < N; k++) {
+        ctx.NI = k / 100;
+        let v;
+        try { v = f(ctx); }
+        catch (e) {
+          if (e instanceof EvalFault) { st.error = { message: e.message, mix: [ctx.FE, ctx.CO, ctx.NI] }; st.done = true; return true; }
+          throw e;
+        }
+        // the first mix with the strictly highest value is kept; mixes within 1e-9 of it are counted as ties
+        if (v > st.best + 1e-9) { st.best = v; st.bi = i; st.bj = j; st.bk = k; st.ties = 1; }
+        else if (v >= st.best - 1e-9) {
+          st.ties++;
+          if (v > st.best) { st.best = v; st.bi = i; st.bj = j; st.bk = k; }
+        }
+      }
+    }
+    st.i++; k0++;
+    if (st.i >= N) st.done = true;
+  }
+  return st.done;
+}
+function mixGridResult(st) {
+  if (st.error) return { error: st.error };
+  const genes = Float64Array.from([st.bi / 100, st.bj / 100, st.bk / 100]);
+  return { fitness: st.best, genes, ties: st.ties, total: st.total, mix: mixTotals(genes), real: true };
+}
+function mixGridSearch(compiled) {
+  const st = mixGridStart(compiled);
+  while (!mixGridRun(st, 101)) { /* keep going */ }
+  return mixGridResult(st);
+}
+
 // settings that the grid demo can vary
 const GRID_PARAMS = {
   pop:    { label: "Population size", py: "sol_per_pop", values: [10, 30, 100] },
@@ -1315,6 +1456,10 @@ function gridConfig(base, rowKey, rowVal, colKey, colVal) {
 // =====================================================================
 //  Problems: item tables and their default fitness formulas
 // =====================================================================
+// Magnet mix (real-number genes FE, CO, NI between 0 and 1)
+const MAGNET_POWER = "80*FE + 300*CO + 100*NI + 100*FE*CO + 300*FE*NI + 50*CO*NI - 150*FE^2 - 200*CO^2 - 250*NI^2";
+const MAGNET_COST = "2*FE + 40*CO + 10*NI";
+const MAGNET_POP = 50, MAGNET_GENS = 150, MAGNET_PARENTS = 10;   // tuned with tests/real_tune.js: seeds 1-5 on the last formula average about 117.7
 const PROBLEMS = {
   backpack: {
     id: "backpack", label: "Backpack (6 items)", short: "Backpack",
@@ -1395,6 +1540,20 @@ const PROBLEMS = {
       { name: "Binoculars", w: 1, v: 3, p: 90 },
     ],
   },
+  magnet: {
+    id: "magnet", label: "Magnet mix (3 metals)", short: "Magnet mix", kind: "real",
+    note: "Mix three metals to make the strongest magnet. Each gene is the fraction of one metal, between 0 and 1.",
+    formula: MAGNET_POWER,
+    items: [],
+    real: { n: 3, low: 0, high: 1 },
+    genes: [
+      { name: "FE", metal: "iron", cost: 2 },
+      { name: "CO", metal: "cobalt", cost: 40 },
+      { name: "NI", metal: "nickel", cost: 10 },
+    ],
+    // starting settings for this problem (every other setting stays at the tool default)
+    cfg: { pop: MAGNET_POP, gens: MAGNET_GENS, parents: MAGNET_PARENTS },
+  },
   custom: {
     id: "custom", label: "Custom (paste)", short: "Custom",
     note: "Paste your own items.",
@@ -1429,6 +1588,8 @@ const S = {
   trueBest: null, brute: null,
   groups: [], tableWarn: false,
   pack: new Uint8Array(0), lastPyHtml: "",
+  mix: [0.5, 0.2, 0.3], mixWarn: "",              // Test a mix: FE, CO, NI (0.5 / 0.2 / 0.3 is the worksheet check value)
+  cfgFam: { pack: null, real: null },             // settings remembered for the packing problems and for the Magnet mix
 };
 
 // ---------------------------------------------------------------- small helpers
@@ -1468,15 +1629,40 @@ function segsHtml(segs) {
     return c ? '<span class="' + c + '">' + esc(s.t) + "</span>" : esc(s.t);
   }).join("");
 }
+const isReal = () => PROBLEMS[S.pid].kind === "real";
+const realSpec = () => (isReal() ? PROBLEMS[S.pid].real : null);
+const nGenes = () => (isReal() ? PROBLEMS[S.pid].real.n : S.items.length);
+const fmt2 = v => {                              // always 2 decimals (real-number mode)
+  if (v === null || v === undefined || !isFinite(v)) return "–";
+  const r = Math.round(v * 100) / 100;
+  return (r === 0 ? 0 : r).toFixed(2);
+};
+const fv = v => (isReal() ? fmt2(v) : fmt(v));   // fitness text for the current problem
+const wordOf = () => (isReal() ? "mixes" : "packings");
 function itemName(i) { return S.items[i] ? S.items[i].name : "item " + (i + 1); }
 function nItems() { return S.items.length; }
 function itemsSig() { return S.items.map(it => it.name + ":" + it.w + ":" + it.v + ":" + it.p).join(";"); }
 
 // ---------------------------------------------------------------- 1. problem
+const FOOT_PACK = $("foot").innerHTML;
+const FOOT_REAL = 'Same rules as PyGAD; different random numbers, so values differ slightly from a Colab run. Operators follow PyGAD 3.9.2 for real-number genes (<span class="mono">gene_space=[{\'low\': 0, \'high\': 1}] * 3</span>, <span class="mono">gene_type=float</span>, <span class="mono">mutation_type="random"</span>): the starting values are uniform random numbers between 0 and 1, and a mutated gene gets a new random number between 0 and 1.';
 function renderProblem() {
+  $("foot").innerHTML = isReal() ? FOOT_REAL : FOOT_PACK;
   document.querySelectorAll("#probSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.p === S.pid ? "true" : "false"));
   $("probNote").textContent = PROBLEMS[S.pid].note;
   $("customBox").hidden = S.pid !== "custom";
+  const real = isReal();
+  $("magnetBox").hidden = !real;
+  $("itemTotals").hidden = real;
+  $("itemTable").classList.toggle("genes", real);
+  $("tableBox").style.maxHeight = real ? "none" : "";
+  if (real) {
+    $("mPower").textContent = MAGNET_POWER; $("mCost").textContent = MAGNET_COST;
+    const cls = { FE: "kV", CO: "kW", NI: "kP" };
+    const rows = PROBLEMS[S.pid].genes.map(g => "<tr><td class='" + cls[g.name] + "'>" + g.name + "</td><td>" + g.metal + "</td><td>0 to 1</td><td>" + g.cost + "</td></tr>").join("");
+    $("itemTable").innerHTML = "<thead><tr><th>Gene</th><th>Metal</th><th>Range</th><th>Cost per kg</th></tr></thead><tbody>" + rows + "</tbody>";
+    return;
+  }
   const rows = S.items.map((it, i) => "<tr><td>" + (i + 1) + "</td><td>" + esc(it.name) + "</td><td>" + fmt(it.w) + "</td><td>" + fmt(it.v) + "</td><td>" + fmt(it.p) + "</td></tr>").join("");
   $("itemTable").innerHTML = "<thead><tr><th>#</th><th>Item</th><th>Weight</th><th>Value</th><th>Price</th></tr></thead><tbody>" + rows + "</tbody>";
   const tw = S.items.reduce((s, it) => s + it.w, 0), tv = S.items.reduce((s, it) => s + it.v, 0), tp = S.items.reduce((s, it) => s + it.p, 0);
@@ -1521,7 +1707,16 @@ function useCustomItems() {
 
 function setProblem(pid) {
   S.formulas[S.pid] = $("formula").value;
+  const wasReal = isReal();
+  S.cfgFam[wasReal ? "real" : "pack"] = Object.assign({}, S.cfg);
   S.pid = pid;
+  S.lastPyHtml = "";
+  if (isReal() !== wasReal) {                      // the two kinds of problem keep their own settings
+    const saved = S.cfgFam[isReal() ? "real" : "pack"];
+    S.cfg = saved ? Object.assign({}, saved) : (isReal() ? Object.assign({}, DEFAULT_CFG, PROBLEMS[pid].cfg) : Object.assign({}, DEFAULT_CFG));
+    writeCfg();
+    resetGridValues();
+  }
   if (pid === "custom") {
     if (!S.customItems) { S.customItems = PROBLEMS.backpack.items.map(x => Object.assign({}, x)); S.customText = itemsToText(S.customItems); }
     S.items = S.customItems;
@@ -1537,12 +1732,12 @@ function normText(t) { return t.replace(/\s+/g, "").toUpperCase(); }
 
 function reparse() {
   const text = $("formula").value;
-  const n = nItems();
-  const p = n ? parseFormula(text, n) : { ok: false, error: { message: "Add some items first.", pos: 0, len: 0 }, tokens: [] };
+  const n = nGenes(), real = isReal();
+  const p = n ? parseFormula(text, nItems(), real ? "real" : undefined) : { ok: false, error: { message: "Add some items first.", pos: 0, len: 0 }, tokens: [] };
   S.parsed = p;
   if (p.ok) {
-    S.compiled = compileFormula(p.ast);
-    S.fit = makeFitnessFn(S.items, S.compiled);
+    S.compiled = compileFormula(p.ast, real ? "real" : undefined);
+    S.fit = real ? makeRealFitnessFn(S.compiled) : makeFitnessFn(S.items, S.compiled);
   } else { S.compiled = null; S.fit = null; }
   return p;
 }
@@ -1550,7 +1745,7 @@ function keyNow() { return S.pid + "|" + itemsSig() + "|" + (S.parsed && S.parse
 
 function colorFormula() {
   const p = S.parsed, text = $("formula").value;
-  if (!text.trim()) return '<span class="kcm">your formula, coloured by term</span>';
+  if (!text.trim()) return '<span class="kcm">your formula, colored by term</span>';
   const toks = p && p.tokens && p.tokens.length ? p.tokens : null;
   if (!toks) return esc(text);
   const src = p.src || text;
@@ -1563,7 +1758,7 @@ function colorFormula() {
     if (t.k === "num") cls = "knum";
     else if (t.k === "name") {
       const u = t.up;
-      cls = u === "VALUE" ? "kV" : u === "WEIGHT" ? "kW" : u === "PRICE" ? "kP" : u === "COUNT" ? "kC" : u === "ITEM" ? "kI" : FUNC_INFO[u] ? "kfn" : "";
+      cls = u === "VALUE" || u === "FE" ? "kV" : u === "WEIGHT" || u === "CO" ? "kW" : u === "PRICE" || u === "NI" ? "kP" : u === "COUNT" ? "kC" : u === "ITEM" ? "kI" : FUNC_INFO[u] ? "kfn" : "";
     } else if (t.k === "op" || t.k === "," || t.k === "(" || t.k === ")") cls = "kop";
     out += cls ? '<span class="' + cls + '">' + esc(src.slice(t.pos, t.end)) + "</span>" : esc(src.slice(t.pos, t.end));
   }
@@ -1573,6 +1768,7 @@ function colorFormula() {
 
 function renderFormula() {
   const p = S.parsed, input = $("formula");
+  $("cheatPack").hidden = isReal(); $("cheatReal").hidden = !isReal();
   const st = $("fstatus"), el = $("ferrline");
   el.innerHTML = "";
   input.classList.remove("bad", "ok");
@@ -1633,13 +1829,46 @@ function insertAtCursor(text) {
 }
 
 // ---- test a packing
+function mixArr() { return Float64Array.from(S.mix); }
 function renderPackStrip() {
+  $("packTitle").textContent = isReal() ? "Test a mix — check your formula by hand" : "Test a packing — tick items and check your formula by hand";
+  $("packAll").hidden = isReal();
+  if (isReal()) {
+    const cls = ["kV", "kW", "kP"], nm = ["FE", "CO", "NI"], metal = ["iron", "cobalt", "nickel"];
+    $("packstrip").className = "mixstrip";
+    $("packstrip").innerHTML = nm.map((g, i) =>
+      '<label><b class="' + cls[i] + '">' + g + '</b> ' + metal[i] + '<input type="number" min="0" max="1" step="0.01" data-g="' + i + '" value="' + S.mix[i] + '" aria-label="' + g + ' (' + metal[i] + '), between 0 and 1"></label>').join("");
+    return;
+  }
+  $("packstrip").className = "packstrip";
   const n = nItems();
   if (S.pack.length !== n) S.pack = new Uint8Array(n);
   $("packstrip").innerHTML = S.items.map((it, i) =>
     '<label class="' + (S.pack[i] ? "on" : "") + '"><input type="checkbox" data-i="' + i + '"' + (S.pack[i] ? " checked" : "") + "><i>" + (i + 1) + "</i> " + esc(it.name) + "</label>").join("");
 }
+function renderPackReal() {
+  const x = mixArr(), m = mixTotals(x);
+  let fitHtml = "–", sub = "";
+  if (S.parsed && S.parsed.ok && S.fit) {
+    try {
+      const f = S.fit(x);
+      fitHtml = fmt2(f);
+      const subst = substituteFormula(S.parsed, { FE: x[0], CO: x[1], NI: x[2], x });
+      sub = "fitness = " + subst + (subst === String(f) ? "" : " = " + fmt2(f));
+    } catch (e) {
+      if (e instanceof EvalFault) { fitHtml = "error"; sub = e.message; } else throw e;
+    }
+  } else sub = "Fix the formula to see the fitness of this mix.";
+  if (S.mixWarn) sub = S.mixWarn + " " + sub;
+  $("packread").innerHTML =
+    '<div class="stat">SUM = FE+CO+NI<b>' + fmt2(m.SUM) + "</b></div>" +
+    '<div class="stat">POWER<b>' + fmt2(m.POWER) + "</b></div>" +
+    '<div class="stat">COST<b>' + fmt2(m.COST) + "</b></div>" +
+    '<div class="stat fit">fitness<b>' + fitHtml + "</b></div>";
+  $("packsub").textContent = sub;
+}
 function renderPack() {
+  if (isReal()) { renderPackReal(); return; }
   const t = packingTotals(S.items, S.pack);
   let fitHtml = "–", sub = "";
   if (S.parsed && S.parsed.ok && S.fit) {
@@ -1675,34 +1904,36 @@ function readCfg() {
   return c;
 }
 function renderSettingsInfo() {
-  const c = S.cfg, n = nItems(), chk = S.cfgCheck;
+  const c = S.cfg, n = nGenes(), chk = S.cfgCheck, real = isReal();
   $("fK").classList.toggle("off", c.sel !== "tournament");
   $("sK").disabled = c.sel !== "tournament";
   let h = "";
   if (chk.ok && n) {
     const m = numOffspring(c), g = mutGenesFor(c, n);
     h = "Each generation: <b>" + m + "</b> children are built" + (c.elite > 0 ? " (population " + c.pop + " − " + c.elite + " elite)" : " (population " + c.pop + " − " + c.parents + " parents carried over)") +
-        " · each child gets <b>" + g + "</b> of its " + n + " genes flipped (" + trimNum(c.mutPct) + "%, at least 1).";
+        (real ? " · each child gets <b>" + g + "</b> of its " + n + " genes replaced by a new random number between 0 and 1 (" + trimNum(c.mutPct) + "% of " + n + " genes, at least 1)."
+              : " · each child gets <b>" + g + "</b> of its " + n + " genes flipped (" + trimNum(c.mutPct) + "%, at least 1).");
   } else if (!chk.ok) h = "Fix the settings marked below to run.";
   const sd = { sss: "sss: the fittest solutions become the parents", tournament: "tournament: each parent wins a small random contest", rws: "rws: the chance of becoming a parent is proportional to fitness", random: "random: parents are drawn at random, fitness is ignored" }[c.sel];
   const xd = { single_point: "single_point: one cut, the genes before it come from one parent and the rest from the other", two_points: "two_points: two cuts, the middle part comes from the second parent", uniform: "uniform: every gene comes from either parent by a coin flip" }[c.xover];
   h += "<div class='hint' style='margin-top:4px'>" + esc(sd) + " · " + esc(xd) + ".</div>";
+  if (real) h += "<div class='hint' style='margin-top:4px'>The Magnet mix has real-number genes: the starting values and every mutation are random numbers between 0 and 1.</div>";
   $("derived").innerHTML = h;
   let w = "";
   if (!chk.ok) w += '<div class="warnbox">' + chk.errors.map(esc).join("<br>") + "</div>";
   else if (chk.notes.length) w += '<div class="warnbox amber">' + chk.notes.map(esc).join("<br>") + "</div>";
   if (c.sel === "rws" && S.ga && (S.ga.rwsWarning || Math.min.apply(null, S.ga.fit) <= 0)) {
-    w += '<div class="warnbox amber">Roulette needs positive fitness — some packings have fitness ≤ 0, so the wheel is not fair.</div>';
+    w += '<div class="warnbox amber">Roulette needs positive fitness — some ' + wordOf() + ' have fitness ≤ 0, so the wheel is not fair.</div>';
   }
   $("cfgwarn").innerHTML = w;
   if (chk.ok && n) {
-    S.callText = pyGadCall(c, n);
+    S.callText = pyGadCall(c, n, real);
     $("pycall").textContent = S.callText;
   }
 }
 function onCfgInput() {
   S.cfg = readCfg();
-  S.cfgCheck = checkCfg(S.cfg, nItems());
+  S.cfgCheck = checkCfg(S.cfg, nGenes());
   resetGA();
 }
 
@@ -1711,21 +1942,24 @@ function stopAnim() {
   if (S.anim) { clearTimeout(S.anim); S.anim = null; }
   S.running = false;
 }
+function faultHint() {
+  return isReal() ? " (Avoid dividing by FE, CO or NI - a gene can be 0.)" : " (For example COUNT is 0 for the empty packing - wrap it in IF, like IF(COUNT=0, 0, VALUE/COUNT).)";
+}
 function fault(e) {
   if (e instanceof EvalFault) {
-    S.runFault = e.message + " (For example COUNT is 0 for the empty packing - wrap it in IF, like IF(COUNT=0, 0, VALUE/COUNT).)";
+    S.runFault = e.message + faultHint();
     return true;
   }
   if (e instanceof GAFault) { S.runFault = e.message; return true; }
   return false;
 }
-function canRun() { return !!(S.fit && S.parsed && S.parsed.ok && S.cfgCheck.ok && nItems() > 0); }
+function canRun() { return !!(S.fit && S.parsed && S.parsed.ok && S.cfgCheck.ok && nGenes() > 0); }
 
 function resetGA() {
   stopAnim();
   S.stage = 0; S.view = null; S.runFault = null; S.ga = null;
   if (canRun()) {
-    try { S.ga = createGA(S.items, S.fit, S.cfg); }
+    try { S.ga = createGA(S.items, S.fit, S.cfg, realSpec()); }
     catch (e) { if (!fault(e)) throw e; }
   }
   renderAll();
@@ -1739,7 +1973,7 @@ function hardReset() {
   renderPackStrip();
   reparse();
   S.fkey = keyNow();
-  S.cfgCheck = checkCfg(S.cfg, nItems());
+  S.cfgCheck = checkCfg(S.cfg, nGenes());
   renderFormula();
   resetGA();
 }
@@ -1756,6 +1990,7 @@ function startGeneration() {
   S.view = view; S.stage = 1;
 }
 function doStep() {
+  if (isReal()) { toast("Step mode is for the packing problems."); return; }
   flushFormula();
   if (!canRun()) { renderAll(); return; }
   stopAnim();
@@ -1813,7 +2048,7 @@ function doSeeds() {
   if (!canRun()) { renderAll(); return; }
   stopAnim();
   let rows;
-  try { rows = runSeeds(S.items, S.fit, S.cfg, 5); }
+  try { rows = runSeeds(S.items, S.fit, S.cfg, 5, realSpec()); }
   catch (e) { if (fault(e)) { renderAll(); return; } throw e; }
   const key = cfgKey(S.cfg) + "|" + S.cfg.seed;
   const g = { key, label: cfgLabel(S.cfg), rows };
@@ -1826,7 +2061,18 @@ function doSeeds() {
   $("restable").scrollTop = $("restable").scrollHeight;
 }
 
+function tableLinesReal() {
+  const lines = [["Run", "Seed", "Best fitness", "FE", "CO", "NI", "SUM", "POWER", "COST", "Generation of best"]];
+  const cols = [r => r.fitness, r => r.FE, r => r.CO, r => r.NI, r => r.SUM, r => r.POWER, r => r.COST];
+  for (const g of S.groups) {
+    for (const r of g.rows) lines.push([g.label, r.seed].concat(cols.map(f => fmt2(f(r))), [r.gen]));
+    lines.push([g.label + " - mean", ""].concat(cols.map(f => fmt2(mean(g.rows.map(f)))), [fmt1(mean(g.rows.map(r => r.gen)))]));
+    lines.push([g.label + " - std", ""].concat(cols.map(f => fmt2(stdev(g.rows.map(f)))), [fmt1(stdev(g.rows.map(r => r.gen)))]));
+  }
+  return lines;
+}
 function tableLines() {
+  if (isReal()) return tableLinesReal();
   const head = ["Run", "Seed", "Best fitness", "Value", "Weight", "Price", "Generation of best"];
   const lines = [head];
   for (const g of S.groups) {
@@ -1840,7 +2086,20 @@ function tableLines() {
 function renderTable() {
   const box = $("restable");
   if (!S.groups.length) { box.innerHTML = ""; box.style.display = "none"; }
-  else {
+  else if (isReal()) {
+    box.style.display = "";
+    const cols = [r => r.fitness, r => r.FE, r => r.CO, r => r.NI, r => r.SUM, r => r.POWER, r => r.COST];
+    let h = "<table class='res'><thead><tr><th>Run</th><th>Seed</th><th>Best fitness</th><th>FE</th><th>CO</th><th>NI</th><th>SUM</th><th>POWER</th><th>COST</th><th>Generation of best</th></tr></thead><tbody>";
+    for (const g of S.groups) {
+      g.rows.forEach((r, i) => {
+        h += "<tr><td class='lab'>" + (i === 0 ? esc(g.label) : "") + "</td><td>" + r.seed + "</td>" + cols.map(f => "<td>" + fmt2(f(r)) + "</td>").join("") + "<td>" + r.gen + "</td></tr>";
+      });
+      h += "<tr class='sum'><td>mean</td><td></td>" + cols.map(f => "<td>" + fmt2(mean(g.rows.map(f))) + "</td>").join("") + "<td>" + fmt1(mean(g.rows.map(r => r.gen))) + "</td></tr>";
+      h += "<tr class='sum last'><td>std (n − 1)</td><td></td>" + cols.map(f => "<td>" + fmt2(stdev(g.rows.map(f))) + "</td>").join("") + "<td>" + fmt1(stdev(g.rows.map(r => r.gen))) + "</td></tr>";
+    }
+    h += "</tbody></table>";
+    box.innerHTML = h;
+  } else {
     box.style.display = "";
     let h = "<table class='res'><thead><tr><th>Run</th><th>Seed</th><th>Best fitness</th><th>Value</th><th>Weight</th><th>Price</th><th>Generation of best</th></tr></thead><tbody>";
     for (const g of S.groups) {
@@ -1855,14 +2114,40 @@ function renderTable() {
     box.innerHTML = h;
   }
   let hint = "Press “Run 5 seeds” to add rows. Each setting gets a mean and a standard deviation (n − 1) row. The table is cleared when the problem or the formula changes.";
-  if (S.tableWarn) hint = "Roulette needs positive fitness — some packings have fitness ≤ 0, so the wheel is not fair. (" + hint + ")";
+  if (S.tableWarn) hint = "Roulette needs positive fitness — some " + wordOf() + " have fitness ≤ 0, so the wheel is not fair. (" + hint + ")";
   $("tableHint").textContent = hint;
   $("btnCopyTable").disabled = !S.groups.length; $("btnClearTable").disabled = !S.groups.length;
 }
 
+function doTrueBestReal() {
+  stopAnim();
+  const st = mixGridStart(S.compiled);
+  S.brute = st;
+  const total = st.total.toLocaleString("en-US");
+  const step = () => {
+    if (S.brute !== st) return;
+    let done;
+    try { done = mixGridRun(st, 3); } catch (e) { if (fault(e)) { S.brute = null; renderAll(); return; } throw e; }
+    if (!done) {
+      $("status").innerHTML = '<div class="stat">Checking all ' + total + " mixes… <b>" + Math.round(100 * st.i / st.N) + "%</b></div>";
+      setTimeout(step, 0);
+      return;
+    }
+    S.brute = null;
+    const r = mixGridResult(st);
+    if (r.error) { S.runFault = r.error.message + faultHint(); renderAll(); return; }
+    r.key = S.fkey;
+    S.trueBest = r;
+    renderAll();
+    toast("True best fitness (grid): " + fmt2(r.fitness));
+  };
+  setTimeout(step, 0);
+  $("status").innerHTML = '<div class="stat">Checking all ' + total + " mixes…</div>";
+}
 function doTrueBest() {
   flushFormula();
-  if (!canRun() || nItems() > 20) return;
+  if (!canRun() || (!isReal() && nItems() > 20)) return;
+  if (isReal()) { doTrueBestReal(); return; }
   stopAnim();
   const st = bruteStart(S.items, S.compiled);
   S.brute = st;
@@ -1892,6 +2177,11 @@ function trueBestNow() { return S.trueBest && S.trueBest.key === S.fkey ? S.true
 // ---------------------------------------------------------------- 4. run and step: stage text
 function stageIntro() {
   const g = S.ga;
+  if (isReal()) {
+    let h = "<p class='what'><b>Step mode is for the packing problems.</b> Here, press <b>Run</b> to play all " + S.cfg.gens + " generations, or <b>Run 5 seeds</b> to compare several random starts.</p>";
+    if (g && g.gen >= S.cfg.gens) h = "<p class='what'><b>Run finished.</b> Best fitness <b>" + fmt2(g.best.fit) + "</b>, first reached in generation <b>" + g.best.gen + "</b>. Press <b>Reset</b> to start again, or change a setting (that also starts a new run).</p>" + h;
+    return h;
+  }
   if (!g) return "<p class='what'>Set a valid formula and settings, then press <b>Step</b> to watch one generation in four stages, or <b>Run</b> to play the whole run.</p>";
   if (g.gen === 0) {
     return "<p class='what'>This is the <b>starting population</b>: " + S.cfg.pop + " random packings (generation 0). Press <b>Step</b> to watch one generation in four stages — selection, crossover, mutation, elitism — or <b>Run</b> to play all " + S.cfg.gens + " generations.</p>";
@@ -1946,7 +2236,7 @@ function renderStageBox() {
       two_points: "<b>Two cut points</b> per child: the middle part comes from the second parent (orange), both ends from the first (blue).",
       uniform: "<b>Uniform</b>: for every gene a coin flip decides whether it comes from the first parent (blue) or the second (orange).",
     }[cfg.xover];
-    h += "<p class='what'><b>2 · Crossover.</b> " + (m ? m + " children are built from neighbouring parents — child 1 from P1 and P2, child 2 from P2 and P3, … and the last parent wraps round to P1. " + how : "No children are built, because keep_elitism equals the population size.") + "</p>";
+    h += "<p class='what'><b>2 · Crossover.</b> " + (m ? m + " children are built from neighboring parents — child 1 from P1 and P2, child 2 from P2 and P3, … and the last parent wraps round to P1. " + how : "No children are built, because keep_elitism equals the population size.") + "</p>";
     h += "<div class='stagelist'>";
     cx.kids.forEach((kid, k) => {
       const me = cx.meta[k];
@@ -1985,6 +2275,7 @@ function renderStageBox() {
 }
 
 function renderStages() {
+  if (isReal()) { $("stages").innerHTML = ""; return; }
   const names = ["Selection", "Crossover", "Mutation", "Elitism"];
   $("stages").innerHTML = names.map((nm, i) => {
     const s = i + 1;
@@ -1999,15 +2290,15 @@ function renderStatus() {
   if (S.runFault && !g) h = '<div class="warnbox" style="margin:0;width:100%">' + esc(S.runFault) + "</div>";
   else if (!S.parsed || !S.parsed.ok) h = '<div class="stat">Fix the formula (area 2) to run.</div>';
   else if (!S.cfgCheck.ok) h = '<div class="stat">Fix the settings (area 3) to run.</div>';
-  else if (!nItems()) h = '<div class="stat">Add some items (area 1) to run.</div>';
+  else if (!nGenes()) h = '<div class="stat">Add some items (area 1) to run.</div>';
   else if (g) {
     const L = shownLen(), hist = g.history[L - 1], b = shownBest();
     h += '<div class="stat">generation<b>' + hist.gen + " / " + c.gens + "</b></div>";
-    h += '<div class="stat best">best fitness<b>' + fmt(b.fit) + "</b></div>";
-    h += '<div class="stat">mean fitness<b>' + fmt1(hist.mean) + "</b></div>";
+    h += '<div class="stat best">best fitness<b>' + fv(b.fit) + "</b></div>";
+    h += '<div class="stat">mean fitness<b>' + (isReal() ? fmt2(hist.mean) : fmt1(hist.mean)) + "</b></div>";
     h += '<div class="stat">found in generation<b>' + b.gen + "</b></div>";
     const tb = trueBestNow();
-    if (tb) h += '<div class="stat">true best<b style="color:var(--good)">' + fmt(tb.fitness) + "</b></div>";
+    if (tb) h += '<div class="stat">true best<b style="color:var(--good)">' + fv(tb.fitness) + "</b></div>";
   }
   $("status").innerHTML = h;
 }
@@ -2018,14 +2309,16 @@ function renderControls() {
   const stepBtn = $("btnStep");
   const lab = { 0: "Step", 1: "Next: Crossover", 2: "Next: Mutation", 3: "Next: Elitism", 4: "Step" }[S.stage];
   stepBtn.textContent = lab;
-  stepBtn.disabled = !ok || running || isFinished() && S.ga && S.ga.gen >= S.cfg.gens;
+  stepBtn.disabled = !ok || running || isFinished() && S.ga && S.ga.gen >= S.cfg.gens || isReal();
+  stepBtn.title = isReal() ? "Step mode is for the packing problems." : "";
   $("btnRun").textContent = running ? "Pause" : "Run";
   $("btnRun").disabled = !ok;
   $("btnReset").disabled = !ok && !S.ga;
   $("btnSeeds").disabled = !ok;
-  const big = nItems() > 20;
+  const big = !isReal() && nItems() > 20;
   $("btnTrue").disabled = !ok || big;
-  $("btnTrue").title = big ? "True best checks all 2^n packings, so it is only available for up to 20 items" : "Check every possible packing with the current formula";
+  $("btnTrue").title = isReal() ? "Check every mix in steps of 0.01 (1,030,301 mixes) with the current formula"
+    : big ? "True best checks all 2^n packings, so it is only available for up to 20 items" : "Check every possible packing with the current formula";
   $("btnGridRun").disabled = !ok;
 }
 
@@ -2115,7 +2408,46 @@ function chipsFor(genes, packedOnly) {
   for (let i = 0; i < genes.length; i++) if (!!genes[i] === packedOnly) a.push(i);
   return a;
 }
+function renderBestReal() {
+  const box = $("bestcard"), g = S.ga, b = shownBest();
+  let h = "<div class='sub'>Best mix found" + (g && b ? " <span class='grow'></span><button class='small' id='btnTestBest'>Test it</button>" : "") + "</div>";
+  if (!g || !b) h += "<p class='hint'>Nothing to show yet. Fix the formula and settings, then press Run.</p>";
+  else {
+    const m = mixTotals(b.genes);
+    h += "<div class='kv'>" +
+      "<div class='stat'>FE (iron)<b class='kV'>" + fmt2(m.FE) + "</b></div>" +
+      "<div class='stat'>CO (cobalt)<b class='kW'>" + fmt2(m.CO) + "</b></div>" +
+      "<div class='stat'>NI (nickel)<b class='kP'>" + fmt2(m.NI) + "</b></div>" +
+      "<div class='stat'>SUM<b>" + fmt2(m.SUM) + "</b></div>" +
+      "<div class='stat'>POWER<b>" + fmt2(m.POWER) + "</b></div>" +
+      "<div class='stat'>COST<b>" + fmt2(m.COST) + "</b></div>" +
+      "<div class='stat'>fitness<b style='color:var(--good)'>" + fmt2(b.fit) + "</b></div>" +
+      "<div class='stat'>found in generation<b>" + b.gen + "</b></div></div>" +
+      "<p class='hint'>Values are shown with 2 decimals; the GA keeps full precision.</p>";
+  }
+  const tb = trueBestNow();
+  if (tb) {
+    const m = tb.mix;
+    let msg = "";
+    if (g && b) {
+      const d = tb.fitness - b.fit;
+      if (d <= -1e-9) msg = "The GA found a higher value than the grid, because its genes are not limited to steps of 0.01.";
+      else if (d < 0.05) msg = "The GA reached the grid best (within 0.05).";
+      else msg = "The GA is " + fmt2(d) + " below the grid best.";
+    }
+    const reached = g && b && tb.fitness - b.fit < 0.05;
+    h += "<div class='truebox'><b>True best (grid, step 0.01): " + fmt2(tb.fitness) + "</b> <span class='hint' style='margin:0'>(all " + tb.total.toLocaleString("en-US") + " mixes checked" + (tb.ties > 1 ? "; " + tb.ties + " mixes tie" : "") + ")</span><br>" +
+      (msg ? "<b style='color:" + (reached ? "var(--good)" : "var(--amber)") + "'>" + msg + "</b><br>" : "") +
+      "<span class='hint'>FE " + fmt2(m.FE) + " · CO " + fmt2(m.CO) + " · NI " + fmt2(m.NI) + " · SUM " + fmt2(m.SUM) + " · POWER " + fmt2(m.POWER) + " · COST " + fmt2(m.COST) + "</span></div>";
+  } else {
+    h += "<div class='truebox neutral'><span class='hint' style='margin:0'>Press <b>True best</b> to check all 1,030,301 mixes (FE, CO, NI in steps of 0.01) with the current formula.</span></div>";
+  }
+  box.innerHTML = h;
+  const tbtn = $("btnTestBest");
+  if (tbtn) tbtn.onclick = () => { loadPack(b.genes); toast("Mix copied to Test a mix (rounded to 2 decimals)"); document.getElementById("sec-formula").scrollIntoView({ behavior: "smooth" }); };
+}
 function renderBest() {
+  if (isReal()) { renderBestReal(); return; }
   const box = $("bestcard"), g = S.ga, b = shownBest();
   let h = "<div class='sub'>Best packing found" + (g && b ? " <span class='grow'></span><button class='small' id='btnTestBest'>Test it</button>" : "") + "</div>";
   if (!g || !b) {
@@ -2160,11 +2492,39 @@ function renderBest() {
 }
 
 function loadPack(genes) {
+  if (isReal()) {                                  // the mix is shown with 2 decimals, so the test uses the rounded values
+    S.mix = [0, 1, 2].map(i => Math.round(genes[i] * 100) / 100); S.mixWarn = "";
+    renderPackStrip(); renderPack();
+    return;
+  }
   S.pack = Uint8Array.from(genes);
   renderPackStrip(); renderPack();
 }
 
+function renderPopReal() {
+  const g = S.ga, box = $("popbox");
+  $("popHint").textContent = "rows sorted by fitness · darker blue = a larger fraction";
+  $("popTitle").textContent = "Population — generation " + g.gen;
+  const tags = g.gen > 0 ? g.tags : null;
+  const order = sortDesc(g.fit);
+  const bestFit = Math.max.apply(null, g.fit);
+  let h = '<div style="--ch:22px;--cols:46px repeat(3,76px) 90px 72px;min-width:max-content">';
+  h += '<div class="pg-row head"><span class="id">#</span><span class="gh kV">FE</span><span class="gh kW">CO</span><span class="gh kP">NI</span>' +
+       '<span class="fit gh" style="text-align:right;padding-right:10px">fitness</span><span class="tg gh" style="text-align:left"></span></div>';
+  order.forEach((idx, r) => {
+    const x = g.pop[idx];
+    let cls = "pg-row", tg = "";
+    if (tags) { cls += " " + tags[idx]; tg = tags[idx]; }
+    h += '<div class="' + cls + '"><span class="id">#' + (idx + 1) + "</span>";
+    for (let i = 0; i < 3; i++) h += '<span class="g gr" style="background:rgba(47,85,151,' + (0.06 + 0.5 * Math.min(1, Math.max(0, x[i]))).toFixed(3) + ')">' + fmt2(x[i]) + "</span>";
+    h += '<span class="fit" ' + (g.fit[idx] === bestFit && r === 0 ? 'style="color:var(--good)"' : "") + ">" + fmt2(g.fit[idx]) + '</span><span class="tg">' + tg + "</span></div>";
+  });
+  h += "</div>";
+  box.innerHTML = h;
+}
 function renderPop() {
+  if (isReal() && S.ga) { renderPopReal(); return; }
+  $("popHint").textContent = isReal() ? "rows sorted by fitness · darker blue = a larger fraction" : "rows sorted by fitness · 1 = packed (blue) · 0 = left out";
   const g = S.ga, box = $("popbox");
   if (!g) { box.innerHTML = "<p class='hint' style='margin:6px'>No population yet.</p>"; $("popTitle").textContent = "Population"; return; }
   const n = nItems();
@@ -2218,12 +2578,17 @@ function renderFormulaStatusOnly() {
 }
 
 // ---------------------------------------------------------------- grid demo
+// With only 3 genes, 2 %, 10 % and 30 % all mean "1 gene per child", so the Magnet mix uses other starting values
+function gridDefaults(key) { return isReal() && key === "mutPct" ? [10, 67, 100] : GRID_PARAMS[key].values; }
+function resetGridValues() {
+  $("gdRowVals").value = gridDefaults($("gdRow").value).join(", ");
+  $("gdColVals").value = gridDefaults($("gdCol").value).join(", ");
+}
 function fillGridSelects() {
   const opts = Object.keys(GRID_PARAMS).map(k => '<option value="' + k + '">' + GRID_PARAMS[k].label + " (" + GRID_PARAMS[k].py + ")</option>").join("");
   $("gdRow").innerHTML = opts; $("gdCol").innerHTML = opts;
   $("gdRow").value = "pop"; $("gdCol").value = "mutPct";
-  $("gdRowVals").value = GRID_PARAMS.pop.values.join(", ");
-  $("gdColVals").value = GRID_PARAMS.mutPct.values.join(", ");
+  resetGridValues();
 }
 function parseVals(txt, key) {
   const parts = txt.split(/[,;\s]+/).filter(Boolean);
@@ -2249,7 +2614,7 @@ function doGrid() {
   const cells = [];
   for (const r of rv.vals) for (const c of cv.vals) {
     const cfg = gridConfig(S.cfg, rk, r, ck, c);
-    const chk = checkCfg(cfg, nItems());
+    const chk = checkCfg(cfg, nGenes());
     if (!chk.ok) { msg.innerHTML = '<span class="msg-bad">' + esc("Row " + r + ", column " + c + ": " + chk.errors[0]) + "</span>"; return; }
     cells.push({ r, c, cfg });
   }
@@ -2261,7 +2626,7 @@ function doGrid() {
   const stepGrid = () => {
     if (i < cells.length) {
       const cell = cells[i];
-      try { results.push(runSeeds(S.items, S.fit, cell.cfg, 5).map(x => x.fitness)); }
+      try { results.push(runSeeds(S.items, S.fit, cell.cfg, 5, realSpec()).map(x => x.fitness)); }
       catch (e) { $("btnGridRun").disabled = false; if (fault(e)) { msg.innerHTML = '<span class="msg-bad">' + esc(S.runFault) + "</span>"; renderAll(); return; } throw e; }
       i++;
       msg.textContent = "Running… " + i + " of " + cells.length + " cells";
@@ -2295,6 +2660,7 @@ function renderGridTable(rk, ck, rvals, cvals, results, total) {
   const notes = [];
   if (rk === "K" || ck === "K") notes.push("K_tournament is varied, so parent selection is set to tournament for this grid.");
   if (S.cfg.parents > Math.min.apply(null, (rk === "pop" ? rvals : ck === "pop" ? cvals : [S.cfg.pop]))) notes.push("Where the population is smaller than num_parents_mating, the number of parents is reduced to the population size.");
+  if (isReal() && (rk === "mutPct" || ck === "mutPct")) notes.push("With 3 genes, mutation % sets how many genes change per child: below 67% is 1 gene, 67% to 99% is 2 genes, 100% is 3 genes. Settings that give the same number of genes behave exactly alike.");
   if (notes.length) h += "<p class='hint'>" + notes.join(" ") + "</p>";
   $("gdOut").innerHTML = h;
 }
@@ -2315,7 +2681,18 @@ function wire() {
     e.target.parentNode.classList.toggle("on", e.target.checked);
     renderPack();
   });
-  $("packClear").addEventListener("click", () => loadPack(new Uint8Array(nItems())));
+  $("packstrip").addEventListener("input", e => {
+    const g = e.target && e.target.dataset ? e.target.dataset.g : undefined;
+    if (g === undefined) return;
+    const raw = parseFloat(e.target.value), bad = !isFinite(raw) || raw < 0 || raw > 1;
+    S.mix[+g] = isFinite(raw) ? Math.min(1, Math.max(0, raw)) : 0;
+    e.target.classList.toggle("out", bad);
+    S.mixWarn = bad ? "Each gene must be between 0 and 1." : "";
+    renderPack();
+  });
+  $("btnCopyPower").addEventListener("click", () => copyText(MAGNET_POWER, "Power formula copied"));
+  $("btnCopyCost").addEventListener("click", () => copyText(MAGNET_COST, "Cost formula copied"));
+  $("packClear").addEventListener("click", () => loadPack(isReal() ? [0, 0, 0] : new Uint8Array(nItems())));
   $("packAll").addEventListener("click", () => loadPack(new Uint8Array(nItems()).fill(1)));
   $("packBest").addEventListener("click", () => { if (S.ga && shownBest()) loadPack(shownBest().genes); else toast("Run first - there is no GA best yet"); });
   ["sPop", "sGens", "sPar", "sSel", "sK", "sX", "sMut", "sEl", "sSeed"].forEach(id => $(id).addEventListener("input", onCfgInput));
@@ -2336,8 +2713,8 @@ function wire() {
   $("btnClearCurves").addEventListener("click", () => { S.curves = []; S.lastCurveCfg = null; renderChart(); });
   $("btnCopyTable").addEventListener("click", () => copyText(tableLines().map(l => l.join("\t")).join("\n"), "Table copied - paste it into Word or Excel"));
   $("btnClearTable").addEventListener("click", () => { S.groups = []; S.tableWarn = false; renderTable(); });
-  $("gdRow").addEventListener("change", () => { $("gdRowVals").value = GRID_PARAMS[$("gdRow").value].values.join(", "); });
-  $("gdCol").addEventListener("change", () => { $("gdColVals").value = GRID_PARAMS[$("gdCol").value].values.join(", "); });
+  $("gdRow").addEventListener("change", () => { $("gdRowVals").value = gridDefaults($("gdRow").value).join(", "); });
+  $("gdCol").addEventListener("change", () => { $("gdColVals").value = gridDefaults($("gdCol").value).join(", "); });
   $("btnGridRun").addEventListener("click", doGrid);
 }
 
