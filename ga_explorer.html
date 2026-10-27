@@ -98,11 +98,12 @@ table.items.genes th:nth-child(3), table.items.genes th:nth-child(4){text-align:
 .cgrp{display:contents} .cgrp[hidden]{display:none}
 
 /* ---- formula ---- */
-.fwrap{display:flex; align-items:center; gap:8px}
-.fwrap .eq{font-weight:700; color:var(--navy); white-space:nowrap}
-input.formula{flex:1; min-width:0; font-family:var(--mono); font-size:17px; padding:9px 12px; border:2px solid var(--edge); border-radius:8px}
-input.formula.bad{border-color:var(--bad); background:var(--bad-bg)}
-input.formula.ok{border-color:var(--good)}
+.fwrap{display:flex; align-items:flex-start; gap:8px}
+.fwrap .eq{font-weight:700; color:var(--navy); white-space:nowrap; padding-top:10px}
+.fwrap button{margin-top:6px}
+.formula{flex:1; min-width:0; font-family:var(--mono); font-size:16.5px; line-height:1.5; padding:8px 12px; border:2px solid var(--edge); border-radius:8px; resize:none; overflow:hidden; display:block; overflow-wrap:anywhere}
+.formula.bad{border-color:var(--bad); background:var(--bad-bg)}
+.formula.ok{border-color:var(--good)}
 .fstatus{margin:7px 0 0; font-size:14.5px; min-height:24px}
 .fstatus.ok{color:var(--good)} .fstatus.bad{color:var(--bad)} .fstatus.warn{color:var(--amber)}
 pre.errline{margin:4px 0 0; font-family:var(--mono); font-size:14px; color:var(--bad); background:#fff; border:1px solid #f1c4c4; border-radius:6px; padding:5px 10px; overflow-x:auto}
@@ -115,6 +116,8 @@ pre.errline{margin:4px 0 0; font-family:var(--mono); font-size:14px; color:var(-
 .colorf{font-family:var(--mono); font-size:15px; background:#fff; border:1px solid var(--line); border-radius:6px; padding:5px 10px; margin-top:8px; overflow-x:auto; white-space:pre-wrap; overflow-wrap:anywhere}
 pre.code{margin:0; font-family:var(--mono); font-size:13px; line-height:1.5; background:#fff; border:1px solid var(--line); border-radius:6px; padding:9px 12px; overflow-x:auto; white-space:pre}
 pre.code.dim{opacity:.45}
+#codeWarn:empty{display:none}
+pre.bigcode{max-height:560px; overflow:auto; font-size:13.5px}
 
 /* ---- test a packing ---- */
 .packstrip{display:flex; flex-wrap:wrap; gap:5px 6px; margin:4px 0 8px; max-height:130px; overflow:auto}
@@ -211,6 +214,14 @@ details.fold[open] summary{margin-bottom:8px}
 .pg-row.child .tg{color:var(--accent)}
 .pg-row.parent .tg{color:var(--amber)}
 .pg-row.bestrow .fit{color:var(--good)}
+.pg-row .v{text-align:right; padding-right:16px; font-size:14px; font-variant-numeric:tabular-nums; border-radius:4px; margin:1px 0}
+.pg-row .v.obj{font-weight:700}
+.pg-row .v.bad{background:#fbd9d9; color:#9b1c1c}
+.pg-row .vh{font-size:12px; line-height:1.2; color:var(--muted); text-align:right; padding-right:16px}
+.pg-row .vh small{display:block; font-size:11px}
+.pg-row .vh.obj{color:var(--ink2); font-weight:700}
+.pg-row .fit.vh{padding-right:10px}
+.redkey{background:#fbd9d9; color:#9b1c1c; border-radius:3px; padding:0 5px; font-weight:600}
 .pg-row .g.gr{color:var(--ink); font-size:13px; font-variant-numeric:tabular-nums}
 
 /* ---- results table ---- */
@@ -250,7 +261,7 @@ table.gd td.best{outline:3px solid var(--good); outline-offset:-3px}
   <h1>GA Explorer — Genetic Algorithm<span>SE 600 · Decision Making and Optimization</span></h1>
   <div class="spacer"></div>
   <nav class="jump" aria-label="Areas of this page">
-    <a href="#sec-problem"><b>1</b>Problem</a><a href="#sec-formula"><b>2</b>Fitness formula</a><a href="#sec-settings"><b>3</b>Settings</a><a href="#sec-run"><b>4</b>Run and Step</a><a href="#sec-results"><b>5</b>Results</a>
+    <a href="#sec-problem"><b>1</b>Problem</a><a href="#sec-formula"><b>2</b>Fitness formula</a><a href="#sec-settings"><b>3</b>Settings</a><a href="#sec-run"><b>4</b>Run and Step</a><a href="#sec-results"><b>5</b>Results</a><a href="#sec-code"><b>6</b>Full PyGAD code</a>
   </nav>
 </header>
 
@@ -288,7 +299,7 @@ table.gd td.best{outline:3px solid var(--good); outline-offset:-3px}
     <section class="card" id="sec-formula">
       <h2><b>2</b>Fitness formula</h2>
       <div class="fwrap"><span class="eq">fitness =</span>
-        <input type="text" class="formula" id="formula" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Fitness formula">
+        <textarea class="formula" id="formula" rows="3" spellcheck="false" autocomplete="off" autocapitalize="off" wrap="soft" aria-label="Fitness formula (line breaks are ignored)"></textarea>
         <button class="small" id="btnDefaultF" title="Put back the formula this problem starts with">Default</button></div>
       <div class="fstatus" id="fstatus"></div>
       <div id="ferrline"></div>
@@ -333,11 +344,7 @@ table.gd td.best{outline:3px solid var(--good); outline-offset:-3px}
       </div>
       <div class="derived" id="derived"></div>
       <div id="cfgwarn"></div>
-      <details class="fold" id="pyCall">
-        <summary>Show the matching pygad.GA(...) call</summary>
-        <div class="sub" style="margin-top:8px"><span class="grow"></span><button class="small" id="btnCopyCall">Copy call</button></div>
-        <pre class="code" id="pycall"></pre>
-      </details>
+      <p class="hint" style="margin-top:10px">The same settings as one complete, runnable PyGAD script: <a href="#sec-code">see “Full PyGAD code” below the results</a>.</p>
     </section>
 
     <!-- 4. RUN AND STEP -->
@@ -383,6 +390,15 @@ table.gd td.best{outline:3px solid var(--good); outline-offset:-3px}
       <button class="small" id="btnCopyTable">Copy table</button><button class="small" id="btnClearTable">Clear table</button></div>
     <div class="restable" id="restable"></div>
     <p class="hint" id="tableHint">Press “Run 5 seeds” to add rows. Each setting gets a mean and a standard deviation (n − 1) row. The table is cleared when the problem or the formula changes.</p>
+  </section>
+
+  <!-- FULL PYGAD CODE -->
+  <section class="card" id="sec-code" style="margin-bottom:18px">
+    <h2><b>6</b>Full PyGAD code</h2>
+    <p class="note" style="margin:0 0 8px">Same rules as GA Explorer; PyGAD uses different random numbers, so the result can differ slightly. The script follows your problem, formula and settings.</p>
+    <div class="btnrow" style="margin-bottom:8px"><button class="small primary" id="btnCopyCode">Copy</button><button class="small" id="btnDownloadCode">Download .py</button><span class="hint" id="codeFile" style="margin:0"></span></div>
+    <div class="fstatus warn" id="codeWarn"></div>
+    <pre class="code bigcode" id="pycall"></pre>
   </section>
 
   <!-- GRID DEMO (instructor) -->
@@ -547,7 +563,7 @@ function tokenize(src) {
 //   comparison  <  +,-  <  *,/  <  ^  <  unary minus  <  atom
 function parseFormula(text, nItems, kind) {
   const real = kind === "real";
-  let src = String(text).replace(/ /g, " ");
+  let src = String(text).replace(/[\u00a0\r\n]/g, " ");       // line breaks (the formula box has several lines) count as spaces
   let lead = 0;
   const lm = /^\s*=/.exec(src);                       // Excel habit: a leading = is allowed
   if (lm) { src = src.slice(0, lm[0].length - 1).replace(/./g, " ") + " " + src.slice(lm[0].length); lead = lm[0].length; }
@@ -1051,6 +1067,102 @@ function checkCfg(cfg, nGenes) {
   return { ok: errors.length === 0, errors, notes };
 }
 
+// =====================================================================
+//  3b. The full PyGAD script for the current problem, formula and settings
+// =====================================================================
+function pyWrapList(head, pieces, tail) {          // "head a, b, c, ... tail" wrapped at about 88 characters
+  const pad = " ".repeat(head.length), rows = [];
+  let cur = head, first = true;
+  pieces.forEach((p, i) => {
+    const piece = p + (i < pieces.length - 1 ? ", " : "");
+    if (cur.length + piece.length > 88 && !first) { rows.push(cur.replace(/\s+$/, "")); cur = pad; first = true; }
+    cur += piece; first = false;
+  });
+  rows.push(cur + tail);
+  return rows;
+}
+
+// prob: { id, label, real (true for the Magnet mix) }; returns the script as text
+function fullPyGadCode(parsed, items, cfg, prob) {
+  const real = !!prob.real, L = [];
+  const n = real ? 3 : items.length;
+  L.push("# Genetic algorithm for the problem \"" + prob.label + "\", written with PyGAD.");
+  L.push("# To run it yourself: pip install pygad numpy matplotlib");
+  L.push("");
+  L.push("import numpy");
+  L.push("import pygad");
+  L.push("");
+  if (!real) {
+    L.push("# 1. The data: one number per item, in the same order as the item table.");
+    L.push("names = [" + items.map(it => JSON.stringify(it.name)).join(", ") + "]");
+    L[L.length - 1] = pyWrapList("names = [", items.map(it => JSON.stringify(it.name)), "]").join("\n");
+    L.push(...[["weights", "w"], ["values", "v"], ["prices", "p"]].map(a => pyWrapList(a[0] + " = numpy.array([", items.map(it => String(it[a[1]])), "])").join("\n")));
+    L.push("");
+    L.push("# 2. The fitness function: PyGAD calls it for every solution. Higher is better.");
+    L.push("#    solution[i] = 1 means item i is packed, 0 means it stays at home.");
+  } else {
+    L.push("# 1. The fitness function: PyGAD calls it for every solution. Higher is better.");
+    L.push("#    A solution holds three numbers between 0 and 1: the fractions FE, CO and NI.");
+  }
+  const py = pythonFitness(parsed, items);
+  const at = py.lines.findIndex(l => l.length && l[0].t.indexOf("def ") === 0);
+  const body = py.lines.slice(at).map(segsText);
+  body[body.length - 1] = "    return float(fitness)";
+  L.push(...body);
+  L.push("");
+  L.push("# " + (real ? "2" : "3") + ". The GA with all its settings (the same ones as in GA Explorer).");
+  L.push("ga = pygad.GA(");
+  const arg = (code, note) => L.push("    " + (note ? (code + ",").padEnd(40) + "# " + note : code + ","));
+  arg("num_generations=" + cfg.gens, "how many generations to run");
+  arg("num_parents_mating=" + cfg.parents, "parents selected in every generation");
+  arg("sol_per_pop=" + cfg.pop, "population size");
+  arg("num_genes=" + n, real ? "genes per solution: FE, CO, NI" : "one gene per item");
+  if (real) { arg("gene_space=[{'low': 0, 'high': 1}] * 3", "every gene is a real number between 0 and 1"); arg("gene_type=float"); }
+  else { arg("gene_space=[0, 1]", "every gene is 0 (left out) or 1 (packed)"); arg("gene_type=int"); }
+  arg("fitness_func=fitness_func");
+  arg('parent_selection_type="' + cfg.sel + '"');
+  if (cfg.sel === "tournament") arg("K_tournament=" + cfg.K);
+  arg('crossover_type="' + cfg.xover + '"');
+  arg('mutation_type="random"');
+  arg("mutation_percent_genes=" + trimNum(cfg.mutPct));
+  arg("keep_elitism=" + cfg.elite, cfg.elite === 0 ? "0: the selected parents are carried over instead" : "");
+  arg("random_seed=" + cfg.seed);
+  arg("suppress_warnings=True", "keep the printout short");
+  L.push(")");
+  L.push("");
+  L.push("# " + (real ? "3" : "4") + ". Run the GA.");
+  L.push("ga.run()");
+  L.push("");
+  L.push("# " + (real ? "4" : "5") + ". Get the best solution and print it in plain words.");
+  if (cfg.elite === 0) L.push("#    (with keep_elitism=0 this is the best of the last generation, which can be worse than an earlier one)");
+  L.push("solution, fitness, idx = ga.best_solution()");
+  if (!real) {
+    L.push("packed = [names[i] for i in range(len(names)) if solution[i] == 1]");
+    L.push('print("Packed items:", ", ".join(packed) if packed else "nothing")');
+    L.push('print("Number of items:", int(numpy.sum(solution)))');
+    L.push('print("Total weight:", numpy.sum(solution * weights))');
+    L.push('print("Total value:", numpy.sum(solution * values))');
+    L.push('print("Total price:", numpy.sum(solution * prices))');
+    L.push('print("Fitness:", fitness)');
+  } else {
+    L.push("FE, CO, NI = solution");
+    L.push("SUM = FE + CO + NI");
+    L.push("POWER = 80*FE + 300*CO + 100*NI + 100*FE*CO + 300*FE*NI + 50*CO*NI - 150*FE**2 - 200*CO**2 - 250*NI**2");
+    L.push("COST = 2*FE + 40*CO + 10*NI");
+    L.push('print("FE (iron):", round(FE, 2))');
+    L.push('print("CO (cobalt):", round(CO, 2))');
+    L.push('print("NI (nickel):", round(NI, 2))');
+    L.push('print("SUM:", round(SUM, 2))');
+    L.push('print("POWER:", round(POWER, 2))');
+    L.push('print("COST:", round(COST, 2))');
+    L.push('print("Fitness:", round(fitness, 2))');
+  }
+  L.push("");
+  L.push("# " + (real ? "5" : "6") + ". Draw the best fitness of every generation.");
+  L.push("ga.plot_fitness()");
+  return L.join("\n") + "\n";
+}
+
 function numOffspring(cfg) { return cfg.elite === 0 ? cfg.pop - cfg.parents : cfg.pop - cfg.elite; }
 function mutGenesFor(cfg, n) { return Math.max(1, Math.floor(cfg.mutPct * n / 100)); }
 
@@ -1462,9 +1574,10 @@ const MAGNET_COST = "2*FE + 40*CO + 10*NI";
 const MAGNET_POP = 50, MAGNET_GENS = 150, MAGNET_PARENTS = 10;   // tuned with tests/real_tune.js: seeds 1-5 on the last formula average about 117.7
 const PROBLEMS = {
   backpack: {
-    id: "backpack", label: "Backpack (6 items)", short: "Backpack",
+    id: "backpack", label: "Backpack (6 items)", short: "Backpack", pyfile: "ga_backpack.py",
     note: "Lecture 9 backpack, weight limit 15 kg.",
     formula: "VALUE - 10*MAX(0, WEIGHT - 15)",
+    rules: { maxWeight: 15 },                       // the stated rule, used only to tint the population view
     items: [
       { name: "Laptop", w: 5, v: 12, p: 40 },
       { name: "Camera", w: 4, v: 10, p: 30 },
@@ -1475,9 +1588,10 @@ const PROBLEMS = {
     ],
   },
   camping: {
-    id: "camping", label: "Camping trip (12 items)", short: "Camping trip",
+    id: "camping", label: "Camping trip (12 items)", short: "Camping trip", pyfile: "ga_camping_trip.py",
     note: "Weight limit 20 kg; a $200 budget can be added to the formula.",
     formula: "VALUE - 10*MAX(0, WEIGHT - 20)",
+    rules: { maxWeight: 20 },
     items: [
       { name: "Tent", w: 5, v: 9, p: 60 },
       { name: "Sleeping bag", w: 3, v: 8, p: 40 },
@@ -1494,9 +1608,10 @@ const PROBLEMS = {
     ],
   },
   expedition: {
-    id: "expedition", label: "Expedition (40 items)", short: "Expedition",
+    id: "expedition", label: "Expedition (40 items)", short: "Expedition", pyfile: "ga_expedition.py",
     note: "Weight limit 28 kg and budget $1200 - both limits are in the formula, and both are tight.",
     formula: "VALUE - 10*MAX(0, WEIGHT - 28) - 1*MAX(0, PRICE - 1200)",
+    rules: { maxWeight: 28, maxPrice: 1200 },
     items: [
       { name: "Four-season tent", w: 6, v: 30, p: 320 },
       { name: "Bivouac sack", w: 2, v: 16, p: 90 },
@@ -1541,11 +1656,12 @@ const PROBLEMS = {
     ],
   },
   magnet: {
-    id: "magnet", label: "Magnet mix (3 metals)", short: "Magnet mix", kind: "real",
+    id: "magnet", label: "Magnet mix (3 metals)", short: "Magnet mix", pyfile: "ga_magnet_mix.py", kind: "real",
     note: "Mix three metals to make the strongest magnet. Each gene is the fraction of one metal, between 0 and 1.",
     formula: MAGNET_POWER,
     items: [],
     real: { n: 3, low: 0, high: 1 },
+    rules: { sumTol: 0.005, maxCost: 12.005 },       // SUM must be 1 and COST at most 12 (2-decimal tolerance)
     genes: [
       { name: "FE", metal: "iron", cost: 2 },
       { name: "CO", metal: "cobalt", cost: 40 },
@@ -1555,7 +1671,7 @@ const PROBLEMS = {
     cfg: { pop: MAGNET_POP, gens: MAGNET_GENS, parents: MAGNET_PARENTS },
   },
   custom: {
-    id: "custom", label: "Custom (paste)", short: "Custom",
+    id: "custom", label: "Custom (paste)", short: "Custom", pyfile: "ga_custom.py",
     note: "Paste your own items.",
     formula: "VALUE - 10*MAX(0, WEIGHT - 15)",
     items: [],
@@ -1778,9 +1894,11 @@ function renderFormula() {
     st.textContent = (empty ? "" : "✗ ") + p.error.message;
     if (!empty) {
       input.classList.add("bad");
-      const t = input.value;
+      const t = input.value.replace(/[\u00a0\r\n]/g, " ");          // line breaks count as spaces, so positions match the parser
       const pos = Math.min(p.error.pos, t.length), len = Math.max(1, Math.min(p.error.len || 1, Math.max(1, t.length - pos)));
-      el.innerHTML = '<pre class="errline">' + esc(t) + "\n" + " ".repeat(pos) + "^".repeat(len) + "</pre>";
+      const W = 64, start = t.length > W ? Math.max(0, pos - 24) : 0;      // long formulas: show a window around the mistake
+      const pre = start > 0 ? "…" : "", post = start + W < t.length ? "…" : "";
+      el.innerHTML = '<pre class="errline">' + esc(pre + t.slice(start, start + W) + post) + "\n" + " ".repeat(pre.length + pos - start) + "^".repeat(Math.min(len, W)) + "</pre>";
     }
     $("pyfit").classList.add("dim");
     $("pyfit").innerHTML = S.lastPyHtml || '<span class="kcm"># fix the formula above to see the Python version</span>';
@@ -1796,7 +1914,42 @@ function renderFormula() {
     $("pyfit").innerHTML = S.lastPyHtml;
   }
   $("colorf").innerHTML = colorFormula();
+  fitFormulaBox();
+  renderCode();
   renderPack();
+}
+
+// the formula box grows with the formula (at least 3 lines)
+function fitFormulaBox() {
+  const t = $("formula");
+  t.style.height = "auto";
+  t.style.height = (t.scrollHeight + (t.offsetHeight - t.clientHeight)) + "px";
+}
+
+// ---- the full PyGAD script
+function renderCode() {
+  const pre = $("pycall"), warn = $("codeWarn");
+  const P = PROBLEMS[S.pid];
+  $("codeFile").textContent = P.pyfile;
+  const ok = !!(S.parsed && S.parsed.ok && S.cfgCheck.ok && nGenes() > 0);
+  if (ok) {
+    S.codeText = fullPyGadCode(S.parsed, S.items, S.cfg, { id: P.id, label: P.label, real: isReal() });
+    pre.textContent = S.codeText; pre.classList.remove("dim"); warn.textContent = "";
+  } else {
+    pre.classList.add("dim");
+    if (!S.codeText) pre.textContent = "# Fix the formula or the settings above to see the script.";
+    warn.textContent = "⚠ " + (!S.cfgCheck.ok ? "Fix the settings (area 3) to update the script." : nGenes() ? "Fix the formula (area 2) to update the script." : "Add some items (area 1) to see the script.");
+  }
+  $("btnCopyCode").disabled = !ok; $("btnDownloadCode").disabled = !ok;
+}
+function downloadCode() {
+  if (!S.codeText) return;
+  const blob = new Blob([S.codeText], { type: "text/x-python" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = PROBLEMS[S.pid].pyfile;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  toast("Saved " + PROBLEMS[S.pid].pyfile);
 }
 
 function onFormulaInput() {
@@ -1926,10 +2079,7 @@ function renderSettingsInfo() {
     w += '<div class="warnbox amber">Roulette needs positive fitness — some ' + wordOf() + ' have fitness ≤ 0, so the wheel is not fair.</div>';
   }
   $("cfgwarn").innerHTML = w;
-  if (chk.ok && n) {
-    S.callText = pyGadCall(c, n, real);
-    $("pycall").textContent = S.callText;
-  }
+  renderCode();
 }
 function onCfgInput() {
   S.cfg = readCfg();
@@ -2501,35 +2651,38 @@ function loadPack(genes) {
   renderPackStrip(); renderPack();
 }
 
-function renderPopReal() {
-  const g = S.ga, box = $("popbox");
-  $("popHint").textContent = "rows sorted by fitness · darker blue = a larger fraction";
-  $("popTitle").textContent = "Population — generation " + g.gen;
-  const tags = g.gen > 0 ? g.tags : null;
-  const order = sortDesc(g.fit);
-  const bestFit = Math.max.apply(null, g.fit);
-  let h = '<div style="--ch:22px;--cols:46px repeat(3,76px) 90px 72px;min-width:max-content">';
-  h += '<div class="pg-row head"><span class="id">#</span><span class="gh kV">FE</span><span class="gh kW">CO</span><span class="gh kP">NI</span>' +
-       '<span class="fit gh" style="text-align:right;padding-right:10px">fitness</span><span class="tg gh" style="text-align:left"></span></div>';
-  order.forEach((idx, r) => {
-    const x = g.pop[idx];
-    let cls = "pg-row", tg = "";
-    if (tags) { cls += " " + tags[idx]; tg = tags[idx]; }
-    h += '<div class="' + cls + '"><span class="id">#' + (idx + 1) + "</span>";
-    for (let i = 0; i < 3; i++) h += '<span class="g gr" style="background:rgba(47,85,151,' + (0.06 + 0.5 * Math.min(1, Math.max(0, x[i]))).toFixed(3) + ')">' + fmt2(x[i]) + "</span>";
-    h += '<span class="fit" ' + (g.fit[idx] === bestFit && r === 0 ? 'style="color:var(--good)"' : "") + ">" + fmt2(g.fit[idx]) + '</span><span class="tg">' + tg + "</span></div>";
-  });
-  h += "</div>";
-  box.innerHTML = h;
+// ---- population view: for every row the objective, the constraint values and the fitness come BEFORE the gene cells,
+//      so they stay visible when the 40-item problem needs a horizontal scroll
+function popColumns() {
+  if (isReal()) return [
+    { k: "SUM", label: "sum", name: "FE+CO+NI" },
+    { k: "POWER", label: "power", name: "POWER", obj: true },
+    { k: "COST", label: "cost", name: "COST" }];
+  const cols = [{ k: "V", label: "value", name: "VALUE", obj: true }, { k: "W", label: "weight", name: "WEIGHT" }];
+  if (S.items.some(it => it.p > 0)) cols.push({ k: "P", label: "price", name: "PRICE" });      // custom items without prices: no price column
+  cols.push({ k: "C", label: "count", name: "COUNT" });
+  return cols;
+}
+function popTotals(genes) {
+  if (isReal()) { const m = mixTotals(genes); return { SUM: m.SUM, POWER: m.POWER, COST: m.COST }; }
+  return packingTotals(S.items, genes);
+}
+// the stated rules of the built-in problems (from the problem notes, not parsed from the formula)
+function popBreaks(k, v) {
+  const rules = PROBLEMS[S.pid].rules;
+  if (!rules) return false;
+  if (isReal()) return (k === "SUM" && Math.abs(v - 1) > rules.sumTol) || (k === "COST" && v > rules.maxCost);
+  return (k === "W" && rules.maxWeight !== undefined && v > rules.maxWeight + 1e-9) || (k === "P" && rules.maxPrice !== undefined && v > rules.maxPrice + 1e-9);
 }
 function renderPop() {
-  if (isReal() && S.ga) { renderPopReal(); return; }
-  $("popHint").textContent = isReal() ? "rows sorted by fitness · darker blue = a larger fraction" : "rows sorted by fitness · 1 = packed (blue) · 0 = left out";
-  const g = S.ga, box = $("popbox");
+  const g = S.ga, box = $("popbox"), real = isReal();
+  const rules = !!PROBLEMS[S.pid].rules;
+  $("popHint").innerHTML = "rows sorted by fitness · bold = the objective" + (rules ? " · <span class='redkey'>red</span> = breaks a stated rule" : "") +
+    (real ? " · darker blue = a larger fraction" : " · 1 = packed (blue) · 0 = left out");
   if (!g) { box.innerHTML = "<p class='hint' style='margin:6px'>No population yet.</p>"; $("popTitle").textContent = "Population"; return; }
-  const n = nItems();
+  const n = nGenes();
   let pop, fit, tags = null, parentsOf = null, title;
-  if (S.stage >= 1 && S.stage <= 3 && S.view) {
+  if (!real && S.stage >= 1 && S.stage <= 3 && S.view) {
     pop = S.view.oldPop; fit = S.view.oldFit;
     parentsOf = {};
     S.view.trace.selection.idx.forEach((pi, k) => { (parentsOf[pi] = parentsOf[pi] || []).push(k + 1); });
@@ -2539,22 +2692,28 @@ function renderPop() {
     title = "Population — generation " + g.gen;
   }
   $("popTitle").textContent = title;
-  const cw = n <= 12 ? 28 : n <= 24 ? 22 : n <= 45 ? 15 : 11, ch = n <= 24 ? 22 : 19;
+  const cols = popColumns(), nf = real ? fmt2 : fmt;
+  const cw = real ? 76 : n <= 12 ? 28 : n <= 24 ? 22 : n <= 45 ? 15 : 11, ch = real || n <= 24 ? 22 : 19;
   const order = sortDesc(fit);
   const bestFit = Math.max.apply(null, fit);
-  let h = '<div style="--cw:' + cw + "px;--ch:" + ch + "px;--cols:46px repeat(" + n + ",var(--cw)) 78px 84px;min-width:max-content\">";
+  let h = '<div style="--cw:' + cw + "px;--ch:" + ch + "px;--cols:46px repeat(" + cols.length + ",86px) 84px 78px repeat(" + n + ",var(--cw));min-width:max-content\">";
   h += '<div class="pg-row head"><span class="id">#</span>';
-  for (let i = 0; i < n; i++) h += '<span class="gh" title="' + (i + 1) + " " + esc(itemName(i)) + '">' + ((n <= 24 || (i + 1) % 5 === 0 || i === 0) ? i + 1 : "") + "</span>";
-  h += '<span class="fit gh" style="text-align:right;padding-right:10px">fitness</span><span class="tg gh" style="text-align:left"></span></div>';
+  cols.forEach(c => { h += '<span class="vh' + (c.obj ? " obj" : "") + '">' + c.label + " <small>(" + c.name + ")</small></span>"; });
+  h += '<span class="fit gh vh">fitness</span><span class="tg gh" style="text-align:left"></span>';
+  if (real) ["FE", "CO", "NI"].forEach((nm, i) => { h += '<span class="gh ' + ["kV", "kW", "kP"][i] + '">' + nm + "</span>"; });
+  else for (let i = 0; i < n; i++) h += '<span class="gh" title="' + (i + 1) + " " + esc(itemName(i)) + '">' + ((n <= 24 || (i + 1) % 5 === 0 || i === 0) ? i + 1 : "") + "</span>";
+  h += "</div>";
   order.forEach((idx, r) => {
-    const genes = pop[idx];
-    let cls = "pg-row";
-    let tg = "";
+    const genes = pop[idx], tot = popTotals(genes);
+    let cls = "pg-row", tg = "";
     if (parentsOf && parentsOf[idx]) { cls += " par"; tg = "P" + parentsOf[idx].join(", P"); }
     else if (tags) { cls += " " + tags[idx]; tg = tags[idx]; }
     h += '<div class="' + cls + '"><span class="id">#' + (idx + 1) + "</span>";
-    for (let i = 0; i < n; i++) h += '<span class="g ' + (genes[i] ? "g1" : "g0") + '">' + (n <= 24 ? genes[i] : "") + "</span>";
-    h += '<span class="fit" ' + (fit[idx] === bestFit && r === 0 ? 'style="color:var(--good)"' : "") + ">" + fmt(fit[idx]) + '</span><span class="tg">' + tg + "</span></div>";
+    cols.forEach(c => { h += '<span class="v' + (c.obj ? " obj" : "") + (popBreaks(c.k, tot[c.k]) ? " bad" : "") + '" data-k="' + c.k + '">' + nf(tot[c.k]) + "</span>"; });
+    h += '<span class="fit" ' + (fit[idx] === bestFit && r === 0 ? 'style="color:var(--good)"' : "") + ">" + nf(fit[idx]) + '</span><span class="tg">' + tg + "</span>";
+    if (real) for (let i = 0; i < 3; i++) h += '<span class="g gr" style="background:rgba(47,85,151,' + (0.06 + 0.5 * Math.min(1, Math.max(0, genes[i]))).toFixed(3) + ')">' + fmt2(genes[i]) + "</span>";
+    else for (let i = 0; i < n; i++) h += '<span class="g ' + (genes[i] ? "g1" : "g0") + '">' + (n <= 24 ? genes[i] : "") + "</span>";
+    h += "</div>";
   });
   h += "</div>";
   box.innerHTML = h;
@@ -2673,7 +2832,9 @@ function wire() {
   $("btnDefaultF").addEventListener("click", () => { $("formula").value = PROBLEMS[S.pid].formula; onFormulaInput(); applyFormula(); });
   document.querySelectorAll("#cheat [data-ins]").forEach(b => b.addEventListener("click", () => insertAtCursor(b.dataset.ins)));
   $("btnCopyPy").addEventListener("click", () => { if (S.lastPyText && S.parsed && S.parsed.ok) copyText(S.lastPyText, "Python function copied"); else toast("Fix the formula first"); });
-  $("btnCopyCall").addEventListener("click", () => { if (S.callText) copyText(S.callText, "pygad.GA call copied"); });
+  $("btnCopyCode").addEventListener("click", () => { if (S.codeText) copyText(S.codeText, "Python script copied"); });
+  $("btnDownloadCode").addEventListener("click", downloadCode);
+  window.addEventListener("resize", fitFormulaBox);
   $("packstrip").addEventListener("change", e => {
     const i = e.target && e.target.dataset ? e.target.dataset.i : undefined;
     if (i === undefined) return;
